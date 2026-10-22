@@ -23,7 +23,7 @@ Variables d'environnement liées :
 | `CRAFTY_API_TOKEN` | clé d'API Crafty Controller, sans accès complet (cartes `crafty`) |
 | `GW2_API_KEY` | clé d'API Guild Wars 2 du compte (cartes `gw2`) : droits `account`, `wallet`, `progression`, `tradingpost` |
 | `PROFILE_DATA_DIR` | dossier des données saisies par chaque profil : clés de « Mes clés » (chiffrées) et ordre des cartes ; vide = `var/profiles`. En prod : un volume privé, sauvegardé |
-| `HTTP_CA_FILE` | CA à approuver pour Beszel et les sondes HTTPS (CA mkcert), vide = CA du système |
+| `TLS_CA_FILE` | CA à approuver pour Beszel et les sondes HTTPS (CA mkcert), vide = CA du système |
 
 ### Identifiants par personne (`credentials`)
 

@@ -7,7 +7,7 @@ Le texte en bas de la carte vient de l'une de deux sources :
 | Message | Origine | Piste |
 |---|---|---|
 | Cartes `service` en « ne répond pas » au hasard alors que le service tourne, erreur « Idle timeout reached » ou latence ~3 s | résolution DNS lente dans le container (pas le service) : en dev, relais DNS de Docker Desktop | donner Pi-hole au container (`dns:`), voir docs/developpement.md ; vérifier : `curl -w '%{time_namelookup}'` depuis le container |
-| « Beszel injoignable : … » | le hub ne répond pas | `BESZEL_URL`, Caddy, le container `beszel-hub` ; en dev, la CA (`HTTP_CA_FILE`) |
+| « Beszel injoignable : … » | le hub ne répond pas | `BESZEL_URL`, Caddy, le container `beszel-hub` ; en dev, la CA (`TLS_CA_FILE`) |
 | « Connexion à Beszel refusée … » | identifiants refusés | `BESZEL_EMAIL` / `BESZEL_PASSWORD` ; le compte existe-t-il ? |
 | « Beszel ne connaît pas le système « X » (systèmes visibles : …) » | nom faux dans `hosts.<m>.beszel`, ou compte pas membre du système | copier le nom exact listé ; ajouter le compte au système dans Beszel |
 | « Beszel ne reçoit plus les données de X » | l'agent de la machine ne répond plus | la machine, son agent (`beszel-agent`) |
@@ -42,6 +42,7 @@ Le texte en bas de la carte vient de l'une de deux sources :
 | « Clé Guild Wars 2 refusée (403) sur /v2/… : Requires scope … » | la clé n'a pas le droit cité | recréer la clé sur account.arena.net en cochant ce droit |
 | « … : Variable XXX_<NOM> absente ou vide (identifiants de la carte) » | carte avec `credentials: <nom>` sans la variable correspondante | ajouter `XXX_<NOM>=…` dans `.env.local` (dev) ou au vault (prod) |
 | « Pas encore de clé pour ce profil : l'ajouter dans « Mes clés ». » | carte en `credentials: profile`, aucune clé saisie pour ce profil | bouton « Mes clés » du dashboard du profil |
+| En prod seulement, une variable d'environnement semble ignorée (valeur de `.env` utilisée) | son nom commence par `HTTP_` : sous PHP-FPM, Symfony ne reprend pas ces variables de l'environnement (ce sont des en-têtes de requête). Cas de l'ancienne `HTTP_CA_FILE` (« unable to get local issuer certificate ») | ne jamais nommer une variable `HTTP_*` (vérifié par `tests/Config/EnvVariablesTest.php`) |
 | Toutes les clés de « Mes clés » redeviennent « Pas encore de clé » (fichiers `<profil>.credentials.json`) | `APP_SECRET` a changé (clés chiffrées avec), ou le dossier `PROFILE_DATA_DIR` a été perdu | ressaisir les clés ; en prod, garder `APP_SECRET` au vault et restaurer le volume depuis la sauvegarde |
 | Après une modification du YAML, une carte n'est plus à la place choisie avec « Réorganiser » | une option de la carte a changé, donc son identifiant (`<profil>-<type>-<empreinte>`) : l'ordre enregistré ne la reconnaît plus, elle va à la fin de sa section | la replacer avec « Réorganiser », ou lui donner un `id:` fixe dans le YAML |
 | « Ordre attendu… » ou « Cartes inconnues dans ce profil » en enregistrant l'ordre | le dashboard affiché est plus ancien que le YAML (cartes retirées entre-temps) | recharger la page puis réorganiser |

@@ -30,7 +30,7 @@ final readonly class BeszelClient
         #[\SensitiveParameter]
         private string $password,
         /** Autorité de certification à approuver (mkcert en dev), sinon celles du système */
-        #[Autowire('%env(HTTP_CA_FILE)%')]
+        #[Autowire('%env(TLS_CA_FILE)%')]
         private ?string $caFile = null,
     ) {
     }

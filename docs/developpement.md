@@ -35,7 +35,7 @@ C411_API_SECRET=…       # clé C411, scope « Profil (lecture) »
 GITHUB_TOKEN=…          # jeton fine-grained, lecture seule (Pull requests + Issues)
 B2_KEY_ID=…             # clé d'application Backblaze, type Read Only
 B2_APPLICATION_KEY=…
-HTTP_CA_FILE=/certs/mkcert-rootCA.pem
+TLS_CA_FILE=/certs/mkcert-rootCA.pem
 ```
 
 `compose.yaml` monte la CA mkcert du poste (`~/.local/share/mkcert/rootCA.pem`,
