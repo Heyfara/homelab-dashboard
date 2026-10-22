@@ -1,0 +1,26 @@
+{
+ "status": "ok",
+ "data": {
+  "stats_id": 1,
+  "created": "2026-10-20T08:00:00",
+  "started": "False",
+  "running": false,
+  "cpu": 0.0,
+  "mem": 0.0,
+  "mem_percent": 0.0,
+  "world_name": "w",
+  "world_size": "12MB",
+  "server_port": 25565,
+  "int_ping_results": "False",
+  "online": 0,
+  "max": 0,
+  "players": "False",
+  "desc": "False",
+  "icon": null,
+  "version": "False",
+  "updating": false,
+  "waiting_start": false,
+  "crashed": true,
+  "importing": false
+ }
+}

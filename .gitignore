@@ -1,0 +1,26 @@
+
+###> symfony/framework-bundle ###
+/.env.local
+/.env.local.php
+/.env.*.local
+/config/secrets/prod/prod.decrypt.private.php
+/public/bundles/
+/var/
+/vendor/
+###< symfony/framework-bundle ###
+
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.cache/
+###< phpunit/phpunit ###
+
+###> homelab-dashboard ###
+node_modules/
+/public/build/
+/.phpunit.cache/
+###< homelab-dashboard ###
+
+###> homelab-dashboard dev ###
+/dashboard.local.yaml
+###< homelab-dashboard dev ###
+/compose.override.yaml

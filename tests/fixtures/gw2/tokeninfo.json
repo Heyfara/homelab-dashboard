@@ -1,0 +1,10 @@
+{
+ "id": "cle-fictive",
+ "name": "Dashboard",
+ "permissions": [
+  "account",
+  "wallet",
+  "progression",
+  "tradingpost"
+ ]
+}

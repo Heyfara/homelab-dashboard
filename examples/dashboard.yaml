@@ -1,0 +1,59 @@
+# Configuration d'exemple, fictive : elle sert de modèle et aux vérifications
+# de la CI (dashboard:lint). En dev, la config réelle est dans
+# dashboard.local.yaml (non versionné, voir docs/developpement.md) ; en prod,
+# elle vient du rôle Ansible service-dashboard.
+# Référence complète : docs/configuration.md
+
+settings:
+  columns: 4          # colonnes de la grille sur grand écran
+  refresh: 30         # secondes entre deux rafraîchissements d'une carte
+
+hosts:
+  serveur:
+    beszel: Serveur   # nom du système dans Beszel
+  box: ~              # machine sans agent Beszel : sonde HTTP seulement
+
+services:
+  photos:
+    name: Photos
+    description: Galerie de la famille
+    url: https://photos.example
+    check: http://192.0.2.10:2283
+    icon: sh-immich
+    host: serveur
+    container: photos_server
+  recettes:
+    name: Recettes
+    description: Livre de cuisine
+    url: https://recettes.example
+    icon: sh-mealie
+    host: serveur
+    container: recettes
+  dns:
+    name: DNS
+    description: Résolution des noms et anti-pub
+    url: https://dns.example/admin
+    icon: sh-pi-hole
+    host: box
+
+profiles:
+  admin:
+    name: Admin
+    color: indigo
+    sections:
+      - title: Services
+        cards:
+          - { type: service, service: photos }
+          - { type: service, service: recettes }
+          - { type: service, service: dns }
+  famille:
+    name: Famille
+    color: rose
+    sections:
+      - title: Au quotidien
+        columns: 3
+        cards:
+          - type: service
+            service: photos
+            span: 2
+          - { type: service, service: recettes }

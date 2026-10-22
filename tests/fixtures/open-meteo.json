@@ -1,0 +1,112 @@
+{
+ "latitude": 48.853382,
+ "longitude": 2.355208,
+ "utc_offset_seconds": 7200,
+ "timezone": "Europe/Paris",
+ "timezone_abbreviation": "GMT+2",
+ "current_units": {
+  "time": "iso8601",
+  "interval": "seconds",
+  "temperature_2m": "\u00b0C",
+  "apparent_temperature": "\u00b0C",
+  "weather_code": "wmo code",
+  "is_day": "",
+  "wind_speed_10m": "km/h",
+  "precipitation": "mm"
+ },
+ "current": {
+  "time": "2026-10-20T19:00",
+  "interval": 900,
+  "temperature_2m": 12.7,
+  "apparent_temperature": 11.1,
+  "weather_code": 3,
+  "is_day": 0,
+  "wind_speed_10m": 10.2,
+  "precipitation": 0.0
+ },
+ "hourly_units": {
+  "time": "iso8601",
+  "temperature_2m": "\u00b0C",
+  "precipitation_probability": "%",
+  "weather_code": "wmo code",
+  "is_day": ""
+ },
+ "hourly": {
+  "time": [
+   "2026-10-20T19:00",
+   "2026-10-20T20:00",
+   "2026-10-20T21:00",
+   "2026-10-20T22:00"
+  ],
+  "temperature_2m": [
+   12.7,
+   12.1,
+   11.8,
+   11.4
+  ],
+  "precipitation_probability": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "weather_code": [
+   3,
+   3,
+   2,
+   2
+  ],
+  "is_day": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ "daily_units": {
+  "time": "iso8601",
+  "weather_code": "wmo code",
+  "temperature_2m_max": "\u00b0C",
+  "temperature_2m_min": "\u00b0C",
+  "precipitation_probability_max": "%",
+  "sunrise": "iso8601",
+  "sunset": "iso8601"
+ },
+ "daily": {
+  "time": [
+   "2026-10-20",
+   "2026-10-21",
+   "2026-10-22"
+  ],
+  "weather_code": [
+   80,
+   80,
+   61
+  ],
+  "temperature_2m_max": [
+   14.3,
+   14.8,
+   15.7
+  ],
+  "temperature_2m_min": [
+   10.1,
+   7.9,
+   8.6
+  ],
+  "precipitation_probability_max": [
+   98,
+   83,
+   13
+  ],
+  "sunrise": [
+   "2026-10-20T08:18",
+   "2026-10-21T08:20",
+   "2026-10-22T08:21"
+  ],
+  "sunset": [
+   "2026-10-20T18:51",
+   "2026-10-21T18:49",
+   "2026-10-22T18:47"
+  ]
+ }
+}

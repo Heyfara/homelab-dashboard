@@ -1,0 +1,27 @@
+{
+ "meta_progress_current": 1,
+ "meta_progress_complete": 6,
+ "meta_reward_item_id": 2,
+ "meta_reward_astral": 450,
+ "meta_reward_claimed": false,
+ "objectives": [
+  {
+   "id": 1,
+   "title": "Terminer 10 événements",
+   "track": "PvE",
+   "acclaim": 50,
+   "progress_current": 10,
+   "progress_complete": 10,
+   "claimed": true
+  },
+  {
+   "id": 1,
+   "title": "Vaincre un boss du monde",
+   "track": "PvE",
+   "acclaim": 50,
+   "progress_current": 0,
+   "progress_complete": 1,
+   "claimed": false
+  }
+ ]
+}

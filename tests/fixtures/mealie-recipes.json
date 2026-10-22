@@ -1,0 +1,8 @@
+{
+  "total": 3,
+  "items": [
+    { "id": "r1", "slug": "crepes-de-froment", "name": "Crêpes de froment", "image": "8Y40", "totalTime": "1 h 45 min", "rating": 5.0, "createdAt": "2026-05-23T16:09:58.154552+00:00" },
+    { "id": "r2", "slug": "gratin-de-blettes", "name": "Gratin de blettes", "image": "yclX", "totalTime": "30 minutes", "rating": null, "createdAt": "2025-02-25T12:53:54.685370+00:00" },
+    { "id": "r3", "slug": "soupe-sans-photo", "name": "Soupe sans photo", "image": null, "totalTime": null, "rating": 3.5, "createdAt": "2025-01-10T08:00:00+00:00" }
+  ]
+}

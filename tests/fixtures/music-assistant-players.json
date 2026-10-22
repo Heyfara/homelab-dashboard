@@ -1,0 +1,192 @@
+[
+ {
+  "player_id": "p1",
+  "display_name": "Salon",
+  "name": "Salon",
+  "state": "playing",
+  "playback_state": "playing",
+  "available": true,
+  "hide_in_ui": false,
+  "enabled": true,
+  "type": "player",
+  "provider": "chromecast",
+  "icon": "speaker",
+  "elapsed_time": 350.0,
+  "elapsed_time_last_updated": 1792440000.0,
+  "current_media": {
+   "uri": "library://track/1",
+   "media_type": "track",
+   "title": "Chanson fictive",
+   "artist": "Groupe fictif",
+   "album": "Album fictif",
+   "image_url": "http://10.0.0.11:8095/imageproxy/aaa111?size=512&fmt=jpg",
+   "palette": {
+    "accent": [
+     193,
+     72,
+     34
+    ],
+    "primary": [
+     36,
+     13,
+     12
+    ]
+   },
+   "duration": 200,
+   "elapsed_time": 50,
+   "elapsed_time_last_updated": 1792440000.0
+  },
+  "volume_level": 40
+ },
+ {
+  "player_id": "p2",
+  "display_name": "Chambre",
+  "name": "Chambre",
+  "state": "paused",
+  "playback_state": "paused",
+  "available": true,
+  "hide_in_ui": false,
+  "enabled": true,
+  "type": "player",
+  "provider": "chromecast",
+  "icon": "speaker",
+  "elapsed_time": 30.0,
+  "elapsed_time_last_updated": 1792440000.0,
+  "current_media": {
+   "uri": "library://track/1",
+   "media_type": "track",
+   "title": "Comptine",
+   "artist": "Chorale",
+   "album": "Album fictif",
+   "image_url": "http://10.0.0.11:8095/imageproxy/bbb222?size=512&fmt=jpg",
+   "palette": {
+    "accent": [
+     193,
+     72,
+     34
+    ],
+    "primary": [
+     36,
+     13,
+     12
+    ]
+   },
+   "duration": 200,
+   "elapsed_time": 30,
+   "elapsed_time_last_updated": 1792440000.0
+  },
+  "volume_level": 40
+ },
+ {
+  "player_id": "p3",
+  "display_name": "Cuisine",
+  "name": "Cuisine",
+  "state": "idle",
+  "playback_state": "idle",
+  "available": true,
+  "hide_in_ui": false,
+  "enabled": true,
+  "type": "player",
+  "provider": "chromecast",
+  "icon": "speaker",
+  "elapsed_time": 0.0,
+  "elapsed_time_last_updated": 1792440000.0,
+  "current_media": {
+   "uri": "library://track/1",
+   "media_type": "track",
+   "title": "Ancien titre",
+   "artist": "Ancien artiste",
+   "album": "Album fictif",
+   "image_url": "http://10.0.0.11:8095/imageproxy/ccc333?size=512&fmt=jpg",
+   "palette": {
+    "accent": [
+     193,
+     72,
+     34
+    ],
+    "primary": [
+     36,
+     13,
+     12
+    ]
+   },
+   "duration": 200,
+   "elapsed_time": 50,
+   "elapsed_time_last_updated": 1792440000.0
+  },
+  "volume_level": 40
+ },
+ {
+  "player_id": "p4",
+  "display_name": "Enceinte éteinte",
+  "name": "Enceinte éteinte",
+  "state": "idle",
+  "playback_state": "idle",
+  "available": false,
+  "hide_in_ui": false,
+  "enabled": true,
+  "type": "player",
+  "provider": "chromecast",
+  "icon": "speaker",
+  "elapsed_time": 0.0,
+  "elapsed_time_last_updated": 1792440000.0,
+  "current_media": null,
+  "volume_level": 40
+ },
+ {
+  "player_id": "p5",
+  "display_name": "Web (Firefox)",
+  "name": "Web (Firefox)",
+  "state": "playing",
+  "playback_state": "playing",
+  "available": true,
+  "hide_in_ui": true,
+  "enabled": true,
+  "type": "player",
+  "provider": "chromecast",
+  "icon": "speaker",
+  "elapsed_time": 0.0,
+  "elapsed_time_last_updated": 1792440000.0,
+  "current_media": {
+   "uri": "library://track/1",
+   "media_type": "track",
+   "title": "Caché",
+   "artist": "Caché",
+   "album": "Album fictif",
+   "image_url": "http://10.0.0.11:8095/imageproxy/ddd444?size=512&fmt=jpg",
+   "palette": {
+    "accent": [
+     193,
+     72,
+     34
+    ],
+    "primary": [
+     36,
+     13,
+     12
+    ]
+   },
+   "duration": 200,
+   "elapsed_time": 50,
+   "elapsed_time_last_updated": 1792440000.0
+  },
+  "volume_level": 40
+ },
+ {
+  "player_id": "p6",
+  "display_name": "Web (Chrome)",
+  "name": "Web (Chrome)",
+  "state": "idle",
+  "playback_state": "idle",
+  "available": true,
+  "hide_in_ui": true,
+  "enabled": true,
+  "type": "player",
+  "provider": "chromecast",
+  "icon": "speaker",
+  "elapsed_time": 0.0,
+  "elapsed_time_last_updated": 1792440000.0,
+  "current_media": null,
+  "volume_level": 40
+ }
+]

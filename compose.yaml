@@ -1,0 +1,43 @@
+# Environnement de développement. La prod est décrite par le rôle Ansible
+# service-dashboard (homelab-ansible). Commandes : voir Makefile ; mise en
+# route (compte Beszel, .env.local) : docs/developpement.md.
+services:
+  dashboard:
+    build:
+      context: .
+      target: dev
+    user: "${UID:-1000}:${GID:-1000}"
+    environment:
+      COMPOSER_HOME: /tmp/composer
+    volumes:
+      - .:/app
+      # CA mkcert du homelab, pour joindre Beszel et les services en HTTPS local.
+      - type: bind
+        source: ${MKCERT_CAROOT:-${HOME}/.local/share/mkcert}/rootCA.pem
+        target: /certs/mkcert-rootCA.pem
+        read_only: true
+        bind:
+          create_host_path: false
+
+  nginx:
+    image: nginx:1.30.3-alpine
+    depends_on: [dashboard]
+    ports:
+      - "8080:80"
+    volumes:
+      # Dossiers montés, pas les fichiers seuls : un éditeur qui enregistre
+      # par renommage laisserait l'ancien fichier au container.
+      - ./docker/nginx:/etc/nginx/conf.d:ro
+      - ./public:/app/public:ro
+
+  node:
+    image: node:24.16.0-alpine
+    user: "${UID:-1000}:${GID:-1000}"
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev"
+    environment:
+      VITE_API_PROXY: http://nginx
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app

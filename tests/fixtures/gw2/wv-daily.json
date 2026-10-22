@@ -1,0 +1,45 @@
+{
+ "meta_progress_current": 2,
+ "meta_progress_complete": 4,
+ "meta_reward_item_id": 1,
+ "meta_reward_astral": 20,
+ "meta_reward_claimed": false,
+ "objectives": [
+  {
+   "id": 1,
+   "title": "Se connecter",
+   "track": "PvE",
+   "acclaim": 5,
+   "progress_current": 1,
+   "progress_complete": 1,
+   "claimed": true
+  },
+  {
+   "id": 1,
+   "title": "Terminer 3 événements",
+   "track": "PvE",
+   "acclaim": 10,
+   "progress_current": 3,
+   "progress_complete": 3,
+   "claimed": true
+  },
+  {
+   "id": 1,
+   "title": "Terminer une fractale",
+   "track": "PvE",
+   "acclaim": 10,
+   "progress_current": 0,
+   "progress_complete": 1,
+   "claimed": false
+  },
+  {
+   "id": 1,
+   "title": "Récolter 10 ressources",
+   "track": "PvE",
+   "acclaim": 10,
+   "progress_current": 4,
+   "progress_complete": 10,
+   "claimed": false
+  }
+ ]
+}

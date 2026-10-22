@@ -1,0 +1,123 @@
+{
+ "content": [
+  {
+   "id": "e3",
+   "creationDate": "2026-09-01T20:00:00Z",
+   "modificationDate": "2026-10-05T21:00:00Z",
+   "eventType": "FINISHED",
+   "startDate": "2026-09-01T20:00:00Z",
+   "endDate": "2026-10-05T21:00:00Z",
+   "userBook": {
+    "id": "ub3",
+    "user": {
+     "id": "11111111-1111-4111-8111-111111111111",
+     "login": "alice",
+     "password": "HASH-NE-DOIT-PAS-SORTIR",
+     "admin": true,
+     "provider": "JELU_DB",
+     "creationDate": null,
+     "modificationDate": null
+    },
+    "book": {
+     "id": "b3",
+     "title": "Le Dernier Tome",
+     "authors": [
+      {
+       "id": "a",
+       "name": "Jeanne Fictive"
+      }
+     ],
+     "image": "dernier.jpg",
+     "pageCount": null,
+     "isbn13": null
+    },
+    "personalNotes": "note privée",
+    "owned": true,
+    "toRead": false,
+    "percentRead": null,
+    "currentPageNumber": null,
+    "borrowed": false,
+    "price": null
+   }
+  },
+  {
+   "id": "e4",
+   "creationDate": "2026-08-01T20:00:00Z",
+   "modificationDate": "2026-09-20T21:00:00Z",
+   "eventType": "FINISHED",
+   "startDate": "2026-08-01T20:00:00Z",
+   "endDate": "2026-09-20T21:00:00Z",
+   "userBook": {
+    "id": "ub4",
+    "user": {
+     "id": "22222222-2222-4222-8222-222222222222",
+     "login": "bob",
+     "password": null,
+     "admin": false,
+     "provider": "JELU_DB",
+     "creationDate": null,
+     "modificationDate": null
+    },
+    "book": {
+     "id": "b4",
+     "title": "Contes du soir",
+     "authors": [],
+     "image": "contes.jpg",
+     "pageCount": null,
+     "isbn13": null
+    },
+    "personalNotes": "note privée",
+    "owned": true,
+    "toRead": false,
+    "percentRead": null,
+    "currentPageNumber": null,
+    "borrowed": false,
+    "price": null
+   }
+  },
+  {
+   "id": "e5",
+   "creationDate": "2026-02-01T20:00:00Z",
+   "modificationDate": "2026-03-01T21:00:00Z",
+   "eventType": "FINISHED",
+   "startDate": "2026-02-01T20:00:00Z",
+   "endDate": "2026-03-01T21:00:00Z",
+   "userBook": {
+    "id": "ub5",
+    "user": {
+     "id": "11111111-1111-4111-8111-111111111111",
+     "login": "alice",
+     "password": "HASH-NE-DOIT-PAS-SORTIR",
+     "admin": true,
+     "provider": "JELU_DB",
+     "creationDate": null,
+     "modificationDate": null
+    },
+    "book": {
+     "id": "b5",
+     "title": "Voyage au centre",
+     "authors": [
+      {
+       "id": "a",
+       "name": "Auteur Ancien"
+      }
+     ],
+     "image": "voyage.jpg",
+     "pageCount": null,
+     "isbn13": null
+    },
+    "personalNotes": "note privée",
+    "owned": true,
+    "toRead": false,
+    "percentRead": null,
+    "currentPageNumber": null,
+    "borrowed": false,
+    "price": null
+   }
+  }
+ ],
+ "totalElements": 3,
+ "totalPages": 1,
+ "number": 0,
+ "size": 200
+}

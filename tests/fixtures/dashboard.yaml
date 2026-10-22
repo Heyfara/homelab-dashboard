@@ -1,0 +1,118 @@
+# Config de test : volontairement petite, chaque test documente ce qu'il en attend.
+settings:
+  columns: 3
+  refresh: 20
+
+hosts:
+  alpha:
+    beszel: Alpha
+  beta: ~
+
+services:
+  photos:
+    name: Photos
+    description: Galerie de la famille
+    url: https://photos.example
+    check: http://10.0.0.2:2283
+    icon: sh-immich
+    host: alpha
+    container: photos_server
+  films:
+    name: Films
+    url: https://films.example
+    check: http://10.0.0.3:8096
+  torrents:
+    name: Torrents
+    url: https://torrents.example
+    check: http://10.0.0.4:8080
+  c411:
+    name: C411
+    url: https://c411.example
+  cuisine:
+    name: Cuisine
+    url: https://cuisine.example
+    check: http://10.0.0.5:9000
+  audio:
+    name: Livres audio
+    url: https://livres-audio.example
+    check: http://10.0.0.6:13378
+  galerie:
+    name: Galerie
+    url: https://galerie.example
+    check: http://10.0.0.7:2283
+  liseuse:
+    name: Liseuse
+    url: https://liseuse.example
+    check: http://10.0.0.8:8083
+  lego:
+    name: Lego
+    url: https://lego.example
+    check: http://10.0.0.10:3333
+  musique:
+    name: Musique
+    url: https://musique.example
+    check: http://10.0.0.11:8095
+  lectures:
+    name: Lectures
+    url: https://lectures.example
+    check: http://10.0.0.12:11111
+  minecraft:
+    name: Minecraft
+    url: https://minecraft.example
+    check: http://10.0.0.13:8443
+  recettes:
+    name: Recettes
+    url: https://recettes.example
+    host: beta
+
+profiles:
+  alice:
+    name: Alice
+    color: indigo
+    sections:
+      - title: Services
+        cards:
+          - type: service
+            service: photos
+          - type: service
+            id: recettes-alice
+            title: Cuisine
+            service: recettes
+            span: 2
+            rows: 2
+            refresh: 60
+      - title: Large
+        columns: 2
+        cards: []
+  bob:
+    name: Bob
+    sections:
+      - title: Au quotidien
+        cards:
+          - type: service
+            service: recettes
+          - type: jellyfin-latest
+            service: films
+            user: bob
+            limit: 2
+            span: 2
+            rows: 2
+          - { type: qbittorrent, service: torrents, span: 2, rows: 2 }
+          - { type: c411, service: c411, span: 2, rows: 2, refresh: 60 }
+          - { type: machine, host: alpha, span: 2, rows: 2, disk_names: { media: RAID } }
+          - { type: containers, host: alpha, span: 2, rows: 2 }
+          - { type: backblaze, span: 2, rows: 2, refresh: 86400 }
+          - { type: mealie, service: cuisine, span: 2, rows: 2 }
+          - { type: github-prs, repos: [exemple/infra, exemple/app], author: app/renovate, api: https://api.github.test, span: 2, rows: 2 }
+          - { type: audiobookshelf, service: audio, span: 2, rows: 2 }
+          - { type: immich, service: galerie, span: 2, rows: 2 }
+          - { type: calibre-web, service: liseuse, span: 2, rows: 2 }
+          - { type: backups, url: http://10.0.0.9:3000/images/backup-status.json, aliases: { cuisine: cuisine }, span: 2, rows: 2 }
+          - { type: bricktracker, service: lego, span: 2, rows: 2 }
+          - { type: weather, place: Village fictif, latitude: 45.0, longitude: 5.0, api: https://meteo.test, span: 2, rows: 2 }
+          - { type: music-assistant, service: musique, span: 2, rows: 2 }
+          - { type: jelu, service: lectures, readers: { alice: Alice, bob: Bob }, span: 2, rows: 2 }
+          - { type: crafty, service: minecraft, public: [Public], span: 2, rows: 2 }
+          - { type: minecraft, service: minecraft, server: Monde survie, image: 'https://images.example/minecraft/famille.png', span: 2, rows: 3 }
+          - { type: gw2, api: https://gw2.test, span: 2, rows: 2 }
+          - { type: gw2, id: gw2-profil, credentials: profile, api: https://gw2.test, span: 2, rows: 2 }

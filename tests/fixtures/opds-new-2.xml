@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <id>urn:uuid:feed</id>
+  <title>Calibre-Web Automated</title>
+  <entry>
+    <title>Le Dernier Tome</title>
+    <id>urn:uuid:b3</id>
+    <updated>2026-09-01T10:00:00+00:00</updated>
+    <author><name>Jeanne Fictive</name></author>
+    <link type="image/jpeg" href="/opds/cover/3" rel="http://opds-spec.org/image/thumbnail"/>
+    <link rel="http://opds-spec.org/acquisition" href="/opds/download/3/epub/" length="1" type="application/epub+zip"/>
+  </entry>
+</feed>

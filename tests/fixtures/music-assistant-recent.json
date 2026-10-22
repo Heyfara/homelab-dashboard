@@ -1,0 +1,44 @@
+[
+ {
+  "item_id": "1",
+  "provider": "library",
+  "name": "Titre récent",
+  "media_type": "track",
+  "uri": "library://track/1",
+  "image": {
+   "type": "thumb",
+   "path": "http://10.0.0.3:8096/Items/x/Images/Primary?api_key=SECRET-JELLYFIN",
+   "provider": "jellyfin--abc",
+   "remotely_accessible": false,
+   "proxy_id": "rrr111"
+  },
+  "available": true,
+  "is_playable": true
+ },
+ {
+  "item_id": "2",
+  "provider": "library",
+  "name": "Artiste fictif",
+  "media_type": "artist",
+  "uri": "library://artist/2",
+  "image": {
+   "type": "thumb",
+   "path": "http://10.0.0.3:8096/Items/x/Images/Primary?api_key=SECRET-JELLYFIN",
+   "provider": "jellyfin--abc",
+   "remotely_accessible": false,
+   "proxy_id": "rrr222"
+  },
+  "available": true,
+  "is_playable": true
+ },
+ {
+  "item_id": "3",
+  "provider": "library",
+  "name": "Sans image",
+  "media_type": "album",
+  "uri": "library://album/3",
+  "image": null,
+  "available": true,
+  "is_playable": true
+ }
+]

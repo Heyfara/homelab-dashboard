@@ -1,0 +1,26 @@
+{
+ "status": "ok",
+ "data": {
+  "stats_id": 1,
+  "created": "2026-10-20T08:00:00",
+  "started": "2026-10-20 06:00:00",
+  "running": true,
+  "cpu": 0.0,
+  "mem": 0.0,
+  "mem_percent": 0.0,
+  "world_name": "w",
+  "world_size": "309.9MB",
+  "server_port": 25565,
+  "int_ping_results": "False",
+  "online": 0,
+  "max": 20,
+  "players": "[]",
+  "desc": "Serveur public",
+  "icon": null,
+  "version": "Paper 26.2",
+  "updating": false,
+  "waiting_start": false,
+  "crashed": false,
+  "importing": false
+ }
+}

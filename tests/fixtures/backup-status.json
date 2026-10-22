@@ -1,0 +1,102 @@
+{
+  "generated_at": "2026-10-20T08:00:01+02:00",
+  "host": "serveur",
+  "status": "degraded",
+  "ok": 2,
+  "late": 2,
+  "total": 4,
+  "late_list": "galerie (dernier backup il y a 52.0 h (seuil 30 h)), notes (dossier inaccessible (beta down ou NFS bloqué))",
+  "services": [
+    {
+      "name": "cuisine",
+      "state": "ok",
+      "age_hours": 5.0,
+      "max_hours": 30,
+      "latest": "cuisine-20261020-030001.tar.gz",
+      "reason": ""
+    },
+    {
+      "name": "galerie",
+      "state": "late",
+      "age_hours": 52.0,
+      "max_hours": 30,
+      "latest": "galerie-20261018-040001.tar.gz",
+      "reason": "dernier backup il y a 52.0 h (seuil 30 h)"
+    },
+    {
+      "name": "restic",
+      "state": "ok",
+      "age_hours": 4.5,
+      "max_hours": 30,
+      "latest": "a1b2c3",
+      "reason": ""
+    },
+    {
+      "name": "notes",
+      "state": "unreachable",
+      "age_hours": null,
+      "max_hours": 30,
+      "latest": "",
+      "reason": "dossier inaccessible (beta down ou NFS bloqué)"
+    }
+  ],
+  "history": [
+    {
+      "generated_at": "2026-10-18T08:00:01+02:00",
+      "status": "ok",
+      "ok": 4,
+      "late": 0,
+      "states": {
+        "cuisine": "ok",
+        "galerie": "ok",
+        "restic": "ok",
+        "notes": "ok"
+      }
+    },
+    {
+      "generated_at": "2026-10-19T08:00:01+02:00",
+      "status": "degraded",
+      "ok": 3,
+      "late": 1,
+      "states": {
+        "cuisine": "ok",
+        "galerie": "late",
+        "restic": "ok",
+        "notes": "ok"
+      }
+    },
+    {
+      "generated_at": "2026-10-20T08:00:01+02:00",
+      "status": "degraded",
+      "ok": 2,
+      "late": 2,
+      "states": {
+        "cuisine": "ok",
+        "galerie": "late",
+        "restic": "ok",
+        "notes": "unreachable"
+      }
+    }
+  ],
+  "restic": {
+    "started_at": "2026-10-20T03:15:01+02:00",
+    "finished_at": "2026-10-20T03:51:41+02:00",
+    "duration_seconds": 2200,
+    "rc": 0,
+    "backup": {
+      "rc": 0,
+      "seconds": 2139,
+      "snapshot_id": "68e6e1036eba86c0",
+      "files_new": 493,
+      "files_changed": 6101,
+      "files_unmodified": 60240,
+      "data_added": 110080000,
+      "total_files_processed": 66834,
+      "total_bytes_processed": 471063000000
+    },
+    "b2_copy": {
+      "rc": 0,
+      "seconds": 28
+    }
+  }
+}

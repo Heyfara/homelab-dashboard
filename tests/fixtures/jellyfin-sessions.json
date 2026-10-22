@@ -1,0 +1,16 @@
+[
+  {
+    "Id": "s1", "UserName": "Membre", "Client": "Jellyfin Web", "DeviceName": "Firefox",
+    "PlayState": { "PositionTicks": 11594970200, "IsPaused": true, "PlayMethod": "Transcode" },
+    "NowPlayingItem": { "Id": "m1", "Name": "Primer", "Type": "Movie", "ProductionYear": 2004, "RunTimeTicks": 46342980000, "ServerId": "srv", "ImageTags": { "Primary": "t1" } }
+  },
+  {
+    "Id": "s2", "UserName": "Enfant", "Client": "Android TV", "DeviceName": "Salon",
+    "PlayState": { "PositionTicks": 6000000000, "IsPaused": false, "PlayMethod": "DirectPlay" },
+    "NowPlayingItem": { "Id": "e1", "Name": "Le Pilote", "Type": "Episode", "SeriesName": "Bluey", "SeriesId": "series1", "SeriesPrimaryImageTag": "ts", "ParentIndexNumber": 3, "IndexNumber": 1, "RunTimeTicks": 4200000000, "ServerId": "srv" }
+  },
+  {
+    "Id": "s3", "UserName": "Autre", "Client": "Jellyfin Web", "DeviceName": "Chrome",
+    "PlayState": {}
+  }
+]

@@ -1,0 +1,26 @@
+{
+ "status": "ok",
+ "data": {
+  "stats_id": 1,
+  "created": "2026-10-20T08:00:00",
+  "started": "2026-10-20 07:30:00",
+  "running": true,
+  "cpu": 12.5,
+  "mem": "1.2GB",
+  "mem_percent": 15.0,
+  "world_name": "w",
+  "world_size": "423.2MB",
+  "server_port": 25565,
+  "int_ping_results": "False",
+  "online": 2,
+  "max": 10,
+  "players": "['Steve', 'Alex']",
+  "desc": "§aMonde de la §lfamille",
+  "icon": "iVBORw0KGgp4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4\neHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eA==\n",
+  "version": "Paper 26.2",
+  "updating": false,
+  "waiting_start": false,
+  "crashed": false,
+  "importing": false
+ }
+}

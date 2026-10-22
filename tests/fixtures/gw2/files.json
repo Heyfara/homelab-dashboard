@@ -1,0 +1,18 @@
+[
+ {
+  "id": "ui_coin_gold",
+  "icon": "https://render.example/gold.png"
+ },
+ {
+  "id": "ui_coin_silver",
+  "icon": "https://render.example/silver.png"
+ },
+ {
+  "id": "ui_coin_copper",
+  "icon": "https://render.example/copper.png"
+ },
+ {
+  "id": "map_waypoint",
+  "icon": "https://render.example/waypoint.png"
+ }
+]

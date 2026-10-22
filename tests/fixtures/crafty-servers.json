@@ -1,0 +1,45 @@
+{
+ "status": "ok",
+ "data": [
+  {
+   "server_id": "s1",
+   "server_name": "Monde survie",
+   "server_port": 25566,
+   "type": "minecraft-java",
+   "path": "/crafty/servers/s1",
+   "execution_command": "java -Xmx4G -jar SECRET.jar",
+   "server_ip": "127.0.0.1",
+   "created_by": 1
+  },
+  {
+   "server_id": "s2",
+   "server_name": "Public",
+   "server_port": 25570,
+   "type": "minecraft-java",
+   "path": "/crafty/servers/s2",
+   "execution_command": "java -Xmx4G -jar SECRET.jar",
+   "server_ip": "127.0.0.1",
+   "created_by": 1
+  },
+  {
+   "server_id": "s3",
+   "server_name": "Ancien monde",
+   "server_port": 25565,
+   "type": "minecraft-java",
+   "path": "/crafty/servers/s3",
+   "execution_command": "java -Xmx4G -jar SECRET.jar",
+   "server_ip": "127.0.0.1",
+   "created_by": 1
+  },
+  {
+   "server_id": "s4",
+   "server_name": "Planté",
+   "server_port": 25567,
+   "type": "minecraft-java",
+   "path": "/crafty/servers/s4",
+   "execution_command": "java -Xmx4G -jar SECRET.jar",
+   "server_ip": "127.0.0.1",
+   "created_by": 1
+  }
+ ]
+}

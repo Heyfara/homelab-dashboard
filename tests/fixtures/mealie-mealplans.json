@@ -1,0 +1,7 @@
+{
+  "total": 2,
+  "items": [
+    { "date": "2026-10-20", "entryType": "dinner", "title": "", "text": "", "recipeId": "r2", "recipe": { "id": "r2", "slug": "gratin-de-blettes", "name": "Gratin de blettes", "image": "yclX", "totalTime": "30 minutes", "rating": null } },
+    { "date": "2026-10-21", "entryType": "lunch", "title": "Restes", "text": "", "recipeId": null, "recipe": null }
+  ]
+}

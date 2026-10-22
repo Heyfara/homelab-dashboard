@@ -1,0 +1,16 @@
+# see https://symfony.com/doc/current/reference/configuration/framework.html
+framework:
+    secret: '%env(APP_SECRET)%'
+    # API sans état : pas de session.
+    session: false
+
+    http_client:
+        default_options:
+            timeout: 5
+
+when@test:
+    framework:
+        test: true
+        # Aucun appel réseau en test : tests/Http/FakeHomelab répond à la place.
+        http_client:
+            mock_response_factory: App\Tests\Http\FakeHomelab

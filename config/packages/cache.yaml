@@ -1,0 +1,22 @@
+framework:
+    cache:
+        prefix_seed: homelab/dashboard
+        pools:
+            # Images relayées (Immich, Calibre-Web) : sur disque, même en prod.
+            cache.images:
+                adapter: cache.adapter.filesystem
+
+# APCu : partagé par les workers PHP-FPM, en mémoire. Pas en dev, pour que
+# composer et bin/console tournent aussi dans une image sans l'extension.
+when@prod:
+    framework:
+        cache:
+            app: cache.adapter.apcu
+
+when@test:
+    framework:
+        cache:
+            app: cache.adapter.array
+            pools:
+                cache.images:
+                    adapter: cache.adapter.array

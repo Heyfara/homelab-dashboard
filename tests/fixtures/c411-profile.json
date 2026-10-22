@@ -1,0 +1,35 @@
+{
+  "id": 48213,
+  "username": "membre",
+  "avatarUrl": "/avatars/48213.webp",
+  "memberSince": "2025-03-14T09:12:44.000Z",
+  "level": { "level": 37, "xp": 18420, "xpIntoLevel": 310, "xpToNextLevel": 239 },
+  "class": {
+    "slug": "team_mainstream",
+    "effectiveSlug": "team_resident_mainstream",
+    "foundation": "seed",
+    "treeBonusBp": 250,
+    "progress": {
+      "questsCompleted": 23,
+      "questsTotal": 40,
+      "stars": 2,
+      "grade": { "tier": "argent", "level": 2 }
+    },
+    "voies": {
+      "seed": { "star": true, "questsCompleted": 8, "questsTotal": 8 },
+      "upload": { "star": false, "questsCompleted": 5, "questsTotal": 11 },
+      "specialization": { "star": true, "questsCompleted": 6, "questsTotal": 6 },
+      "competitivity": { "star": false, "questsCompleted": 4, "questsTotal": 15 }
+    }
+  },
+  "team": { "name": "Example Team", "slug": "example-team", "tag": "EXT", "role": "member" },
+  "zen": { "balance": 1840, "totalEarned": 12650, "totalSpent": 10810 },
+  "transfer": {
+    "uploaded": { "actual": 5497558138880, "credit": 107374182400, "total": 5604932321280 },
+    "downloaded": { "actual": 3298534883328, "credit": 53687091200, "total": 3244847792128 }
+  },
+  "download": { "allowed": true, "blockedReason": null },
+  "freeleech": { "active": true, "sources": ["campaign"] },
+  "silverLeech": false,
+  "leechBonuses": []
+}

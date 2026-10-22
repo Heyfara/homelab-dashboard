@@ -1,0 +1,30 @@
+[
+ {
+  "id": 1,
+  "name": "Pièce",
+  "description": "",
+  "icon": "https://render.example/coin.png",
+  "order": 101
+ },
+ {
+  "id": 2,
+  "name": "Karma",
+  "description": "",
+  "icon": "https://render.example/karma.png",
+  "order": 102
+ },
+ {
+  "id": 4,
+  "name": "Gemme",
+  "description": "",
+  "icon": "https://render.example/gem.png",
+  "order": 103
+ },
+ {
+  "id": 63,
+  "name": "Acclamations astrales",
+  "description": "",
+  "icon": "https://render.example/astral.png",
+  "order": 104
+ }
+]

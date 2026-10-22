@@ -1,0 +1,21 @@
+{
+ "id": "00000000-0000-4000-8000-000000000000",
+ "name": "Joueur.1234",
+ "age": 3600000,
+ "world": 2101,
+ "guilds": [],
+ "created": "2015-01-01T00:00:00Z",
+ "access": [
+  "GuildWars2",
+  "HeartOfThorns"
+ ],
+ "commander": false,
+ "fractal_level": 42,
+ "daily_ap": 100,
+ "monthly_ap": 10,
+ "wvw": {
+  "team_id": 1,
+  "rank": 321
+ },
+ "last_modified": "2026-10-19T20:00:00Z"
+}
