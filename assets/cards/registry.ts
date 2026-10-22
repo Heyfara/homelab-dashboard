@@ -5,6 +5,7 @@ import { BackblazeCard } from './BackblazeCard'
 import { BackupsCard } from './BackupsCard'
 import { BrickTrackerCard } from './BrickTrackerCard'
 import { CalibreWebCard } from './CalibreWebCard'
+import { DocFetcherCard } from './DocFetcherCard'
 import { ImmichCard } from './ImmichCard'
 import { C411Card } from './C411Card'
 import { ContainersCard } from './ContainersCard'
@@ -50,6 +51,7 @@ export const cardRegistry: Record<string, CardComponent> = {
   immich: ImmichCard,
   'calibre-web': CalibreWebCard,
   backups: BackupsCard,
+  'doc-fetcher': DocFetcherCard,
   bricktracker: BrickTrackerCard,
   weather: WeatherCard,
   'music-assistant': MusicAssistantCard,

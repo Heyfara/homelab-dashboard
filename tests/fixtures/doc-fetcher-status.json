@@ -1,0 +1,74 @@
+{
+  "job": "doc-fetcher",
+  "schedule": "chaque lundi à 7 h 30",
+  "runs": [
+    {
+      "started_at": "2026-10-19T07:30:01+02:00",
+      "finished_at": "2026-10-19T07:31:12+02:00",
+      "state": "action",
+      "manual": false,
+      "sites": [
+        {
+          "name": "paie",
+          "state": "ok",
+          "found": 12,
+          "missing": 1,
+          "imported": [{ "id": 412, "title": "Bulletin septembre 2026", "created": "2026-09-30" }],
+          "errors": []
+        },
+        {
+          "name": "impots",
+          "state": "action",
+          "found": null,
+          "missing": null,
+          "imported": [],
+          "errors": ["appareil non reconnu, code mail requis : lancer run.sh --site impots"]
+        }
+      ]
+    },
+    {
+      "started_at": "2026-10-14T21:02:00+02:00",
+      "finished_at": "2026-10-14T21:03:30+02:00",
+      "state": "ok",
+      "manual": true,
+      "sites": [
+        {
+          "name": "impots",
+          "state": "ok",
+          "found": 9,
+          "missing": 2,
+          "imported": [
+            { "id": 405, "title": "Avis d'impôt 2026", "created": "2026-08-01" },
+            { "id": 406, "title": "Taxe foncière 2026", "created": null }
+          ],
+          "errors": []
+        }
+      ]
+    },
+    {
+      "started_at": "2026-10-12T07:30:01+02:00",
+      "finished_at": "2026-10-12T07:30:40+02:00",
+      "state": "failed",
+      "manual": false,
+      "sites": [
+        {
+          "name": "paie",
+          "state": "failed",
+          "found": 12,
+          "missing": 1,
+          "imported": [],
+          "errors": ["Bulletin août 2026 : consommation en échec : doublon"]
+        }
+      ]
+    },
+    {
+      "started_at": "2026-10-05T07:30:01+02:00",
+      "finished_at": "2026-10-05T07:30:22+02:00",
+      "state": "ok",
+      "manual": false,
+      "sites": [
+        { "name": "paie", "state": "ok", "found": 11, "missing": 0, "imported": [], "errors": [] }
+      ]
+    }
+  ]
+}

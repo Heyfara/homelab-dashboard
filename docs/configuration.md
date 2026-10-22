@@ -479,6 +479,68 @@ affiché est ancien.
   refresh: 600
 ```
 
+### `doc-fetcher`
+
+Imports automatiques de documents dans Paperless par doc-fetcher (rôle Ansible
+`doc-fetcher`). Le script écrit son statut à chaque passage dans un fichier
+JSON, monté en lecture seule dans le container :
+
+- **En-tête** : âge du dernier passage. Si le passage automatique (cron) n'est
+  pas revenu depuis `stale_days`, « passage automatique en retard », même si le
+  script a été lancé à la main entre-temps.
+- **Sites** : le dernier état connu de chaque site (un passage `--site` ne
+  touche que le sien) : nombre de documents sur le site, « code à saisir »
+  (double authentification à faire au terminal) ou « échec ». Les erreurs
+  s'affichent au survol ; celle d'un site bloqué aussi en clair sous la liste.
+- **Historique** : une pastille par passage gardé dans le fichier (vert, ambre,
+  rouge ; atténuée si lancé à la main), détail au survol.
+- **Derniers documents importés** : titre, site, date du document, avec un lien
+  vers Paperless si `service` est donné.
+- **Pied** : la planification, si le script la connaît.
+
+| Option | Défaut | Rôle |
+|---|---|---|
+| `file` | obligatoire | chemin du `status.json` dans le container |
+| `service` | `null` | service Paperless du catalogue, pour les liens vers les documents |
+| `labels` | `{}` | nom du site → nom affiché ; sinon le nom avec une majuscule |
+| `stale_days` | `8` | au-delà, le passage automatique est signalé en retard |
+| `documents` | `6` | nombre de documents listés |
+
+```yaml
+- type: doc-fetcher
+  file: /data/doc-fetcher/status.json
+  service: paperless
+  labels: { impots: Impôts }
+  span: 2
+  rows: 2
+  refresh: 3600
+```
+
+Format du fichier (le plus récent d'abord ; `state` vaut `ok`, `failed` ou
+`action`) :
+
+```json
+{
+  "job": "doc-fetcher",
+  "schedule": "chaque lundi à 7 h 30",
+  "runs": [
+    {
+      "started_at": "2026-10-19T07:30:01+02:00",
+      "finished_at": "2026-10-19T07:31:12+02:00",
+      "state": "ok",
+      "manual": false,
+      "sites": [
+        {
+          "name": "paie", "state": "ok", "found": 12, "missing": 1,
+          "imported": [{ "id": 412, "title": "Bulletin septembre 2026", "created": "2026-09-30" }],
+          "errors": []
+        }
+      ]
+    }
+  ]
+}
+```
+
 ### `bricktracker`
 
 Collection Lego de BrickTracker : nombre de sets, de pièces et de minifigs,
