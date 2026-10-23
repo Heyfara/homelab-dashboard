@@ -766,4 +766,31 @@ français quand la route le permet :
 - Les horaires des boss du monde ne sont pas dans l'API (seulement ceux déjà
   faits) : pas encore affichés.
 
+### `romm`
+
+Bibliothèque de jeux [RomM](https://romm.app) : derniers jeux ajoutés en slider
+(jaquette, plateforme, badge « Nouveau » la première semaine), nombre de jeux,
+de plateformes et de sauvegardes (sauvegardes + états) dans l'en-tête, puis le
+nombre de jeux par plateforme, les plus fournies d'abord. Jeu non identifié :
+nom du fichier.
+
+Les jaquettes sont publiques dans RomM (`/assets/romm/resources/…`) : le
+navigateur les lit directement, sans relais.
+
+| Option | Défaut | Rôle |
+|---|---|---|
+| `service` | obligatoire | service du catalogue, avec une `url` (`check` sert d'adresse d'API s'il est donné) |
+| `limit` | `12` | jeux dans le slider (1 à 50) |
+| `platforms` | `[]` | identifiants (slug) des plateformes à montrer, vide = toutes ; les sauvegardes restent celles de toute la bibliothèque |
+
+```yaml
+- { type: romm, service: romm, span: 2, rows: 2, refresh: 900 }
+- { type: romm, service: romm, platforms: [acpc, amstrad-gx4000], span: 2, rows: 2 }
+```
+
+- **Jeton** (`ROMM_API_TOKEN`) : un compte RomM au rôle *Viewer*, puis
+  *Profil → Client API Tokens*, scopes `roms.read` et `platforms.read`.
+- Liens : `{url}/rom/{id}` et `{url}/platform/{id}`, qui demandent d'être
+  connecté à RomM.
+
 <!-- Ajouter ici chaque nouveau type de carte (voir docs/ajouter-une-carte.md). -->
