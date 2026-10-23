@@ -20,6 +20,7 @@ import { JeluCard } from './JeluCard'
 import { MinecraftCard } from './MinecraftCard'
 import { MusicAssistantCard } from './MusicAssistantCard'
 import { WeatherCard } from './WeatherCard'
+import { RommCard } from './RommCard'
 import { ServiceCard } from './ServiceCard'
 
 /**
@@ -59,4 +60,5 @@ export const cardRegistry: Record<string, CardComponent> = {
   crafty: CraftyCard,
   minecraft: MinecraftCard,
   gw2: Gw2Card,
+  romm: RommCard,
 }
