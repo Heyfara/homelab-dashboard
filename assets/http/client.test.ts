@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, deleteCredential, fetchCard, fetchCredentials, fetchDashboard, fetchProfiles, resetLayout, saveCredential, saveLayout } from './client'
+import { ApiError, deleteCredential, fetchCard, fetchConfig, fetchDashboard, fetchProfiles, resetLayout, resetWeatherLocation, saveCredential, saveLayout, saveWeatherLocation, searchPlaces } from './client'
 
 function mockFetch(status: number, body: unknown) {
   // Une réponse neuve par appel : un corps ne se lit qu'une fois.
@@ -59,15 +59,34 @@ describe('client API', () => {
     await expect(fetchProfiles()).rejects.toMatchObject({ status: 502, message: 'Le serveur a répondu 502' })
   })
 
-  it('« Mes clés » : lister, enregistrer en JSON, supprimer', async () => {
+  it('« Ma config » : lire, enregistrer une clé en JSON', async () => {
     const fetch = mockFetch(200, { configured: true, account: 'Zoe.1234', updatedAt: null })
 
-    await fetchCredentials('zoe')
+    await fetchConfig('zoe')
     await expect(saveCredential('zoe', 'gw2', 'CLE')).resolves.toMatchObject({ account: 'Zoe.1234' })
 
-    expect(fetch.mock.calls[0]?.[0]).toBe('/api/profiles/zoe/credentials')
+    expect(fetch.mock.calls[0]?.[0]).toBe('/api/profiles/zoe/config')
     expect(fetch.mock.calls[1]?.[0]).toBe('/api/profiles/zoe/credentials/gw2')
     expect(fetch.mock.calls[1]?.[1]).toMatchObject({ method: 'PUT', body: JSON.stringify({ key: 'CLE' }), headers: { Accept: 'application/json', 'Content-Type': 'application/json' } })
+  })
+
+  it('« Ma config » : lieu de la météo et recherche de ville', async () => {
+    const fetch = mockFetch(200, [])
+
+    await saveWeatherLocation('zoe', { place: 'Brest', latitude: 48.39, longitude: -4.49 })
+    await searchPlaces('Saint-Malo & co')
+
+    expect(fetch.mock.calls[0]?.[0]).toBe('/api/profiles/zoe/config/weather')
+    expect(fetch.mock.calls[0]?.[1]).toMatchObject({ method: 'PUT', body: JSON.stringify({ place: 'Brest', latitude: 48.39, longitude: -4.49 }), headers: { 'Content-Type': 'application/json' } })
+    expect(fetch.mock.calls[1]?.[0]).toBe('/api/places?q=Saint-Malo%20%26%20co')
+  })
+
+  it('oublier le lieu choisi', async () => {
+    const fetch = vi.fn().mockResolvedValue(new Response(null, { status: 204 }))
+    vi.stubGlobal('fetch', fetch)
+
+    await expect(resetWeatherLocation('zoe')).resolves.toBeUndefined()
+    expect(fetch).toHaveBeenCalledWith('/api/profiles/zoe/config/weather', expect.objectContaining({ method: 'DELETE' }))
   })
 
   it('suppression : réponse vide acceptée', async () => {

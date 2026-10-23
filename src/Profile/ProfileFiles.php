@@ -5,7 +5,7 @@ namespace App\Profile;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * Fichiers JSON propres à chaque profil (« Mes clés », ordre des cartes), dans
+ * Fichiers JSON propres à chaque profil (« Ma config », ordre des cartes), dans
  * PROFILE_DATA_DIR : `<profil>.<nom>.json`, privés (0600, dossier 0700, hors
  * de public/), réécrits sous verrou par renommage atomique.
  */

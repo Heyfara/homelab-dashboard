@@ -133,12 +133,12 @@ $resolver->setDefault('credentials', null)
     ->setAllowedValues('credentials', static fn (?string $c): bool => null === $c || Credentials::isValidVariant($c));
 ```
 
-Pour accepter aussi `credentials: profile` (clé saisie dans « Mes clés ») :
+Pour accepter aussi `credentials: profile` (clé saisie dans « Ma config ») :
 
 1. passer la clé au client plutôt qu'un nom, et la choisir dans la carte avec
    `CardCredentials::resolve($card, 'MA_SOURCE_API_KEY', 'ma-source')` ;
-2. déclarer le service dans « Mes clés » : une classe qui implémente
-   `App\Profile\CredentialKindInterface` (identifiant, libellé, aide, et
+2. déclarer le service dans « Ma config » : une classe qui implémente
+   `App\Profile\CredentialKindInterface` (identifiant, type de la carte, libellé, aide, et
    `verify()` qui interroge le service et renvoie le compte trouvé, ou lève
    `InvalidCredentialException` avec un message pour l'écran).
 

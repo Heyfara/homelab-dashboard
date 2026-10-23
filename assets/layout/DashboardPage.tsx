@@ -22,7 +22,7 @@ const button =
 
 const cardName = (card: CardView) => card.title ?? [card.props.title, card.props.name].find((v): v is string => typeof v === 'string') ?? card.type
 
-export function DashboardPage({ slug, onChangeProfile, onOpenCredentials }: { slug: string; onChangeProfile: () => void; onOpenCredentials?: () => void }) {
+export function DashboardPage({ slug, onChangeProfile, onOpenConfig }: { slug: string; onChangeProfile: () => void; onOpenConfig?: () => void }) {
   const { data, error } = useJson((signal) => fetchDashboard(slug, signal), slug)
   // Copie locale : remplacée après « Enregistrer » ou « Ordre par défaut », sans recharger les cartes.
   const [dashboard, setDashboard] = useState<DashboardView | null>(null)
@@ -164,9 +164,9 @@ export function DashboardPage({ slug, onChangeProfile, onOpenCredentials }: { sl
                 Réorganiser
               </button>
             )}
-            {onOpenCredentials && (
-              <button type="button" onClick={onOpenCredentials} className={button}>
-                Mes clés
+            {onOpenConfig && (
+              <button type="button" onClick={onOpenConfig} className={button}>
+                Ma config
               </button>
             )}
             <button type="button" onClick={onChangeProfile} className={button}>

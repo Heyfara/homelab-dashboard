@@ -24,6 +24,11 @@ final readonly class Gw2CredentialKind implements CredentialKindInterface
         return 'gw2';
     }
 
+    public function cardType(): string
+    {
+        return 'gw2';
+    }
+
     public function label(): string
     {
         return 'Guild Wars 2';

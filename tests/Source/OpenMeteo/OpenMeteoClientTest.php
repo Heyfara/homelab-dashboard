@@ -6,6 +6,7 @@ use App\Source\OpenMeteo\Forecast;
 use App\Source\OpenMeteo\ForecastDay;
 use App\Source\OpenMeteo\ForecastHour;
 use App\Source\OpenMeteo\OpenMeteoClient;
+use App\Source\OpenMeteo\Place;
 use App\Source\SourceUnavailableException;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -31,6 +32,37 @@ final class OpenMeteoClientTest extends TestCase
     public static function homelab(): MockResponse
     {
         return new MockResponse((string) file_get_contents(__DIR__.'/../../fixtures/open-meteo.json'), ['response_headers' => ['Content-Type' => 'application/json']]);
+    }
+
+    /** Résultats fictifs de recherche de lieu (format réel du géocodage), réutilisés par FakeHomelab. */
+    public static function places(): MockResponse
+    {
+        return new MockResponse((string) file_get_contents(__DIR__.'/../../fixtures/open-meteo-geocoding.json'), ['response_headers' => ['Content-Type' => 'application/json']]);
+    }
+
+    public function testSearch(): void
+    {
+        $places = $this->client(self::places())->search('https://geo.test', 'Lyon');
+
+        self::assertEquals([
+            new Place('Lyon', 'Rhône', 'France', 45.74846, 4.84671),
+            new Place('Lyon', 'West Virginia', 'United States', 38.8673, -79.34171),
+        ], $places, 'région = département s\'il est connu, sinon la région');
+        parse_str((string) parse_url($this->urls[0], \PHP_URL_QUERY), $query);
+        self::assertStringStartsWith('https://geo.test/v1/search?', $this->urls[0]);
+        self::assertSame(['Lyon', '8', 'fr'], [$query['name'], $query['count'], $query['language']]);
+    }
+
+    public function testSearchWithoutResult(): void
+    {
+        self::assertSame([], $this->client(new MockResponse('{"generationtime_ms":0.1}'))->search('https://geo.test', 'zzzqqq'));
+    }
+
+    public function testSearchUnreachable(): void
+    {
+        $this->expectExceptionMessage('Recherche de lieu Open-Meteo injoignable');
+
+        $this->client(new MockResponse('', ['error' => 'Connexion refusée']))->search('https://geo.test', 'Lyon');
     }
 
     public function testForecast(): void

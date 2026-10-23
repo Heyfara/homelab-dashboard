@@ -5,7 +5,7 @@ namespace App\Profile;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * Clés d'API saisies par chaque personne depuis son profil (« Mes clés »).
+ * Clés d'API saisies par chaque personne depuis son profil (« Ma config »).
  *
  * Fichier `<profil>.credentials.json` (voir ProfileFiles : privé, hors de public/).
  * Chaque valeur est chiffrée (XChaCha20-Poly1305) avec une clé dérivée

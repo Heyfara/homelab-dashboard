@@ -5,6 +5,7 @@ namespace App\Card;
 use App\Dashboard\Model\CardInstance;
 use App\Dashboard\Model\Dashboard;
 use App\Profile\ProfileCredentials;
+use App\Profile\ProfileSettings;
 use App\Source\SourceUnavailableException;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\Cache\CacheInterface;
@@ -21,6 +22,7 @@ final readonly class CardDataFetcher
         private CacheInterface $cache,
         private LoggerInterface $logger,
         private ?ProfileCredentials $profileCredentials = null,
+        private ?ProfileSettings $profileSettings = null,
     ) {
     }
 
@@ -31,8 +33,8 @@ final readonly class CardDataFetcher
     {
         // Les options font partie de la clé : une carte modifiée dans le YAML
         // n'attend pas l'expiration de l'ancienne version.
-        // Les clés du profil aussi : une clé saisie dans « Mes clés » sert tout de suite.
-        $revision = null !== $card->profile && null !== $this->profileCredentials ? $this->profileCredentials->revision($card->profile) : '';
+        // Les clés et réglages du profil aussi : ce qui est saisi dans « Ma config » sert tout de suite.
+        $revision = null === $card->profile ? '' : $this->profileCredentials?->revision($card->profile).'|'.$this->profileSettings?->revision($card->profile);
         $key = 'card.'.hash('xxh128', $card->id.'|'.$feed.'|'.serialize($card->options).'|'.$revision);
 
         try {

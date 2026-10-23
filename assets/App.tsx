@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { usePath } from './hooks/usePath'
-import { CredentialsPage } from './layout/CredentialsPage'
+import { ConfigPage } from './layout/ConfigPage'
 import { DashboardPage } from './layout/DashboardPage'
 import { ProfilePicker } from './layout/ProfilePicker'
 
@@ -25,7 +25,7 @@ const remembered = {
   },
 }
 
-/** Trois écrans : / (choix du profil), /:profil (son dashboard), /:profil/cles (ses clés d'API). */
+/** Trois écrans : / (choix du profil), /:profil (son dashboard), /:profil/config (« Ma config » : réglages de ses cartes). */
 export function App() {
   const [path, navigate] = usePath()
   const [slug = null, page = null] = path.split('/').filter(Boolean)
@@ -33,7 +33,9 @@ export function App() {
   useEffect(() => {
     const last = remembered.get()
     if (!slug && last) navigate(`/${last}`, { replace: true })
-  }, [slug, navigate])
+    // Ancienne adresse de « Mes clés », devenue « Ma config ».
+    if (slug && page === 'cles') navigate(`/${slug}/config`, { replace: true })
+  }, [slug, page, navigate])
 
   if (!slug) {
     return (
@@ -46,8 +48,8 @@ export function App() {
     )
   }
 
-  if (page === 'cles') {
-    return <CredentialsPage slug={slug} onBack={() => navigate(`/${slug}`)} />
+  if (page === 'config' || page === 'cles') {
+    return <ConfigPage slug={slug} onBack={() => navigate(`/${slug}`)} />
   }
 
   return (
@@ -57,7 +59,7 @@ export function App() {
         remembered.set(null)
         navigate('/')
       }}
-      onOpenCredentials={() => navigate(`/${slug}/cles`)}
+      onOpenConfig={() => navigate(`/${slug}/config`)}
     />
   )
 }

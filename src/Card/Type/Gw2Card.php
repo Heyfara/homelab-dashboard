@@ -17,7 +17,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  *
  *     - type: gw2
  *       currencies: [1, 63, 2, 4]   # identifiants /v2/currencies : or, acclamations astrales, karma, gemmes
- *       credentials: profile       # clé saisie dans « Mes clés » du profil ; ou un nom : GW2_API_KEY_<NOM> ; sinon GW2_API_KEY
+ *       credentials: profile       # clé saisie dans « Ma config » du profil ; ou un nom : GW2_API_KEY_<NOM> ; sinon GW2_API_KEY
  *       span: 2
  *       rows: 2
  */
@@ -41,7 +41,7 @@ final readonly class Gw2Card implements CardTypeInterface
             ->setDefault('credentials', null)
             ->setAllowedTypes('credentials', ['null', 'string'])
             ->setAllowedValues('credentials', static fn (?string $c): bool => null === $c || Credentials::isValidVariant($c))
-            ->setInfo('credentials', 'profile = clé saisie dans « Mes clés » ; un nom = variable GW2_API_KEY_<NOM> ; absent = GW2_API_KEY')
+            ->setInfo('credentials', 'profile = clé saisie dans « Ma config » ; un nom = variable GW2_API_KEY_<NOM> ; absent = GW2_API_KEY')
             ->setDefault('api', 'https://api.guildwars2.com')
             ->setAllowedTypes('api', 'string');
     }
