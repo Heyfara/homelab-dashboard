@@ -22,7 +22,7 @@ Variables d'environnement liées :
 | `JELU_API_TOKEN` | jeton d'API Jelu avec le scope `reading:read` (cartes `jelu`) |
 | `CRAFTY_API_TOKEN` | clé d'API Crafty Controller, sans accès complet (cartes `crafty`) |
 | `GW2_API_KEY` | clé d'API Guild Wars 2 du compte (cartes `gw2`) : droits `account`, `wallet`, `progression`, `tradingpost` |
-| `PROFILE_DATA_DIR` | dossier des données saisies par chaque profil : clés de « Mes clés » (chiffrées) et ordre des cartes ; vide = `var/profiles`. En prod : un volume privé, sauvegardé |
+| `PROFILE_DATA_DIR` | dossier des données saisies par chaque profil : clés et réglages de « Ma config » (clés chiffrées) et ordre des cartes ; vide = `var/profiles`. En prod : un volume privé, sauvegardé |
 | `TLS_CA_FILE` | CA à approuver pour Beszel et les sondes HTTPS (CA mkcert), vide = CA du système |
 
 ### Identifiants par personne (`credentials`)
@@ -32,14 +32,16 @@ Wars 2. L'option `credentials` dit quelle clé prendre :
 
 ```yaml
 - { type: gw2 }                         # GW2_API_KEY (environnement)
-- { type: gw2, credentials: profile }   # la clé saisie dans « Mes clés » par le profil de la carte
+- { type: gw2, credentials: profile }   # la clé saisie dans « Ma config » par le profil de la carte
 - { type: gw2, credentials: zoe }   # GW2_API_KEY_ZOE (environnement)
 ```
 
-- **`profile`** : chacun colle sa clé lui-même, depuis le bouton « Mes clés »
-  de son dashboard (`/<profil>/cles`). La clé est vérifiée, puis gardée chiffrée
+- **`profile`** : chacun colle sa clé lui-même, depuis le bouton « Ma config »
+  de son dashboard (`/<profil>/config`). La clé est vérifiée, puis gardée chiffrée
   sur le serveur (voir `docs/architecture.md`). Tant qu'elle manque, la carte
-  affiche « Pas encore de clé pour ce profil : l'ajouter dans « Mes clés ». ».
+  affiche « Pas encore de clé pour ce profil : l'ajouter dans « Ma config ». ».
+  La section du service n'apparaît dans « Ma config » que si le profil a une
+  carte de ce type en `credentials: profile`.
 - **Un nom** : la clé est posée par l'admin dans l'environnement ; le YAML ne
   contient que le nom (`.env.local` en dev, vault Ansible en prod).
 - Le nom n'accepte que lettres, chiffres et `_`, et il est toujours accolé au
@@ -576,8 +578,9 @@ charger. Leur dessin dépend du système.
 
 | Option | Défaut | Rôle |
 |---|---|---|
-| `latitude`, `longitude` | obligatoires | le lieu, en degrés décimaux |
+| `latitude`, `longitude` | obligatoires (sauf `location: profile`) | le lieu, en degrés décimaux |
 | `place` | `null` | nom affiché en titre (sinon « Météo ») |
+| `location` | `null` | `profile` = chaque personne choisit son lieu dans « Ma config » ; le lieu du YAML sert alors de lieu par défaut |
 | `days` | `5` | jours de prévision, aujourd'hui compris (1 à 7) |
 | `hours` | `12` | heures de prévision, heure en cours comprise (2 à 24) |
 | `timezone` | `Europe/Paris` | fuseau des heures affichées |
@@ -589,6 +592,19 @@ charger. Leur dessin dépend du système.
 
 Le lieu reste dans le YAML, donc dans le rôle Ansible : jamais dans l'image
 ni dans ce dépôt.
+
+**Lieu choisi par chaque personne** (`location: profile`) : une section
+« Météo » apparaît dans « Ma config » du profil. La personne cherche sa ville
+(géocodage d'Open-Meteo, par le serveur : `GET /api/places?q=`) ou saisit des
+coordonnées. Le lieu est arrondi à 0,01° (environ 1 km) et rangé dans
+`<profil>.settings.json` de `PROFILE_DATA_DIR`. « Revenir au lieu par défaut »
+reprend celui du YAML. Sans lieu dans le YAML ni choisi, la carte affiche
+« Pas encore de lieu pour ce profil : le choisir dans « Ma config ». ». Un seul
+lieu par profil : toutes ses cartes météo en `location: profile` le partagent.
+
+```yaml
+- { type: weather, place: Maison, latitude: 48.85, longitude: 2.35, location: profile, span: 2, rows: 2, refresh: 1800 }
+```
 
 ### `music-assistant`
 
@@ -751,12 +767,12 @@ français quand la route le permet :
 | Option | Défaut | Rôle |
 |---|---|---|
 | `currencies` | `[1, 63, 2, 4]` | monnaies affichées, identifiants de `/v2/currencies` : or, acclamations astrales, karma, gemmes |
-| `credentials` | `null` | `profile` = clé de « Mes clés » ; un nom = `GW2_API_KEY_<NOM>` ; absent = `GW2_API_KEY` (voir « Identifiants par personne ») |
+| `credentials` | `null` | `profile` = clé de « Ma config » ; un nom = `GW2_API_KEY_<NOM>` ; absent = `GW2_API_KEY` (voir « Identifiants par personne ») |
 | `api` | `https://api.guildwars2.com` | adresse de l'API (tests) |
 
 ```yaml
 - { type: gw2, span: 2, rows: 2, refresh: 300 }                         # GW2_API_KEY
-- { type: gw2, credentials: profile, span: 2, rows: 2, refresh: 300 }    # clé de « Mes clés »
+- { type: gw2, credentials: profile, span: 2, rows: 2, refresh: 300 }    # clé de « Ma config »
 ```
 
 - **Clé** : https://account.arena.net/applications. Les clés sont en lecture

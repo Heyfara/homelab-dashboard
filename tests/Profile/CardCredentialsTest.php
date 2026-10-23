@@ -51,7 +51,7 @@ final class CardCredentialsTest extends TestCase
     public function testProfileWithoutSavedKeySaysWhereToAddIt(): void
     {
         $this->expectException(SourceUnavailableException::class);
-        $this->expectExceptionMessage('Pas encore de clé pour ce profil : l\'ajouter dans « Mes clés ».');
+        $this->expectExceptionMessage('Pas encore de clé pour ce profil : l\'ajouter dans « Ma config ».');
 
         $this->resolver()->resolve($this->card('profile', 'tom'), 'GW2_API_KEY', 'gw2');
     }

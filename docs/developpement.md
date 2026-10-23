@@ -69,9 +69,9 @@ services:
 Puis `docker compose up -d dashboard`. L'adresse reste hors du dépôt (image
 et dépôt publics).
 
-### 5. « Mes clés » et ordre des cartes en dev
+### 5. « Ma config » et ordre des cartes en dev
 
-Les clés saisies dans « Mes clés » et l'ordre des cartes (« Réorganiser ») vont
+Les clés et réglages saisis dans « Ma config » et l'ordre des cartes (« Réorganiser ») vont
 dans `var/profiles/` (ignoré par git) ; les clés sont chiffrées avec
 l'`APP_SECRET` du dev. Les tests utilisent un dossier à part,
 dans le cache de test.

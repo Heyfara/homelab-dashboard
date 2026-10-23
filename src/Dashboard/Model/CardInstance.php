@@ -24,7 +24,7 @@ final readonly class CardInstance
         public array $options,
         /** Hauteur, en rangées (une rangée = la hauteur d'une carte service) */
         public int $rows = 1,
-        /** Profil où la carte est placée (« Mes clés » de ce profil, option credentials: profile) */
+        /** Profil où la carte est placée (« Ma config » de ce profil, option credentials: profile) */
         public ?string $profile = null,
     ) {
     }

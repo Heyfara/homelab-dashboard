@@ -116,3 +116,4 @@ profiles:
           - { type: minecraft, service: minecraft, server: Monde survie, image: 'https://images.example/minecraft/famille.png', span: 2, rows: 3 }
           - { type: gw2, api: https://gw2.test, span: 2, rows: 2 }
           - { type: gw2, id: gw2-profil, credentials: profile, api: https://gw2.test, span: 2, rows: 2 }
+          - { type: weather, id: meteo-profil, place: Village fictif, latitude: 45.0, longitude: 5.0, location: profile, api: https://meteo.test, span: 2, rows: 2 }

@@ -17,6 +17,38 @@ final readonly class OpenMeteoClient
     ) {
     }
 
+    /** Adresse de la recherche de lieu (géocodage), distincte de celle des prévisions */
+    public const GEOCODING_API = 'https://geocoding-api.open-meteo.com';
+
+    /**
+     * Lieux dont le nom ressemble à celui cherché, les plus peuplés d'abord.
+     *
+     * @return list<Place>
+     */
+    public function search(string $api, string $name, int $count = 8): array
+    {
+        try {
+            $response = $this->httpClient->request('GET', rtrim($api, '/').'/v1/search', [
+                'query' => ['name' => $name, 'count' => $count, 'language' => 'fr', 'format' => 'json'],
+                'timeout' => 5,
+            ]);
+            $json = $response->toArray(false);
+            if ($response->getStatusCode() >= 400) {
+                throw new SourceUnavailableException(\sprintf('Recherche de lieu refusée par Open-Meteo : %s', $json['reason'] ?? 'HTTP '.$response->getStatusCode()));
+            }
+        } catch (ExceptionInterface $e) {
+            throw new SourceUnavailableException(\sprintf('Recherche de lieu Open-Meteo injoignable : %s', $e->getMessage()), previous: $e);
+        }
+
+        return array_map(static fn (array $r): Place => new Place(
+            (string) $r['name'],
+            $r['admin2'] ?? $r['admin1'] ?? null,
+            $r['country'] ?? null,
+            (float) $r['latitude'],
+            (float) $r['longitude'],
+        ), array_values($json['results'] ?? []));
+    }
+
     public function forecast(string $api, float $latitude, float $longitude, int $days, int $hours, string $timezone = 'Europe/Paris'): Forecast
     {
         try {

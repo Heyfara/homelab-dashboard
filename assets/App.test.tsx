@@ -72,13 +72,21 @@ describe('App', () => {
     await screen.findByText(/Profil inconnu/)
   })
 
-  it('« Mes clés » s’ouvre depuis le dashboard et y revient', async () => {
+  it('« Ma config » s’ouvre depuis le dashboard et y revient', async () => {
     window.history.replaceState(null, '', '/alice')
     render(<App />)
 
-    ;(await screen.findByRole('button', { name: 'Mes clés' })).click()
-    expect(window.location.pathname).toBe('/alice/cles')
+    ;(await screen.findByRole('button', { name: 'Ma config' })).click()
+    expect(window.location.pathname).toBe('/alice/config')
     ;(await screen.findByRole('button', { name: '← Retour au dashboard' })).click()
     expect(window.location.pathname).toBe('/alice')
+  })
+
+  it('l’ancienne adresse de « Mes clés » mène à « Ma config »', async () => {
+    window.history.replaceState(null, '', '/alice/cles')
+    render(<App />)
+
+    await screen.findByRole('button', { name: '← Retour au dashboard' })
+    expect(window.location.pathname).toBe('/alice/config')
   })
 })

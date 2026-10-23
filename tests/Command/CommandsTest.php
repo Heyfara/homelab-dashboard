@@ -19,7 +19,7 @@ final class CommandsTest extends KernelTestCase
         $tester = $this->tester('dashboard:lint');
 
         self::assertSame(Command::SUCCESS, $tester->execute(['file' => __DIR__.'/../fixtures/dashboard.yaml']));
-        self::assertStringContainsString('2 profils, 23 cartes', $tester->getDisplay());
+        self::assertStringContainsString('2 profils, 24 cartes', $tester->getDisplay());
     }
 
     public function testLintUsesConfiguredFileByDefault(): void

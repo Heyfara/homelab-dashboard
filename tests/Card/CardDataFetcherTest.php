@@ -9,6 +9,7 @@ use App\Dashboard\Model\CardInstance;
 use App\Dashboard\Model\Dashboard;
 use App\Dashboard\Model\Settings;
 use App\Profile\ProfileCredentials;
+use App\Profile\ProfileSettings;
 use App\Profile\ProfileFiles;
 use App\Source\SourceUnavailableException;
 use PHPUnit\Framework\TestCase;
@@ -76,7 +77,23 @@ final class CardDataFetcherTest extends TestCase
         $keys->set('zoe', 'gw2', 'nouvelle-cle', null);
         $fetcher->fetch($card, $this->dashboard);
 
-        self::assertSame(2, $this->type->fetchCount, 'clé ajoutée dans « Mes clés » : données relues');
+        self::assertSame(2, $this->type->fetchCount, 'clé ajoutée dans « Ma config » : données relues');
+        array_map('unlink', glob($dir.'/{,.}*.*', \GLOB_BRACE) ?: []);
+        @rmdir($dir);
+    }
+
+    public function testNewProfileSettingBypassesCache(): void
+    {
+        $dir = sys_get_temp_dir().'/fetcher-'.bin2hex(random_bytes(4));
+        $settings = new ProfileSettings(new ProfileFiles($dir));
+        $fetcher = new CardDataFetcher($this->registry, new ArrayAdapter(), new NullLogger(), new ProfileCredentials(new ProfileFiles($dir), 'secret'), $settings);
+        $card = new CardInstance('c1', 'fake', null, 1, 30, ['label' => 'x', 'loud' => false], 1, 'zoe');
+
+        $fetcher->fetch($card, $this->dashboard);
+        $settings->set('zoe', 'weather', ['place' => 'Brest', 'latitude' => 48.39, 'longitude' => -4.49]);
+        $fetcher->fetch($card, $this->dashboard);
+
+        self::assertSame(2, $this->type->fetchCount, 'lieu choisi dans « Ma config » : données relues');
         array_map('unlink', glob($dir.'/{,.}*.*', \GLOB_BRACE) ?: []);
         @rmdir($dir);
     }

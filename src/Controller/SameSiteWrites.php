@@ -7,7 +7,7 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\UnsupportedMediaTypeHttpException;
 
 /**
- * Écritures sans mot de passe (« Mes clés », ordre des cartes) : on refuse
+ * Écritures sans mot de passe (« Ma config », ordre des cartes) : on refuse
  * celles déclenchées depuis un autre site (CSRF). Le navigateur dit d'où vient
  * la requête (Sec-Fetch-Site, Origin) ; un corps JSON impose en plus une
  * requête « préliminaire » qu'un autre site ne peut pas faire passer.

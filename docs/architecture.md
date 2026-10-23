@@ -24,8 +24,8 @@ navigateur ─▶ Caddy (TLS, dashboard.example) ─▶ nginx partagé ─┬─
 | `Card/` | contrat d'un type de carte (`CardTypeInterface`, `#[AsCard]`), registre, `CardDataFetcher` (cache + capture d'erreurs), `CardResult` |
 | `Card/Type/` | un fichier par type de carte |
 | `Source/` | clients des sources : `Beszel/` (API du hub), `Container/` (état des containers), `Http/` (sonde), API des services ; `Credentials` (clés par variable d'environnement) |
-| `Profile/` | « Mes clés » : coffre chiffré par profil (`ProfileCredentials`), ordre des cartes (`ProfileLayout`), fichiers privés par profil (`ProfileFiles`), services dont on peut saisir sa clé (`CredentialKindInterface`), choix de la clé d'une carte (`CardCredentials`) |
-| `Controller/` | routes de lecture, « Mes clés » et ordre des cartes (seules écritures), sans logique |
+| `Profile/` | « Ma config » : coffre chiffré par profil (`ProfileCredentials`), réglages non secrets (`ProfileSettings`, dont le lieu de la météo `WeatherLocation`), ordre des cartes (`ProfileLayout`), fichiers privés par profil (`ProfileFiles`), services dont on peut saisir sa clé (`CredentialKindInterface`), choix de la clé d'une carte (`CardCredentials`) |
+| `Controller/` | routes de lecture, « Ma config » et ordre des cartes (seules écritures), sans logique |
 | `Command/` | `dashboard:lint`, `dashboard:card-types` |
 | `EventListener/` | toute erreur sous `/api` répond en JSON |
 
@@ -51,17 +51,18 @@ Points clés :
   invalide renvoie un 503 avec la liste complète des erreurs.
 - **Cache APCu en prod**, système de fichiers en dev, mémoire en test.
 
-## Données propres à chaque profil : « Mes clés » et ordre des cartes
+## Données propres à chaque profil : « Ma config » et ordre des cartes
 
 Tout le reste est sans état (YAML, environnement, caches). Exceptions, saisies
 par chaque personne depuis son dashboard :
 
-- les clés d'API de « Mes clés » (`/<profil>/cles`), pour ses propres cartes
-  (`credentials: profile`) ;
+- « Ma config » (`/<profil>/config`, ancienne adresse `/<profil>/cles`) : une
+  section par carte du profil réglable par la personne — clés d'API
+  (`credentials: profile`), lieu de la météo (`location: profile`) ;
 - l'ordre de ses cartes (bouton « Réorganiser »).
 
 `ProfileFiles` les range dans `PROFILE_DATA_DIR` (vide = `var/profiles`) :
-`<profil>.credentials.json` et `<profil>.layout.json`, hors de `public/`,
+`<profil>.credentials.json`, `<profil>.settings.json` et `<profil>.layout.json`, hors de `public/`,
 droits `0600` et dossier `0700`, écriture atomique sous verrou.
 
 ### Ordre des cartes
@@ -82,7 +83,18 @@ droits `0600` et dossier `0700`, écriture atomique sous verrou.
   avant « Enregistrer » (`PUT /api/profiles/{profil}/layout`) ; « Ordre par
   défaut » l'oublie (`DELETE`). Pas de bibliothèque de glisser-déposer.
 
-### « Mes clés »
+### « Ma config »
+
+- `GET /api/profiles/{profil}/config` (`ProfileConfigController`) liste les
+  sections du profil : les services de `CredentialKinds::usedBy()` (ceux dont
+  une carte du profil est en `credentials: profile`, d'après
+  `CredentialKindInterface::cardType()`) et le lieu de la météo s'il a une
+  carte en `location: profile`. Écritures : `PUT`/`DELETE
+  …/credentials/{service}` et `…/config/weather`.
+- **Réglages non secrets** (`ProfileSettings`, `<profil>.settings.json`) : en
+  clair, avec leur date. Le lieu de la météo est arrondi à 0,01°.
+
+#### Clés d'API
 
 - **Chiffrement** : chaque clé est chiffrée (XChaCha20-Poly1305, `ext-sodium`)
   avec une clé dérivée d'`APP_SECRET`, et liée à son profil et à son service.
@@ -93,8 +105,8 @@ droits `0600` et dossier `0700`, écriture atomique sous verrou.
   n'importe qui peut remplacer ou supprimer une clé (ou réordonner les cartes
   d'un autre), mais pas la lire. Les écritures (trait `SameSiteWrites`) refusent les requêtes venues d'un autre site (`Sec-Fetch-Site`,
   `Origin`) et exigent du JSON.
-- **Cache** : l'empreinte du fichier des clés du profil entre dans la clé de cache de
-  ses cartes ; une clé ajoutée sert tout de suite.
+- **Cache** : l'empreinte des fichiers des clés et des réglages du profil entre
+  dans la clé de cache de ses cartes ; une clé ou un lieu ajouté sert tout de suite.
 - **Sauvegarde** : ce dossier n'est pas dans Ansible. En prod, c'est un volume
   sauvegardé chaque nuit.
 

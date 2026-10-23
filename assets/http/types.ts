@@ -43,7 +43,35 @@ export type CardResult<D = Record<string, unknown>> =
   | { status: 'ok'; data: D; error: null; fetchedAt: string }
   | { status: 'error'; data: null; error: string; fetchedAt: string }
 
-/** Un service de « Mes clés » (ProfileCredentialsController::list). La clé n'est jamais renvoyée. */
+/** GET /api/profiles/{slug}/config : une section par carte configurable du profil. */
+export type ProfileConfigView = {
+  /** Clés d'API des cartes en credentials: profile */
+  credentials: CredentialView[]
+  /** Lieu de la carte météo en location: profile, null s'il n'y en a pas */
+  weather: WeatherLocationView | null
+}
+
+/** Lieu de la météo (WeatherLocation::view) : celui choisi, sinon celui du YAML, sinon vide. */
+export type WeatherLocationView = {
+  place: string | null
+  latitude: number | null
+  longitude: number | null
+  /** Choisi par la personne (sinon : lieu par défaut du YAML) */
+  custom: boolean
+  updatedAt: string | null
+}
+
+/** Un lieu trouvé par GET /api/places?q= */
+export type PlaceView = {
+  name: string
+  /** Département, sinon région */
+  region: string | null
+  country: string | null
+  latitude: number
+  longitude: number
+}
+
+/** Une clé d'API de « Ma config ». La clé n'est jamais renvoyée. */
 export type CredentialView = {
   id: string
   label: string

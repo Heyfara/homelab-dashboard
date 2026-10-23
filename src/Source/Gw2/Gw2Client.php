@@ -9,7 +9,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * API officielle de Guild Wars 2 (v2), avec une clé de compte : lecture seule
  * par nature. La clé est passée à chaque appel : la carte choisit celle de qui
- * (variable d'environnement ou « Mes clés » du profil). Textes en français (lang=fr) quand la route le permet. Icônes
+ * (variable d'environnement ou « Ma config » du profil). Textes en français (lang=fr) quand la route le permet. Icônes
  * publiques sur render.guildwars2.com.
  */
 final readonly class Gw2Client

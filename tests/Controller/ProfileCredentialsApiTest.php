@@ -6,7 +6,7 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
- * « Mes clés » : clés d'API saisies par chaque profil (bob, dans la fixture).
+ * « Ma config », clés d'API saisies par chaque profil (bob, dans la fixture).
  */
 final class ProfileCredentialsApiTest extends WebTestCase
 {
@@ -31,15 +31,16 @@ final class ProfileCredentialsApiTest extends WebTestCase
 
     private function list(string $profile = 'bob'): array
     {
-        $this->client->request('GET', '/api/profiles/'.$profile.'/credentials');
+        $this->client->request('GET', '/api/profiles/'.$profile.'/config');
         self::assertSame(200, $this->client->getResponse()->getStatusCode());
 
-        return json_decode((string) $this->client->getResponse()->getContent(), true);
+        return json_decode((string) $this->client->getResponse()->getContent(), true)['credentials'];
     }
 
-    public function testListsTheServicesWithoutAnyKey(): void
+    public function testListsTheServicesOfTheProfileCardsWithoutAnyKey(): void
     {
         self::assertSame([['id' => 'gw2', 'label' => 'Guild Wars 2', 'help' => 'Créer une clé sur https://account.arena.net/applications en cochant : account, wallet, progression, tradingpost.', 'configured' => false, 'account' => null, 'updatedAt' => null]], $this->list());
+        self::assertSame([], $this->list('alice'), 'pas de carte gw2 en credentials: profile chez alice');
     }
 
     public function testSaveVerifiesTheKeyAndNeverReturnsIt(): void
@@ -54,7 +55,6 @@ final class ProfileCredentialsApiTest extends WebTestCase
         self::assertTrue($listed['configured']);
         self::assertSame('Joueur.1234', $listed['account']);
         self::assertStringNotContainsString('CLE-DE-BOB', json_encode($this->list()));
-        self::assertFalse($this->list('alice')[0]['configured'], 'chaque profil a ses clés');
     }
 
     public function testCardWithProfileCredentialsUsesTheSavedKey(): void
@@ -77,7 +77,7 @@ final class ProfileCredentialsApiTest extends WebTestCase
         $json = json_decode((string) $this->client->getResponse()->getContent(), true);
 
         self::assertSame('error', $json['status']);
-        self::assertStringContainsString('« Mes clés »', $json['error']);
+        self::assertStringContainsString('« Ma config »', $json['error']);
     }
 
     public function testInvalidKeyIsRefusedWithTheReason(): void
@@ -119,7 +119,7 @@ final class ProfileCredentialsApiTest extends WebTestCase
 
     public function testUnknownProfileOrService(): void
     {
-        $this->client->request('GET', '/api/profiles/inconnu/credentials');
+        $this->client->request('DELETE', '/api/profiles/inconnu/credentials/gw2', server: ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
         self::assertSame(404, $this->client->getResponse()->getStatusCode());
 
         $this->put('/api/profiles/bob/credentials/inconnu', ['key' => 'X']);

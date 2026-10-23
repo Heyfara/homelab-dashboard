@@ -111,7 +111,12 @@ final class FakeHomelab
             return OpenMeteoClientTest::homelab();
         }
 
-        // Vérification des clés de « Mes clés » : adresse officielle de l'API.
+        // Recherche de lieu de « Ma config » : adresse officielle du géocodage.
+        if (str_starts_with($url, 'https://geocoding-api.open-meteo.com/v1/search')) {
+            return OpenMeteoClientTest::places();
+        }
+
+        // Vérification des clés de « Ma config » : adresse officielle de l'API.
         if (str_starts_with($url, 'https://gw2.test/') || str_starts_with($url, 'https://api.guildwars2.com/')) {
             return Gw2ClientTest::homelab((string) $path);
         }
