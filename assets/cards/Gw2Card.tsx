@@ -64,9 +64,9 @@ export const Gw2Card: CardComponent<{ title: string }, Gw2Data> = ({ card, resul
           {data.vault.objectives.length === 0 ? (
             <p className="text-sm text-emerald-700 dark:text-emerald-400">Tous les objectifs sont faits.</p>
           ) : (
-            <ul aria-label="Objectifs restants" className="flex min-h-0 flex-1 flex-col gap-1 overflow-hidden">
+            <ul aria-label="Objectifs restants" className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto [scrollbar-width:thin]">
               {data.vault.objectives.map((o, i) => (
-                <li key={`${o.period}-${i}`} title={o.title} className="flex items-center gap-2 text-xs">
+                <li key={`${o.period}-${i}`} title={o.title} className="flex shrink-0 items-center gap-2 text-xs">
                   <span className={`w-11 shrink-0 rounded px-1 text-center text-[0.6rem] font-semibold uppercase ${o.period === 'daily' ? 'bg-sky-500/15 text-sky-700 dark:text-sky-300' : 'bg-violet-500/15 text-violet-700 dark:text-violet-300'}`}>
                     {o.period === 'daily' ? 'Jour' : 'Hebdo'}
                   </span>

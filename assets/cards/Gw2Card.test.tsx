@@ -72,6 +72,15 @@ describe('Gw2Card', () => {
     expect(text(items[1]!)).toContain('+50')
   })
 
+  it('trop d’objectifs pour la hauteur : la liste défile au lieu de les couper', () => {
+    render(<GwCard />)
+
+    const list = screen.getByRole('list', { name: 'Objectifs restants' })
+    expect(list.className).toContain('overflow-y-auto')
+    expect(list.className).not.toContain('overflow-hidden')
+    expect(list.querySelector('li')?.className).toContain('shrink-0')
+  })
+
   it('tout est fait : le dit', () => {
     render(<Gw2Card card={card} result={result({ ...data, vault: { ...data.vault, objectives: [] } })} />)
 
