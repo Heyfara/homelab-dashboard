@@ -5,24 +5,26 @@ namespace App\Tests\Source\DocFetcher;
 use App\Source\DocFetcher\DocFetcherSite;
 use App\Source\DocFetcher\DocFetcherStatusReader;
 use App\Source\DocFetcher\ImportedDocument;
+use App\Source\Healthchecks\HealthchecksClient;
 use App\Source\SourceUnavailableException;
+use App\Tests\Source\Healthchecks\HealthchecksClientTest;
 use PHPUnit\Framework\TestCase;
 
 final class DocFetcherStatusReaderTest extends TestCase
 {
-    public const FILE = __DIR__.'/../../fixtures/doc-fetcher-status.json';
+    private const URL = 'https://healthchecks.test';
 
-    private function write(string $content): string
+    /**
+     * @param list<string>|null $reports rapports de doc-fetcher, le plus récent d'abord ; sinon ceux de la fixture
+     */
+    public static function reader(?array $reports = null): DocFetcherStatusReader
     {
-        $file = tempnam(sys_get_temp_dir(), 'doc-fetcher');
-        file_put_contents($file, $content);
-
-        return $file;
+        return new DocFetcherStatusReader(new HealthchecksClient(HealthchecksClientTest::httpClient(null === $reports ? null : ['doc-fetcher' => $reports]), 'cle-hc'));
     }
 
     public function testRunsNewestFirst(): void
     {
-        $status = (new DocFetcherStatusReader())->status(self::FILE);
+        $status = self::reader()->status(self::URL, 'doc-fetcher', 12);
 
         self::assertSame('chaque lundi à 7 h 30', $status->schedule);
         self::assertCount(4, $status->runs);
@@ -38,32 +40,38 @@ final class DocFetcherStatusReaderTest extends TestCase
         self::assertTrue($status->runs[1]->manual);
     }
 
-    public function testMissingFileMeansNoRunYet(): void
+    public function testLimitedNumberOfRuns(): void
+    {
+        self::assertCount(2, self::reader()->status(self::URL, 'doc-fetcher', 2)->runs);
+    }
+
+    public function testNoRunYet(): void
     {
         $this->expectException(SourceUnavailableException::class);
         $this->expectExceptionMessage('Aucun passage enregistré');
 
-        (new DocFetcherStatusReader())->status('/nulle/part/status.json');
+        self::reader([])->status(self::URL, 'doc-fetcher', 12);
     }
 
-    public function testInvalidContent(): void
+    public function testInvalidReport(): void
     {
         $this->expectException(SourceUnavailableException::class);
-        $this->expectExceptionMessage('n\'est pas un statut de doc-fetcher');
+        $this->expectExceptionMessage('n\'est pas un passage de doc-fetcher');
 
-        (new DocFetcherStatusReader())->status($this->write('{"services": []}'));
+        self::reader(['{"services": []}'])->status(self::URL, 'doc-fetcher', 12);
     }
 
-    public function testTruncatedJson(): void
+    public function testTruncatedReport(): void
     {
         $this->expectException(SourceUnavailableException::class);
 
-        (new DocFetcherStatusReader())->status($this->write('{"runs": ['));
+        self::reader(['{"run": {'])->status(self::URL, 'doc-fetcher', 12);
     }
 
-    public function testOptionalFields(): void
+    /** Rapport sans enveloppe ni planification : le passage seul. */
+    public function testBareRunWithOptionalFields(): void
     {
-        $status = (new DocFetcherStatusReader())->status($this->write('{"runs": [{"started_at": "2026-10-19T07:30:01+02:00", "state": "ok", "sites": [{"name": "paie", "state": "ok"}]}]}'));
+        $status = self::reader(['{"started_at": "2026-10-19T07:30:01+02:00", "state": "ok", "sites": [{"name": "paie", "state": "ok"}]}'])->status(self::URL, 'doc-fetcher', 12);
 
         self::assertNull($status->schedule);
         self::assertNull($status->runs[0]->finishedAt);

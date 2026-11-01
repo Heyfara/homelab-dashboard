@@ -6,18 +6,19 @@ use App\Card\AsCard;
 use App\Card\CardTypeInterface;
 use App\Dashboard\Model\CardInstance;
 use App\Dashboard\Model\Dashboard;
+use App\Dashboard\Model\ServiceDefinition;
 use App\Source\DocFetcher\DocFetcherRun;
 use App\Source\DocFetcher\DocFetcherStatusReader;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * Imports automatiques de documents dans Paperless (doc-fetcher) : dernier
- * passage, état de chaque site, historique des passages et derniers documents
- * importés. Signale un cron qui ne passe plus, même si on a lancé le script à
- * la main entre-temps.
+ * Imports automatiques de documents dans Paperless (doc-fetcher), d'après les
+ * rapports de ses passages dans Healthchecks : dernier passage, état de chaque
+ * site, historique des passages et derniers documents importés. Signale un cron
+ * qui ne passe plus, même si on a lancé le script à la main entre-temps.
  *
  *     - type: doc-fetcher
- *       file: /data/doc-fetcher/status.json
+ *       healthchecks: healthchecks        # service Healthchecks du catalogue
  *       service: paperless                # liens vers les documents
  *       labels: { impots: Impôts }        # nom du site → nom affiché
  *       span: 2
@@ -35,10 +36,18 @@ final readonly class DocFetcherCard implements CardTypeInterface
 
     public function configureOptions(OptionsResolver $resolver, Dashboard $dashboard): void
     {
+        $withUrl = array_map('strval', array_keys(array_filter($dashboard->services, static fn (ServiceDefinition $s): bool => null !== $s->url)));
+
         $resolver
-            ->setRequired('file')
-            ->setAllowedTypes('file', 'string')
-            ->setInfo('file', 'chemin du status.json de doc-fetcher, monté dans le container')
+            ->setRequired('healthchecks')
+            ->setAllowedValues('healthchecks', $withUrl)
+            ->setInfo('healthchecks', 'service Healthchecks du catalogue, qui reçoit les pings de doc-fetcher')
+            ->setDefault('check', 'doc-fetcher')
+            ->setAllowedTypes('check', 'string')
+            ->setInfo('check', 'slug du check de doc-fetcher dans Healthchecks')
+            ->setDefault('runs', 12)
+            ->setAllowedTypes('runs', 'int')
+            ->setInfo('runs', 'nombre de passages lus (historique)')
             ->setDefault('service', null)
             ->setAllowedTypes('service', ['null', 'string'])
             ->setAllowedValues('service', static fn (?string $s): bool => null === $s || isset($dashboard->services[$s]))
@@ -61,7 +70,8 @@ final readonly class DocFetcherCard implements CardTypeInterface
 
     public function fetch(CardInstance $card, Dashboard $dashboard): array
     {
-        $status = $this->reader->status($card->options['file']);
+        $healthchecks = $dashboard->services[$card->options['healthchecks']];
+        $status = $this->reader->status($healthchecks->check ?? (string) $healthchecks->url, $card->options['check'], $card->options['runs']);
         $now = new \DateTimeImmutable($this->now ?? 'now');
         $label = static fn (string $name): string => $card->options['labels'][$name] ?? mb_ucfirst($name);
         $paperless = null === $card->options['service'] ? null : rtrim((string) $dashboard->services[$card->options['service']]->url, '/');

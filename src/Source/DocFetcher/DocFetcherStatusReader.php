@@ -2,36 +2,46 @@
 
 namespace App\Source\DocFetcher;
 
+use App\Source\Healthchecks\HealthchecksClient;
 use App\Source\SourceUnavailableException;
 
 /**
- * Lit le statut de doc-fetcher, un fichier JSON monté dans le container (le
- * script tourne sur la même machine). Format : voir docs/configuration.md.
+ * Passages de doc-fetcher, lus dans Healthchecks : le rapport de chaque ping de
+ * fin est le passage (`{"schedule": …, "run": {…}}`, ou le passage seul).
+ * Format d'un passage : voir docs/configuration.md.
  */
 final readonly class DocFetcherStatusReader
 {
-    public function status(string $file): DocFetcherStatus
+    public function __construct(
+        private HealthchecksClient $healthchecks,
+    ) {
+    }
+
+    /**
+     * @param string $baseUrl adresse de Healthchecks
+     * @param string $check   slug du check de doc-fetcher
+     * @param int    $runs    nombre de passages à lire
+     */
+    public function status(string $baseUrl, string $check, int $runs): DocFetcherStatus
     {
-        if (!is_file($file)) {
-            throw new SourceUnavailableException(\sprintf('Aucun passage enregistré (%s absent)', $file));
-        }
-        $content = @file_get_contents($file);
-        if (false === $content) {
-            throw new SourceUnavailableException(\sprintf('%s illisible (droits du dossier monté ?)', $file));
-        }
-        try {
-            $json = json_decode($content, true, flags: \JSON_THROW_ON_ERROR);
-        } catch (\JsonException $e) {
-            throw new SourceUnavailableException(\sprintf('%s : JSON invalide (%s)', $file, $e->getMessage()), previous: $e);
-        }
-        if (!\is_array($json) || !\is_array($json['runs'] ?? null)) {
-            throw new SourceUnavailableException(\sprintf('%s n\'est pas un statut de doc-fetcher (runs)', $file));
+        $reports = $this->healthchecks->reports($baseUrl, $check, $runs);
+        if ([] === $reports) {
+            throw new SourceUnavailableException(\sprintf('Aucun passage enregistré dans Healthchecks (check « %s »)', $check));
         }
 
-        return new DocFetcherStatus(
-            ($json['schedule'] ?? '') ?: null,
-            array_map(self::toRun(...), array_values($json['runs'])),
-        );
+        $schedule = null;
+        $list = [];
+        foreach ($reports as $report) {
+            $json = json_decode($report, true);
+            $run = \is_array($json['run'] ?? null) ? $json['run'] : $json;
+            if (!\is_array($run) || !isset($run['started_at'], $run['state'])) {
+                throw new SourceUnavailableException(\sprintf('Un rapport du check « %s » n\'est pas un passage de doc-fetcher (started_at, state)', $check));
+            }
+            $schedule ??= ($json['schedule'] ?? '') ?: null;
+            $list[] = self::toRun($run);
+        }
+
+        return new DocFetcherStatus($schedule, $list);
     }
 
     /**

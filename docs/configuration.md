@@ -21,6 +21,7 @@ Variables d'environnement liées :
 | `MUSIC_ASSISTANT_TOKEN` | jeton longue durée Music Assistant d'un utilisateur au rôle Invité (cartes `music-assistant`) |
 | `JELU_API_TOKEN` | jeton d'API Jelu avec le scope `reading:read` (cartes `jelu`) |
 | `CRAFTY_API_TOKEN` | clé d'API Crafty Controller, sans accès complet (cartes `crafty`) |
+| `HEALTHCHECKS_API_KEY` | clé API (lecture-écriture) du projet Healthchecks (cartes `backups` et `doc-fetcher`) : la clé en lecture seule ne donne pas les rapports des pings. Le dashboard ne fait que lire |
 | `GW2_API_KEY` | clé d'API Guild Wars 2 du compte (cartes `gw2`) : droits `account`, `wallet`, `progression`, `tradingpost` |
 | `PROFILE_DATA_DIR` | dossier des données saisies par chaque profil : clés et réglages de « Ma config » (clés chiffrées) et ordre des cartes ; vide = `var/profiles`. En prod : un volume privé, sauvegardé |
 | `TLS_CA_FILE` | CA à approuver pour Beszel et les sondes HTTPS (CA mkcert), vide = CA du système |
@@ -449,18 +450,19 @@ d'images signé (comme `immich`) et sont gardées 24 h.
 ### `backups`
 
 État des sauvegardes, d'après le statut publié chaque matin par la sentinelle
-du homelab (`backup-status.json`, rôle Ansible `backup-sentinel`). Même
-présentation que `backblaze`, une rangée suffit :
+du homelab (rôle Ansible `backup-sentinel`). La sentinelle l'envoie comme
+rapport de son ping à Healthchecks : la carte lit le rapport de son dernier
+passage. Même présentation que `backblaze`, une rangée suffit :
 
 - **Sauvegardes** : « 19/19 à jour » et le nombre de nuits sans incident (champ
   `history` de la sentinelle), ou « N à surveiller » avec leurs noms. La liste
   complète, avec l'âge de chaque sauvegarde et la raison d'un défaut, s'affiche
   au survol.
 - **Dernière sauvegarde** : le dernier passage de restic (champ `restic`, joint
-  par la sentinelle depuis `restic-status.json`). Affiche la durée totale, le
-  volume ajouté au dépôt et la durée de la copie vers B2 ; le détail
-  (fichiers, volume analysé) apparaît au survol. En cas d'échec : l'étape en
-  cause et son code. « — » si la sentinelle ne joint pas ce statut.
+  par la sentinelle). Affiche la durée totale, le volume ajouté au dépôt et la
+  durée de la copie vers B2 ; le détail (fichiers, volume analysé) apparaît au
+  survol. En cas d'échec : l'étape en cause et son code. « — » si la sentinelle
+  ne joint pas ce statut.
 
 Les âges sont recalculés à l'affichage. Si la sentinelle n'est pas repassée
 depuis `stale_hours`, l'en-tête l'indique (« sentinelle en retard ») : l'état
@@ -468,13 +470,14 @@ affiché est ancien.
 
 | Option | Défaut | Rôle |
 |---|---|---|
-| `url` | obligatoire | adresse du `backup-status.json` |
+| `healthchecks` | obligatoire | service Healthchecks du catalogue (`check` sert d'adresse pour l'API s'il est donné) ; clé dans `HEALTHCHECKS_API_KEY` |
+| `check` | `sentinel` | slug du check de la sentinelle |
 | `aliases` | `{}` | nom dans la sentinelle → service du catalogue, quand ils diffèrent (nom affiché) ; sinon le nom de la sentinelle, avec une majuscule |
 | `stale_hours` | `26` | au-delà, la sentinelle est signalée en retard (elle passe une fois par jour) |
 
 ```yaml
 - type: backups
-  url: http://10.0.0.16:3000/images/backup-status.json
+  healthchecks: healthchecks
   aliases: { bookstack: wiki, cwa: ebooks, audiobookshelf: audiobooks }
   span: 2
   rows: 1
@@ -484,8 +487,8 @@ affiché est ancien.
 ### `doc-fetcher`
 
 Imports automatiques de documents dans Paperless par doc-fetcher (rôle Ansible
-`doc-fetcher`). Le script écrit son statut à chaque passage dans un fichier
-JSON, monté en lecture seule dans le container :
+`doc-fetcher`). À chaque passage, le script envoie son rapport comme contenu de
+son ping de fin à Healthchecks ; la carte lit les `runs` derniers :
 
 - **En-tête** : âge du dernier passage. Si le passage automatique (cron) n'est
   pas revenu depuis `stale_days`, « passage automatique en retard », même si le
@@ -494,15 +497,17 @@ JSON, monté en lecture seule dans le container :
   touche que le sien) : nombre de documents sur le site, « code à saisir »
   (double authentification à faire au terminal) ou « échec ». Les erreurs
   s'affichent au survol ; celle d'un site bloqué aussi en clair sous la liste.
-- **Historique** : une pastille par passage gardé dans le fichier (vert, ambre,
-  rouge ; atténuée si lancé à la main), détail au survol.
+- **Historique** : une pastille par passage lu (vert, ambre, rouge ; atténuée
+  si lancé à la main), détail au survol.
 - **Derniers documents importés** : titre, site, date du document, avec un lien
   vers Paperless si `service` est donné.
 - **Pied** : la planification, si le script la connaît.
 
 | Option | Défaut | Rôle |
 |---|---|---|
-| `file` | obligatoire | chemin du `status.json` dans le container |
+| `healthchecks` | obligatoire | service Healthchecks du catalogue (`check` sert d'adresse pour l'API s'il est donné) ; clé dans `HEALTHCHECKS_API_KEY` |
+| `check` | `doc-fetcher` | slug du check de doc-fetcher |
+| `runs` | `12` | nombre de passages lus (historique) ; Healthchecks garde les 100 derniers pings d'un check, soit 50 passages |
 | `service` | `null` | service Paperless du catalogue, pour les liens vers les documents |
 | `labels` | `{}` | nom du site → nom affiché ; sinon le nom avec une majuscule |
 | `stale_days` | `8` | au-delà, le passage automatique est signalé en retard |
@@ -510,7 +515,7 @@ JSON, monté en lecture seule dans le container :
 
 ```yaml
 - type: doc-fetcher
-  file: /data/doc-fetcher/status.json
+  healthchecks: healthchecks
   service: paperless
   labels: { impots: Impôts }
   span: 2
@@ -518,28 +523,26 @@ JSON, monté en lecture seule dans le container :
   refresh: 3600
 ```
 
-Format du fichier (le plus récent d'abord ; `state` vaut `ok`, `failed` ou
-`action`) :
+Format d'un rapport (`state` vaut `ok`, `failed` ou `action`). Le passage seul,
+sans enveloppe ni `schedule`, est aussi accepté :
 
 ```json
 {
   "job": "doc-fetcher",
   "schedule": "chaque lundi à 7 h 30",
-  "runs": [
-    {
-      "started_at": "2026-10-19T07:30:01+02:00",
-      "finished_at": "2026-10-19T07:31:12+02:00",
-      "state": "ok",
-      "manual": false,
-      "sites": [
-        {
-          "name": "paie", "state": "ok", "found": 12, "missing": 1,
-          "imported": [{ "id": 412, "title": "Bulletin septembre 2026", "created": "2026-09-30" }],
-          "errors": []
-        }
-      ]
-    }
-  ]
+  "run": {
+    "started_at": "2026-10-19T07:30:01+02:00",
+    "finished_at": "2026-10-19T07:31:12+02:00",
+    "state": "ok",
+    "manual": false,
+    "sites": [
+      {
+        "name": "paie", "state": "ok", "found": 12, "missing": 1,
+        "imported": [{ "id": 412, "title": "Bulletin septembre 2026", "created": "2026-09-30" }],
+        "errors": []
+      }
+    ]
+  }
 }
 ```
 

@@ -44,6 +44,10 @@ services:
     name: Liseuse
     url: https://liseuse.example
     check: http://10.0.0.8:8083
+  controle:
+    name: Healthchecks
+    url: https://controle.example
+    check: http://10.0.0.20:8000
   lego:
     name: Lego
     url: https://lego.example
@@ -107,7 +111,7 @@ profiles:
           - { type: audiobookshelf, service: audio, span: 2, rows: 2 }
           - { type: immich, service: galerie, span: 2, rows: 2 }
           - { type: calibre-web, service: liseuse, span: 2, rows: 2 }
-          - { type: backups, url: http://10.0.0.9:3000/images/backup-status.json, aliases: { cuisine: cuisine }, span: 2, rows: 2 }
+          - { type: backups, healthchecks: controle, aliases: { cuisine: cuisine }, span: 2, rows: 2 }
           - { type: bricktracker, service: lego, span: 2, rows: 2 }
           - { type: weather, place: Village fictif, latitude: 45.0, longitude: 5.0, api: https://meteo.test, span: 2, rows: 2 }
           - { type: music-assistant, service: musique, span: 2, rows: 2 }

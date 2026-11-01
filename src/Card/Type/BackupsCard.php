@@ -6,18 +6,20 @@ use App\Card\AsCard;
 use App\Card\CardTypeInterface;
 use App\Dashboard\Model\CardInstance;
 use App\Dashboard\Model\Dashboard;
+use App\Dashboard\Model\ServiceDefinition;
 use App\Source\Backup\BackupEntry;
 use App\Source\Backup\BackupRun;
 use App\Source\Backup\BackupStatusClient;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * Fraîcheur des sauvegardes, d'après le statut de la sentinelle du homelab :
- * bilan des sauvegardes et dernier passage de restic (durée, volume ajouté). Les âges sont
- * recalculés à l'affichage, et la carte signale une sentinelle qui ne passe plus.
+ * Fraîcheur des sauvegardes, d'après le statut de la sentinelle du homelab,
+ * lu dans Healthchecks (rapport de son dernier ping) : bilan des sauvegardes et
+ * dernier passage de restic (durée, volume ajouté). Les âges sont recalculés à
+ * l'affichage, et la carte signale une sentinelle qui ne passe plus.
  *
  *     - type: backups
- *       url: http://10.0.0.16:3000/images/backup-status.json
+ *       healthchecks: healthchecks           # service Healthchecks du catalogue
  *       aliases: { bookstack: wiki, cwa: ebooks }   # nom sentinelle → service du catalogue
  *       span: 2
  *       rows: 2
@@ -38,11 +40,15 @@ final readonly class BackupsCard implements CardTypeInterface
     public function configureOptions(OptionsResolver $resolver, Dashboard $dashboard): void
     {
         $services = array_map('strval', array_keys($dashboard->services));
+        $withUrl = array_keys(array_filter($dashboard->services, static fn (ServiceDefinition $s): bool => null !== $s->url));
 
         $resolver
-            ->setRequired('url')
-            ->setAllowedTypes('url', 'string')
-            ->setInfo('url', 'adresse du backup-status.json publié par la sentinelle')
+            ->setRequired('healthchecks')
+            ->setAllowedValues('healthchecks', array_map('strval', $withUrl))
+            ->setInfo('healthchecks', 'service Healthchecks du catalogue, qui reçoit les pings de la sentinelle')
+            ->setDefault('check', 'sentinel')
+            ->setAllowedTypes('check', 'string')
+            ->setInfo('check', 'slug du check de la sentinelle dans Healthchecks')
             ->setDefault('aliases', [])
             ->setAllowedTypes('aliases', 'string[]')
             ->setAllowedValues('aliases', static fn (array $a): bool => [] === array_diff($a, $services))
@@ -59,7 +65,8 @@ final readonly class BackupsCard implements CardTypeInterface
 
     public function fetch(CardInstance $card, Dashboard $dashboard): array
     {
-        $status = $this->client->status($card->options['url']);
+        $healthchecks = $dashboard->services[$card->options['healthchecks']];
+        $status = $this->client->status($healthchecks->check ?? (string) $healthchecks->url, $card->options['check']);
         $now = new \DateTimeImmutable($this->now ?? 'now');
         $sinceCheck = ($now->getTimestamp() - $status->checkedAt->getTimestamp()) / 3600;
 

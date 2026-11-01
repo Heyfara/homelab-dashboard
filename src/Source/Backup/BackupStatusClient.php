@@ -2,40 +2,35 @@
 
 namespace App\Source\Backup;
 
+use App\Source\Healthchecks\HealthchecksClient;
 use App\Source\SourceUnavailableException;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * Statut écrit chaque matin par la sentinelle de sauvegarde du homelab
  * (rôle Ansible backup-sentinel, backup-freshness) : âge du dernier backup de
- * chaque service, comparé à un seuil, et les relevés des jours précédents.
+ * chaque service, comparé à un seuil, et les relevés des jours précédents. La
+ * sentinelle l'envoie comme rapport de son ping Healthchecks.
  */
 final readonly class BackupStatusClient
 {
     public function __construct(
-        private HttpClientInterface $httpClient,
-        /** Autorité de certification à approuver (mkcert en dev), sinon celles du système */
-        #[Autowire('%env(TLS_CA_FILE)%')]
-        private ?string $caFile = null,
+        private HealthchecksClient $healthchecks,
     ) {
     }
 
-    public function status(string $url): BackupStatus
+    /**
+     * @param string $baseUrl adresse de Healthchecks
+     * @param string $check   slug du check de la sentinelle
+     */
+    public function status(string $baseUrl, string $check): BackupStatus
     {
-        $options = ['timeout' => 5];
-        if (null !== $this->caFile && '' !== $this->caFile) {
-            $options['cafile'] = $this->caFile;
+        $report = $this->healthchecks->reports($baseUrl, $check, 1)[0] ?? null;
+        if (null === $report) {
+            throw new SourceUnavailableException(\sprintf('Aucun rapport de la sentinelle dans Healthchecks (check « %s »)', $check));
         }
-
-        try {
-            $json = $this->httpClient->request('GET', $url, $options)->toArray();
-        } catch (ExceptionInterface $e) {
-            throw new SourceUnavailableException(\sprintf('Statut des sauvegardes injoignable : %s', $e->getMessage()), previous: $e);
-        }
-        if (!isset($json['generated_at'], $json['services']) || !\is_array($json['services'])) {
-            throw new SourceUnavailableException(\sprintf('%s n\'est pas un statut de sentinelle (generated_at, services)', $url));
+        $json = json_decode($report, true);
+        if (!\is_array($json) || !isset($json['generated_at'], $json['services']) || !\is_array($json['services'])) {
+            throw new SourceUnavailableException(\sprintf('Le rapport du check « %s » n\'est pas un statut de sentinelle (generated_at, services)', $check));
         }
 
         return new BackupStatus(new \DateTimeImmutable($json['generated_at']), array_map(static fn (array $s): BackupEntry => new BackupEntry(
