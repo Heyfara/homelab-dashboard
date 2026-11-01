@@ -7,9 +7,9 @@ use App\Dashboard\Model\CardInstance;
 use App\Dashboard\Model\Dashboard;
 use App\Dashboard\Model\ServiceDefinition;
 use App\Dashboard\Model\Settings;
-use App\Source\DocFetcher\DocFetcherStatusReader;
 use App\Source\SourceUnavailableException;
 use App\Tests\Source\DocFetcher\DocFetcherStatusReaderTest;
+use App\Tests\Source\Healthchecks\HealthchecksClientTest;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\OptionsResolver\Exception\ExceptionInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -22,13 +22,14 @@ final class DocFetcherCardTest extends TestCase
     {
         $this->dashboard = new Dashboard(new Settings(4, 30), [], [
             'papiers' => new ServiceDefinition('papiers', 'Papiers', url: 'https://papiers.example', icon: 'sh-paperless-ngx'),
+            'controle' => new ServiceDefinition('controle', 'Healthchecks', url: 'https://healthchecks.test'),
         ], []);
     }
 
     /** « Maintenant » : deux jours après le dernier passage automatique, sauf mention. */
     private function card(string $now = '2026-10-21T09:00:00+02:00'): DocFetcherCard
     {
-        return new DocFetcherCard(new DocFetcherStatusReader(), $now);
+        return new DocFetcherCard(DocFetcherStatusReaderTest::reader(), $now);
     }
 
     /**
@@ -39,7 +40,7 @@ final class DocFetcherCardTest extends TestCase
         $resolver = new OptionsResolver();
         $card->configureOptions($resolver, $this->dashboard);
 
-        return new CardInstance('d', 'doc-fetcher', null, 2, 3600, $resolver->resolve(['file' => DocFetcherStatusReaderTest::FILE, ...$options]), 2);
+        return new CardInstance('d', 'doc-fetcher', null, 2, 3600, $resolver->resolve(['healthchecks' => 'controle', ...$options]), 2);
     }
 
     /**
@@ -57,7 +58,7 @@ final class DocFetcherCardTest extends TestCase
     public function testOptions(): void
     {
         self::assertEquals(
-            ['file' => DocFetcherStatusReaderTest::FILE, 'service' => null, 'labels' => [], 'stale_days' => 8, 'documents' => 6],
+            ['healthchecks' => 'controle', 'check' => 'doc-fetcher', 'runs' => 12, 'service' => null, 'labels' => [], 'stale_days' => 8, 'documents' => 6],
             $this->instance($this->card())->options,
         );
 
@@ -93,14 +94,8 @@ final class DocFetcherCardTest extends TestCase
         $data = $this->fetch(now: '2026-10-21T09:00:00+02:00', options: ['stale_days' => 7]);
         self::assertFalse($data['stale']);
 
-        $reader = new DocFetcherStatusReader();
-        $json = json_decode((string) file_get_contents(DocFetcherStatusReaderTest::FILE), true);
-        array_shift($json['runs']);
-        $file = tempnam(sys_get_temp_dir(), 'doc-fetcher');
-        file_put_contents($file, json_encode($json, \JSON_THROW_ON_ERROR));
-
-        $card = new DocFetcherCard($reader, '2026-10-21T09:00:00+02:00');
-        $data = $card->fetch($this->instance($card, ['file' => $file, 'stale_days' => 7]), $this->dashboard);
+        $card = new DocFetcherCard(DocFetcherStatusReaderTest::reader(\array_slice(HealthchecksClientTest::docFetcherReports(), 1)), '2026-10-21T09:00:00+02:00');
+        $data = $card->fetch($this->instance($card, ['stale_days' => 7]), $this->dashboard);
         self::assertTrue($data['stale']);
         self::assertTrue($data['lastRun']['manual']);
     }
@@ -139,10 +134,10 @@ final class DocFetcherCardTest extends TestCase
         self::assertNull($this->fetch()['documents'][0]['url']);
     }
 
-    public function testMissingStatusFile(): void
+    public function testUnknownCheck(): void
     {
         $this->expectException(SourceUnavailableException::class);
 
-        $this->fetch(['file' => '/nulle/part/status.json']);
+        $this->fetch(['check' => 'inconnu']);
     }
 }

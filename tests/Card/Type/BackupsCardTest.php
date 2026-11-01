@@ -8,9 +8,9 @@ use App\Dashboard\Model\Dashboard;
 use App\Dashboard\Model\ServiceDefinition;
 use App\Dashboard\Model\Settings;
 use App\Source\Backup\BackupStatusClient;
-use App\Tests\Source\Backup\BackupStatusClientTest;
+use App\Source\Healthchecks\HealthchecksClient;
+use App\Tests\Source\Healthchecks\HealthchecksClientTest;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\OptionsResolver\Exception\ExceptionInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -23,13 +23,14 @@ final class BackupsCardTest extends TestCase
         $this->dashboard = new Dashboard(new Settings(4, 30), [], [
             'cuisine' => new ServiceDefinition('cuisine', 'Cuisine', url: 'https://cuisine.example', icon: 'sh-mealie'),
             'photos' => new ServiceDefinition('photos', 'Photos', url: 'https://photos.example', icon: 'sh-immich'),
+            'controle' => new ServiceDefinition('controle', 'Healthchecks', url: 'https://healthchecks.test'),
         ], []);
     }
 
     /** « Maintenant » : 4 h après le passage de la sentinelle (08:00:01+02:00), sauf mention. */
     private function card(string $now = '2026-10-20T12:00:01+02:00'): BackupsCard
     {
-        return new BackupsCard(new BackupStatusClient(new MockHttpClient(BackupStatusClientTest::homelab())), $now);
+        return new BackupsCard(new BackupStatusClient(new HealthchecksClient(HealthchecksClientTest::httpClient(), 'cle-hc')), $now);
     }
 
     /**
@@ -40,7 +41,7 @@ final class BackupsCardTest extends TestCase
         $resolver = new OptionsResolver();
         $card->configureOptions($resolver, $this->dashboard);
 
-        return new CardInstance('b', 'backups', null, 2, 600, $resolver->resolve(['url' => 'http://statut/backup-status.json', ...$options]), 2);
+        return new CardInstance('b', 'backups', null, 2, 600, $resolver->resolve(['healthchecks' => 'controle', ...$options]), 2);
     }
 
     /**
@@ -57,10 +58,16 @@ final class BackupsCardTest extends TestCase
 
     public function testOptions(): void
     {
-        self::assertEquals(['url' => 'http://statut/backup-status.json', 'aliases' => [], 'stale_hours' => 26], $this->instance($this->card())->options);
+        self::assertEquals(['healthchecks' => 'controle', 'check' => 'sentinel', 'aliases' => [], 'stale_hours' => 26], $this->instance($this->card())->options);
 
         $this->expectException(ExceptionInterface::class);
         $this->instance($this->card(), ['aliases' => ['galerie' => 'inconnu']]);
+    }
+
+    public function testHealthchecksMustBeAServiceWithUrl(): void
+    {
+        $this->expectException(ExceptionInterface::class);
+        $this->instance($this->card(), ['healthchecks' => 'inconnu']);
     }
 
     public function testDescribe(): void
@@ -91,6 +98,7 @@ final class BackupsCardTest extends TestCase
         $this->dashboard = new Dashboard(new Settings(4, 30), [], [
             'cuisine' => new ServiceDefinition('cuisine', 'zCuisine'),
             'restic' => new ServiceDefinition('restic', 'aRestic'),
+            'controle' => new ServiceDefinition('controle', 'Healthchecks', url: 'https://healthchecks.test'),
         ], []);
 
         self::assertSame(['aRestic', 'zCuisine'], \array_slice(array_column($this->fetch()['entries'], 'label'), 2));

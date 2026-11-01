@@ -6,29 +6,32 @@ use App\Source\Backup\BackupEntry;
 use App\Source\Backup\BackupRun;
 use App\Source\Backup\ResticRun;
 use App\Source\Backup\BackupStatusClient;
+use App\Source\Healthchecks\HealthchecksClient;
 use App\Source\SourceUnavailableException;
+use App\Tests\Source\Healthchecks\HealthchecksClientTest;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpClient\MockHttpClient;
-use Symfony\Component\HttpClient\Response\MockResponse;
 
 final class BackupStatusClientTest extends TestCase
 {
-    private const URL = 'http://statut:3000/images/backup-status.json';
+    private const URL = 'https://healthchecks.test';
 
-    private function client(?MockResponse $response = null): BackupStatusClient
+    /**
+     * @param string|null $report rapport de la sentinelle, sinon celui de tests/fixtures/backup-status.json
+     */
+    private function client(?string $report = null): BackupStatusClient
     {
-        return new BackupStatusClient(new MockHttpClient($response ?? self::homelab()));
+        return new BackupStatusClient(new HealthchecksClient(HealthchecksClientTest::httpClient(null === $report ? null : ['sentinel' => [$report]]), 'cle-hc'));
     }
 
-    /** Statut d'une sentinelle fictive, réutilisé par FakeHomelab. */
-    public static function homelab(): MockResponse
+    /** @return array<string, mixed> */
+    private static function fixture(): array
     {
-        return new MockResponse((string) file_get_contents(__DIR__.'/../../fixtures/backup-status.json'), ['response_headers' => ['Content-Type' => 'application/json']]);
+        return json_decode((string) file_get_contents(__DIR__.'/../../fixtures/backup-status.json'), true);
     }
 
     public function testStatus(): void
     {
-        $status = $this->client()->status(self::URL);
+        $status = $this->client()->status(self::URL, 'sentinel');
 
         self::assertEquals(new \DateTimeImmutable('2026-10-20T08:00:01+02:00'), $status->checkedAt);
         self::assertCount(4, $status->entries);
@@ -38,7 +41,7 @@ final class BackupStatusClientTest extends TestCase
 
     public function testHistoryOldestFirst(): void
     {
-        $history = $this->client()->status(self::URL)->history;
+        $history = $this->client()->status(self::URL, 'sentinel')->history;
 
         self::assertCount(3, $history);
         self::assertEquals(new BackupRun(new \DateTimeImmutable('2026-10-19T08:00:01+02:00'), ['cuisine' => 'ok', 'galerie' => 'late', 'restic' => 'ok', 'notes' => 'ok']), $history[1]);
@@ -46,10 +49,10 @@ final class BackupStatusClientTest extends TestCase
 
     public function testSentinelWithoutHistory(): void
     {
-        $json = json_decode((string) file_get_contents(__DIR__.'/../../fixtures/backup-status.json'), true);
+        $json = self::fixture();
         unset($json['history']);
 
-        self::assertSame([], $this->client(new MockResponse(json_encode($json, \JSON_THROW_ON_ERROR)))->status(self::URL)->history);
+        self::assertSame([], $this->client(json_encode($json, \JSON_THROW_ON_ERROR))->status(self::URL, 'sentinel')->history);
     }
 
     public function testLastResticRun(): void
@@ -58,39 +61,40 @@ final class BackupStatusClientTest extends TestCase
             new \DateTimeImmutable('2026-10-20T03:15:01+02:00'),
             new \DateTimeImmutable('2026-10-20T03:51:41+02:00'),
             2200, 0, 2139, 110080000, 493, 6101, 66834, 471063000000, '68e6e1036eba86c0', 0, 28,
-        ), $this->client()->status(self::URL)->restic);
+        ), $this->client()->status(self::URL, 'sentinel')->restic);
     }
 
     public function testResticRunWithoutSummaryNorCopy(): void
     {
-        $json = json_decode((string) file_get_contents(__DIR__.'/../../fixtures/backup-status.json'), true);
+        $json = self::fixture();
         $json['restic'] = ['started_at' => '2026-10-20T03:15:01+02:00', 'finished_at' => '2026-10-20T03:16:00+02:00', 'duration_seconds' => 59, 'rc' => 3, 'backup' => ['rc' => 3, 'seconds' => 58], 'b2_copy' => ['rc' => null, 'seconds' => null]];
 
-        $run = $this->client(new MockResponse(json_encode($json, \JSON_THROW_ON_ERROR)))->status(self::URL)->restic;
+        $run = $this->client(json_encode($json, \JSON_THROW_ON_ERROR))->status(self::URL, 'sentinel')->restic;
 
         self::assertSame([3, null, null], [$run?->rc, $run?->dataAdded, $run?->copyRc]);
     }
 
     public function testSentinelWithoutResticStatus(): void
     {
-        $json = json_decode((string) file_get_contents(__DIR__.'/../../fixtures/backup-status.json'), true);
+        $json = self::fixture();
         $json['restic'] = null;
 
-        self::assertNull($this->client(new MockResponse(json_encode($json, \JSON_THROW_ON_ERROR)))->status(self::URL)->restic);
+        self::assertNull($this->client(json_encode($json, \JSON_THROW_ON_ERROR))->status(self::URL, 'sentinel')->restic);
     }
 
-    public function testNotASentinelFile(): void
+    public function testNotASentinelReport(): void
     {
         $this->expectException(SourceUnavailableException::class);
         $this->expectExceptionMessage('pas un statut de sentinelle');
 
-        $this->client(new MockResponse('{"hello": "world"}'))->status(self::URL);
+        $this->client('{"hello": "world"}')->status(self::URL, 'sentinel');
     }
 
-    public function testMissingFile(): void
+    public function testSentinelNeverReported(): void
     {
-        $this->expectExceptionMessage('Statut des sauvegardes injoignable');
+        $this->expectException(SourceUnavailableException::class);
+        $this->expectExceptionMessage('Aucun rapport de la sentinelle');
 
-        $this->client(new MockResponse('', ['http_code' => 404]))->status(self::URL);
+        (new BackupStatusClient(new HealthchecksClient(HealthchecksClientTest::httpClient(['sentinel' => []]), 'cle-hc')))->status(self::URL, 'sentinel');
     }
 }

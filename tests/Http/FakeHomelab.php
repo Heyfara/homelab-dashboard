@@ -3,10 +3,10 @@
 namespace App\Tests\Http;
 
 use App\Tests\Source\Audiobookshelf\AudiobookshelfClientTest;
-use App\Tests\Source\Backup\BackupStatusClientTest;
 use App\Tests\Source\BrickTracker\BrickTrackerClientTest;
 use App\Tests\Source\Crafty\CraftyClientTest;
 use App\Tests\Source\Gw2\Gw2ClientTest;
+use App\Tests\Source\Healthchecks\HealthchecksClientTest;
 use App\Tests\Source\Jelu\JeluClientTest;
 use App\Tests\Source\MusicAssistant\MusicAssistantClientTest;
 use App\Tests\Source\OpenMeteo\OpenMeteoClientTest;
@@ -99,8 +99,11 @@ final class FakeHomelab
             return CalibreWebClientTest::homelab((string) $path, $query);
         }
 
-        if ('http://10.0.0.9:3000/images/backup-status.json' === $url) {
-            return BackupStatusClientTest::homelab();
+        // Healthchecks renvoie des adresses de rapports absolues, sur son SITE_ROOT.
+        if (str_starts_with($url, 'http://10.0.0.20:8000/') || str_starts_with($url, 'https://healthchecks.test/')) {
+            parse_str((string) parse_url($url, \PHP_URL_QUERY), $query);
+
+            return HealthchecksClientTest::homelab((string) $path, $query);
         }
 
         if (str_starts_with($url, 'http://10.0.0.10:3333/')) {
