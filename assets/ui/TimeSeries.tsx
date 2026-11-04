@@ -19,8 +19,26 @@ const H = 40
  * Chaque courbe est remplie d'un dégradé qui s'efface vers le bas (plus léger à
  * plusieurs séries) ; une mesure manquante coupe la ligne. `clipClassName`
  * arrondit la zone tracée (courbe jusqu'aux bords d'un panneau) sans couper l'infobulle.
+ * `formatAt` : date de l'infobulle (date et heure par défaut) ; `notes` : une
+ * précision par mesure, sous la date (le tarif du jour…).
  */
-export function TimeSeries({ label, at, series, max, clipClassName = '' }: { label: string; at: string[]; series: Series[]; max?: number; clipClassName?: string }) {
+export function TimeSeries({
+  label,
+  at,
+  series,
+  max,
+  clipClassName = '',
+  formatAt = formatDateTime,
+  notes,
+}: {
+  label: string
+  at: string[]
+  series: Series[]
+  max?: number
+  clipClassName?: string
+  formatAt?: (at: string) => string
+  notes?: string[]
+}) {
   const [index, setIndex] = useState<number | null>(null)
   const gradientId = useId()
   const n = at.length
@@ -95,7 +113,10 @@ export function TimeSeries({ label, at, series, max, clipClassName = '' }: { lab
             className="pointer-events-none absolute bottom-full z-10 mb-1 min-w-max rounded-lg bg-white px-2.5 py-1.5 text-xs shadow-lg ring-1 ring-zinc-200 dark:bg-slate-800 dark:ring-slate-700"
             style={index > (n - 1) / 2 ? { right: `${100 - (index / (n - 1)) * 100}%` } : { left: `${(index / (n - 1)) * 100}%` }}
           >
-            <p className="mb-0.5 text-zinc-500 dark:text-slate-400">{formatDateTime(at[index]!)}</p>
+            <p className="mb-0.5 text-zinc-500 dark:text-slate-400">
+              {formatAt(at[index]!)}
+              {notes?.[index] && ` · ${notes[index]}`}
+            </p>
             {series.map((s) => (
               <p key={s.label} className="flex items-center gap-1.5">
                 <span className={`h-0.5 w-3 rounded-full bg-current ${s.className}`} aria-hidden="true" />

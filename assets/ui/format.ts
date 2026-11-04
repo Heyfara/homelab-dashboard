@@ -44,6 +44,11 @@ export function formatDuration(seconds: number): string {
 
 const dateTime = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 
+const day = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
+
+/** Jour « AAAA-MM-JJ » → « 1 oct. 2026 » (sans décalage de fuseau) */
+export const formatDay = (date: string) => day.format(new Date(`${date}T00:00:00Z`))
+
 /** « 19 oct., 21:30 » */
 export const formatDateTime = (iso: string) => dateTime.format(new Date(iso))
 

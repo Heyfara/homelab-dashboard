@@ -10,6 +10,8 @@ parameters:
     # Clés et réglages saisis dans « Ma config » (ProfileCredentials, ProfileSettings), si PROFILE_DATA_DIR est vide.
     # Hors de public/ : jamais servi par nginx. En prod : un volume, sauvegardé.
     profile_data_default_dir: '%kernel.project_dir%/var/profiles'
+    # Relevés quotidiens (DailyHistory), si HISTORY_DATA_DIR est vide. En prod : un volume, sauvegardé.
+    history_data_default_dir: '%kernel.project_dir%/var/history'
 
 services:
     # default configuration for services in *this* file
@@ -28,3 +30,4 @@ services:
 when@test:
     parameters:
         profile_data_default_dir: '%kernel.cache_dir%/profiles'
+        history_data_default_dir: '%kernel.cache_dir%/history'

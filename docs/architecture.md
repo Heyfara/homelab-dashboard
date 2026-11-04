@@ -25,6 +25,8 @@ navigateur ─▶ Caddy (TLS, dashboard.example) ─▶ nginx partagé ─┬─
 | `Card/Type/` | un fichier par type de carte |
 | `Source/` | clients des sources : `Beszel/` (API du hub), `Container/` (état des containers), `Http/` (sonde), API des services ; `Credentials` (clés par variable d'environnement) |
 | `Profile/` | « Ma config » : coffre chiffré par profil (`ProfileCredentials`), réglages non secrets (`ProfileSettings`, dont le lieu de la météo `WeatherLocation`), ordre des cartes (`ProfileLayout`), fichiers privés par profil (`ProfileFiles`), services dont on peut saisir sa clé (`CredentialKindInterface`), choix de la clé d'une carte (`CardCredentials`) |
+| `History/` | relevés quotidiens que les sources ne gardent pas (`DailyHistory` : taille des buckets B2) |
+| `Storage/` | fichiers JSON privés écrits sous verrou (`JsonFiles`), base de `ProfileFiles` et `DailyHistory` |
 | `Controller/` | routes de lecture, « Ma config » et ordre des cartes (seules écritures), sans logique |
 | `Command/` | `dashboard:lint`, `dashboard:card-types` |
 | `EventListener/` | toute erreur sous `/api` répond en JSON |
@@ -63,7 +65,15 @@ par chaque personne depuis son dashboard :
 
 `ProfileFiles` les range dans `PROFILE_DATA_DIR` (vide = `var/profiles`) :
 `<profil>.credentials.json`, `<profil>.settings.json` et `<profil>.layout.json`, hors de `public/`,
-droits `0600` et dossier `0700`, écriture atomique sous verrou.
+droits `0600` et dossier `0700`, écriture atomique sous verrou (`JsonFiles`).
+
+Seule autre écriture, faite par le serveur lui-même : les **relevés
+quotidiens** (`DailyHistory`) des données dont la source ne garde pas
+l'historique, dans `HISTORY_DATA_DIR` (vide = `var/history`), un fichier par
+série (`backblaze.json` : `{"2026-11-04": {"<bucket>": <octets>}}`), une
+mesure par jour, trois ans au plus. Un fichier JSON suffit à ce volume (une
+ligne par jour, lue en entier) ; une base SQLite ne se justifierait qu'avec de
+nombreuses séries ou des requêtes.
 
 ### Ordre des cartes
 
