@@ -336,27 +336,38 @@ containers, de problèmes, et de containers masqués faute de place.
 
 Stockage Backblaze B2 : **coût mensuel estimé** (et annuel), volume stocké,
 nombre de fichiers, date du dernier envoi (en ambre au-delà de `stale_hours` :
-une copie de nuit manquée). Avec un seul bucket, tout tient sur une rangée
-(`span: 2, rows: 1`) ; avec plusieurs, une ligne par bucket (`rows: 2`).
+une copie de nuit manquée). Avec un seul bucket, les chiffres tiennent sur une
+rangée (`span: 2, rows: 1`) ; avec plusieurs, une ligne par bucket. À partir de
+`rows: 2`, un graphique montre l'**évolution du coût mensuel** (date et tarif
+du jour au survol).
 
 | Option | Défaut | Rôle |
 |---|---|---|
 | `buckets` | `[]` | buckets à afficher ; vide = tous ceux que la clé voit |
-| `price_per_tb` | `6.95` | tarif du stockage par To (décimal) et par mois |
+| `price_per_tb` | `{ 2023-10-03: 6, 2026-10-01: 6.95 }` | tarif du stockage par To (décimal) et par mois : un nombre, ou des tarifs datés `{ AAAA-MM-JJ: tarif }`, chacun en vigueur à partir de sa date |
 | `free_gb` | `10` | Go offerts |
 | `currency` | `$` | devise affichée |
 | `vat` | `0` | taux de TVA (%) que Backblaze ajoute à la facture, 20 en France ; le montant affiché est alors TTC (hors taxes au survol) |
 | `stale_hours` | `36` | âge au-delà duquel le dernier envoi est signalé |
+| `history_days` | `365` | jours d'historique du coût affichés |
 
 ```yaml
-- { type: backblaze, span: 2, rows: 1, refresh: 86400 }   # une fois par jour
+- { type: backblaze, span: 2, rows: 2, refresh: 86400 }   # une fois par jour
 ```
 
 - **Le coût est une estimation** : B2 n'expose pas sa facturation par API (les
   rapports d'usage sont réservés aux comptes partenaires). Calcul : (Go stockés
   − Go offerts) / 1000 × `price_per_tb`. Tarif officiel 6,95 $/To depuis le
-  2026-10-01 ; le corriger dans le YAML s'il change. Les téléchargements sont
-  gratuits jusqu'à 3× le volume stocké.
+  2026-10-01 ; s'il change, **ajouter** une date dans `price_per_tb` plutôt que
+  remplacer la valeur : l'historique garde ainsi le tarif de chaque jour. Les
+  téléchargements sont gratuits jusqu'à 3× le volume stocké.
+- **Historique** : ni le coût ni la taille passés ne sont disponibles chez B2
+  (le `prune` de restic efface les anciennes données). La carte relève donc la
+  taille de chaque bucket au plus une fois par jour (à chaque lecture de B2, soit
+  `refresh`) dans `HISTORY_DATA_DIR/backblaze.json`, et recalcule le coût de
+  chaque jour au tarif de ce jour (TVA et Go offerts actuels). L'historique ne
+  commence qu'au premier relevé ; un jour sans visite du dashboard n'a pas de
+  relevé.
 - **Taille** : B2 n'a pas non plus de taille de bucket ; elle est recalculée en
   listant toutes les versions de fichiers (ce qui est facturé), 1 appel par
   10 000 fichiers (classe C : 2 500 gratuits par jour).

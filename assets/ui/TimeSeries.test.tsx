@@ -82,4 +82,11 @@ describe('TimeSeries', () => {
 
     screen.getByText('Pas encore de mesures')
   })
+
+  it('date de l’infobulle dans le format donné', () => {
+    const { container } = render(<TimeSeries label="Coût" at={['2026-11-03', '2026-11-04']} formatAt={(d) => `jour ${d}`} series={[{ label: 'coût', values: [1, 2], className: '', format: String }]} />)
+
+    hover(container.firstElementChild!, 1)
+    expect(screen.getByRole('tooltip').textContent).toContain('jour 2026-11-04')
+  })
 })
