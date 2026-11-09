@@ -557,6 +557,39 @@ sans enveloppe ni `schedule`, est aussi accepté :
 }
 ```
 
+### `dagu`
+
+Tâches planifiées du homelab, lues dans [Dagu](https://github.com/dagucloud/dagu)
+(rôle Ansible `service-dagu`). Seules les tâches qui portent le label `label`
+s'affichent ; côté Ansible, c'est le label `dashboard` de `dagu_jobs`.
+
+- **En-tête** : lien vers Dagu, et le nombre de tâches dont le dernier passage
+  a échoué.
+- **Une ligne par tâche** : état du dernier passage (réussie, en partie : une
+  étape en échec et les autres faites, échec, en cours, jamais lancée,
+  suspendue), quand (« il y a 5 h », « depuis 2 h » s'il tourne encore, « à la
+  main »), planning en clair et prochain passage, et une pastille par passage
+  récent (vert, ambre, rouge, bleu en cours ; atténuée si lancé à la main).
+  La description de la tâche s'affiche au survol.
+- **Clic sur une tâche** : sa page dans Dagu (journaux de chaque étape, bouton
+  de relance). La carte ne lance rien elle-même.
+
+| Option | Défaut | Rôle |
+|---|---|---|
+| `service` | obligatoire | service Dagu du catalogue (`check` sert d'adresse pour l'API s'il est donné) ; clé dans `DAGU_API_KEY`, en rôle viewer (lecture seule) |
+| `label` | `dashboard` | seules les tâches qui portent ce label s'affichent |
+| `runs` | `10` | nombre de passages lus par tâche (historique) |
+| `titles` | `{}` | nom de la tâche → nom affiché ; sinon le nom avec une majuscule |
+
+```yaml
+- type: dagu
+  service: dagu
+  titles: { backup-nuit: Sauvegardes de la nuit, doc-fetcher: Import des documents }
+  span: 2
+  rows: 2
+  refresh: 60
+```
+
 ### `bricktracker`
 
 Collection Lego de BrickTracker : nombre de sets, de pièces et de minifigs,
