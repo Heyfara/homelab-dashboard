@@ -50,7 +50,7 @@ const pct = (v: number) => `${formatNumber(v)} %`
 const celsius = (v: number) => `${formatNumber(Math.round(v))} °C`
 
 /** Tailles telles que Beszel les donne (Go binaires) : 1,7 To au-delà de 1000 Go. */
-function formatGiB(gb: number): [string, 'Go' | 'To'] {
+export function formatGiB(gb: number): [string, 'Go' | 'To'] {
   return gb >= 1000 ? [formatNumber(gb / 1024), 'To'] : [formatNumber(gb), 'Go']
 }
 

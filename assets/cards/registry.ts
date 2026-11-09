@@ -23,6 +23,7 @@ import { MusicAssistantCard } from './MusicAssistantCard'
 import { WeatherCard } from './WeatherCard'
 import { RommCard } from './RommCard'
 import { ServiceCard } from './ServiceCard'
+import { StorageCard } from './StorageCard'
 
 /**
  * Composant d'un type de carte. P = props fixes (describe() côté PHP),
@@ -45,6 +46,7 @@ export const cardRegistry: Record<string, CardComponent> = {
   qbittorrent: QbittorrentCard,
   c411: C411Card,
   machine: MachineCard,
+  storage: StorageCard,
   'github-prs': GithubPullRequestsCard,
   containers: ContainersCard,
   backblaze: BackblazeCard,

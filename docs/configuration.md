@@ -263,6 +263,35 @@ Tailles comme dans Beszel (Go binaires). Réseau : envoyé (violet) et reçu
 (bleu), en octets/s. Température : le capteur le plus chaud. Une machine hors
 ligne garde ses dernières valeurs connues.
 
+### `storage`
+
+Remplissage d'un volume suivi par Beszel (un des `EXTRA_FILESYSTEMS` de
+l'agent) : jauge (mêmes couleurs que `machine`), utilisé / total, place libre,
+courbe de la place utilisée sur la période, rythme de croissance (« +150
+Go/mois ») et délai estimé avant qu'il soit plein. Le rythme est la pente de la
+droite des moindres carrés sur les mesures de la période ; il n'apparaît
+qu'après 2 jours de mesures, et le délai seulement si le volume grossit.
+Les valeurs actuelles viennent de la dernière minute ; la courbe et le rythme
+ignorent les tranches dont le total s'écarte de plus de 1 % du total actuel
+(tranche partielle, voir `depannage.md`, ou disque ajouté : la tendance
+repart alors de zéro).
+
+| Option | Défaut | Rôle |
+|---|---|---|
+| `host` | obligatoire | machine de `hosts`, avec un système Beszel |
+| `filesystem` | obligatoire | nom du volume dans Beszel |
+| `period` | `30d` | `7d` ou `30d` (résolutions 120 et 480 min de Beszel) |
+
+```yaml
+- { type: storage, host: beta, filesystem: NAS, title: NAS, span: 2 }
+```
+
+Le nom est celui que montre Beszel : par défaut le périphérique
+(`sdb1`, `ata-…`), qui change avec le disque. Pour un nom stable, le donner
+à l'agent : `EXTRA_FILESYSTEMS=/mnt/raid__NAS`. Un nom inconnu affiche
+sur la carte la liste des volumes suivis. Sur un pool btrfs raid1, Beszel
+donne la capacité utile (après duplication), pas la somme des disques.
+
 ### `github-prs`
 
 Pull requests ouvertes d'un ou plusieurs dépôts GitHub, les plus récemment
