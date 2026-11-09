@@ -563,8 +563,8 @@ Tâches planifiées du homelab, lues dans [Dagu](https://github.com/dagucloud/da
 (rôle Ansible `service-dagu`). Seules les tâches qui portent le label `label`
 s'affichent ; côté Ansible, c'est le label `dashboard` de `dagu_jobs`.
 
-- **En-tête** : lien vers Dagu, et le nombre de tâches dont le dernier passage
-  a échoué.
+- **En-tête** : nombre de tâches dont le dernier passage a échoué, et lien
+  « Ouvrir Dagu ».
 - **Une ligne par tâche** : état du dernier passage (réussie, en partie : une
   étape en échec et les autres faites, échec, en cours, jamais lancée,
   suspendue), quand (« il y a 5 h », « depuis 2 h » s'il tourne encore, « à la

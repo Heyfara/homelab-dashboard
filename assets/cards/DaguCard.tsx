@@ -58,17 +58,16 @@ export const DaguCard: CardComponent<{ title: string; url: string }, DaguData> =
     <div className="flex h-full flex-col gap-2.5">
       <header className="flex items-center gap-2">
         <ClockIcon className="size-5 shrink-0 text-zinc-500 dark:text-slate-400" />
-        <h3 className="min-w-0 truncate font-semibold text-zinc-900 dark:text-slate-50">
-          <ExternalLink href={card.props.url} className="hover:underline">
-            {card.title ?? card.props.title}
-          </ExternalLink>
-        </h3>
+        <h3 className="min-w-0 truncate font-semibold text-zinc-900 dark:text-slate-50">{card.title ?? card.props.title}</h3>
         <span className="flex-1" />
         {failing > 0 && (
           <span role="alert" className="shrink-0 text-xs font-medium text-rose-700 dark:text-rose-300">
             {failing} en échec
           </span>
         )}
+        <ExternalLink href={card.props.url} className="shrink-0 rounded-md px-2 py-0.5 text-sm text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 focus-visible:outline-2 focus-visible:outline-indigo-500 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100">
+          Ouvrir Dagu →
+        </ExternalLink>
       </header>
 
       {data === null ? (

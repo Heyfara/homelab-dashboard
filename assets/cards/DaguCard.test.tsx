@@ -77,6 +77,12 @@ describe('DaguCard', () => {
     expect(runs[1]!.getAttribute('aria-label')).toContain('(à la main)')
   })
 
+  it('lien vers Dagu dans l’en-tête', () => {
+    render(<DaguCard card={card} result={result(data)} />)
+
+    expect(screen.getByRole('link', { name: 'Ouvrir Dagu →' }).getAttribute('href')).toBe('https://taches.example')
+  })
+
   it('tâches en échec comptées dans l’en-tête', () => {
     render(<DaguCard card={card} result={result(data)} />)
 
