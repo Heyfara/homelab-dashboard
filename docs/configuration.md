@@ -12,6 +12,7 @@ Variables d'environnement liées :
 | `JELLYFIN_API_KEY` | clé API Jellyfin dédiée au dashboard (cartes `jellyfin-latest`) |
 | `QBITTORRENT_USERNAME`, `QBITTORRENT_PASSWORD` | compte WebUI qBittorrent (cartes `qbittorrent`) |
 | `C411_API_SECRET` | clé API C411 avec le scope « Profil (lecture) » (cartes `c411`) |
+| `ULTRACC_API_TOKEN` | jeton du script Ultra-API d'Ultra.cc (cartes `ultracc`) |
 | `GITHUB_TOKEN` | jeton GitHub en lecture seule (cartes `github-prs`) ; vide = dépôts publics seulement |
 | `B2_KEY_ID`, `B2_APPLICATION_KEY` | clé d'application Backblaze B2 en lecture seule (cartes `backblaze`) |
 | `MEALIE_API_TOKEN` | jeton d'API Mealie (cartes `mealie`) |
@@ -296,6 +297,32 @@ Le nom est celui que montre Beszel : par défaut le périphérique
 à l'agent : `EXTRA_FILESYSTEMS=/mnt/raid__NAS`. Un nom inconnu affiche
 sur la carte la liste des volumes suivis. Sur un pool btrfs raid1, Beszel
 donne la capacité utile (après duplication), pas la somme des disques.
+
+### `ultracc`
+
+Abonnement à une seedbox Ultra.cc : deux jauges. *Stockage* : utilisé /
+total et place libre (ambre dès 85 %, rouge dès 95 %). *Trafic du mois* :
+pourcentage consommé, volume si `traffic_quota` est donné, date de la remise à
+zéro et projection au rythme actuel jusqu'à cette date (« ≈ 76 % à ce
+rythme »). Au-delà du quota, Ultra.cc bride le débit : la jauge passe ambre
+dès 85 % projetés, rouge au-delà de 100 %. Pas de projection le premier jour
+après la remise à zéro (trop peu de recul).
+
+| Option | Défaut | Rôle |
+|---|---|---|
+| `service` | obligatoire | service du catalogue dont l'`url` est sur l'hôte Ultra.cc (seuls schéma et hôte comptent ; le titre le lie) |
+| `traffic_quota` | aucun | quota de trafic mensuel de l'offre, en Go (l'API ne donne qu'un pourcentage) |
+
+```yaml
+- { type: ultracc, service: seedbox, traffic_quota: 2000, rows: 2, refresh: 900 }
+```
+
+La source est le script non officiel « Ultra-API », à installer en SSH sur la
+seedbox (`bash <(wget -qO- https://scripts.ultra.cc/util-v2/Ultra-API/main.sh)`,
+choix 1 ; le choix 4 réaffiche le jeton). La carte lit
+`https://<hôte>/ultra-api/total-stats` — avec un tiret, la doc d'Ultra.cc
+écrit `total_stats`, qui répond 404. Le stockage est donné en Gio (`quota
+-s`), le trafic seulement en pourcentage.
 
 ### `github-prs`
 

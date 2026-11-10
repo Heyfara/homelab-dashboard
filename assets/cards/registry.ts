@@ -24,6 +24,7 @@ import { WeatherCard } from './WeatherCard'
 import { RommCard } from './RommCard'
 import { ServiceCard } from './ServiceCard'
 import { StorageCard } from './StorageCard'
+import { UltraccCard } from './UltraccCard'
 
 /**
  * Composant d'un type de carte. P = props fixes (describe() côté PHP),
@@ -47,6 +48,7 @@ export const cardRegistry: Record<string, CardComponent> = {
   c411: C411Card,
   machine: MachineCard,
   storage: StorageCard,
+  ultracc: UltraccCard,
   'github-prs': GithubPullRequestsCard,
   containers: ContainersCard,
   backblaze: BackblazeCard,
