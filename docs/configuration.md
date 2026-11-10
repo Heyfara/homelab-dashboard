@@ -312,9 +312,10 @@ jour après la remise à zéro (trop peu de recul).
 
 | Option | Défaut | Rôle |
 |---|---|---|
-| `service` | obligatoire | service du catalogue dont l'`url` est sur l'hôte Ultra.cc (seuls schéma et hôte comptent ; le titre le lie) |
+| `service` | obligatoire | service du catalogue dont l'`url` est sur l'hôte Ultra.cc (seuls schéma et hôte comptent) |
 | `traffic_quota` | aucun | quota de trafic mensuel de l'offre, en Go (l'API ne donne qu'un pourcentage) |
 | `icon` | celle du service | icône de la carte ; `ultracc.svg` = logo d'Ultra.cc livré avec le dashboard |
+| `link` | `https://cp.ultra.cc/` | adresse du lien « Ouvrir Ultra.cc → » |
 
 ```yaml
 - { type: ultracc, service: seedbox, traffic_quota: 2000, icon: ultracc.svg, span: 2, refresh: 900 }
@@ -325,7 +326,8 @@ seedbox (`bash <(wget -qO- https://scripts.ultra.cc/util-v2/Ultra-API/main.sh)`,
 choix 1 ; le choix 4 réaffiche le jeton). La carte lit
 `https://<hôte>/ultra-api/total-stats` — avec un tiret, la doc d'Ultra.cc
 écrit `total_stats`, qui répond 404. Le stockage est donné en Gio (`quota
--s`), le trafic seulement en pourcentage.
+-s`), le trafic seulement en pourcentage. La carte affiche des Go décimaux,
+comme le panneau d'Ultra.cc : 932 Gio de l'API = « 1001 GB » du panneau.
 
 ### `github-prs`
 

@@ -19,6 +19,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  *       service: seedbox        # service avec une url sur l'hôte Ultra.cc
  *       traffic_quota: 2000     # facultatif : quota de trafic en Go, pour afficher le volume
  *       icon: ultracc.svg       # facultatif : remplace l'icône du service
+ *       link: https://cp.ultra.cc/   # lien « Ouvrir » (défaut : le panneau Ultra.cc)
  *       span: 2
  *       refresh: 900
  */
@@ -48,14 +49,18 @@ final readonly class UltraccCard implements CardTypeInterface
             ->setInfo('traffic_quota', 'quota de trafic mensuel en Go (l\'API ne donne qu\'un pourcentage)')
             ->setDefault('icon', null)
             ->setAllowedTypes('icon', ['null', 'string'])
-            ->setInfo('icon', 'icône de la carte (même convention que les services), sinon celle du service');
+            ->setInfo('icon', 'icône de la carte (même convention que les services), sinon celle du service')
+            ->setDefault('link', 'https://cp.ultra.cc/')
+            ->setAllowedTypes('link', 'string')
+            ->setAllowedValues('link', static fn (string $u): bool => 1 === preg_match('#^https?://#', $u))
+            ->setInfo('link', 'adresse du lien « Ouvrir Ultra.cc »');
     }
 
     public function describe(CardInstance $card, Dashboard $dashboard): array
     {
         $service = $dashboard->services[$card->options['service']];
 
-        return ['title' => $card->title ?? $service->name, 'url' => $service->url, 'icon' => $card->options['icon'] ?? $service->icon];
+        return ['title' => $card->title ?? $service->name, 'link' => $card->options['link'], 'icon' => $card->options['icon'] ?? $service->icon];
     }
 
     public function fetch(CardInstance $card, Dashboard $dashboard): array
@@ -72,10 +77,10 @@ final readonly class UltraccCard implements CardTypeInterface
 
         return [
             'storage' => [
-                'used' => $stats->usedGiB,
-                'total' => $stats->totalGiB,
-                'free' => $stats->freeGiB,
-                'percent' => $stats->totalGiB > 0 ? round($stats->usedGiB / $stats->totalGiB * 100, 2) : null,
+                'used' => $stats->usedBytes,
+                'total' => $stats->totalBytes,
+                'free' => $stats->freeBytes,
+                'percent' => $stats->totalBytes > 0 ? round($stats->usedBytes / $stats->totalBytes * 100, 2) : null,
             ],
             'traffic' => [
                 'percent' => $stats->trafficUsedPercent,

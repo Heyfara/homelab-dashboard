@@ -37,15 +37,16 @@ final class UltraccClientTest extends TestCase
         self::assertSame(['GET', 'https://tom.serveur.usbx.example/ultra-api/total-stats'], [$method, $url]);
         self::assertContains('Authorization: Bearer jeton', $options['headers']);
 
-        self::assertSame(632.0, $stats->usedGiB);
-        self::assertSame(932.0, $stats->totalGiB);
-        self::assertSame(300.0, $stats->freeGiB);
+        // L'API compte en Gio (quota -s) : converti en octets.
+        self::assertSame(632 * 1024 ** 3, $stats->usedBytes);
+        self::assertSame(932 * 1024 ** 3, $stats->totalBytes);
+        self::assertSame(322122547200, $stats->freeBytes);
         self::assertSame(24.5, $stats->trafficUsedPercent);
         self::assertEquals(new \DateTimeImmutable('2026-03-10T00:00:00Z'), $stats->lastTrafficReset);
         self::assertEquals(new \DateTimeImmutable('2026-04-10T00:00:00Z'), $stats->nextTrafficReset);
     }
 
-    public function testConvertsStorageUnitsToGiB(): void
+    public function testConvertsStorageUnitsToBytes(): void
     {
         $json = json_decode((string) file_get_contents(__DIR__.'/../../fixtures/ultracc-total-stats.json'), true);
         $json['service_stats_info']['total_storage_value'] = 2;
@@ -55,8 +56,8 @@ final class UltraccClientTest extends TestCase
 
         $stats = $this->client(new MockResponse(json_encode($json)))->stats('https://tom.serveur.usbx.example');
 
-        self::assertSame(2048.0, $stats->totalGiB);
-        self::assertSame(0.5, $stats->usedGiB);
+        self::assertSame(2 * 1024 ** 4, $stats->totalBytes);
+        self::assertSame(512 * 1024 ** 2, $stats->usedBytes);
     }
 
     public function testMissingTokenIsExplained(): void

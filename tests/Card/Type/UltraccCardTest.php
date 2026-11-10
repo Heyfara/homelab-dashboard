@@ -55,7 +55,7 @@ final class UltraccCardTest extends TestCase
 
     public function testOptionsDefaults(): void
     {
-        self::assertEquals(['service' => 'seedbox', 'traffic_quota' => null, 'icon' => null], $this->instance($this->card())->options);
+        self::assertEquals(['service' => 'seedbox', 'traffic_quota' => null, 'icon' => null, 'link' => 'https://cp.ultra.cc/'], $this->instance($this->card())->options);
     }
 
     public function testServiceMustHaveAnUrl(): void
@@ -72,12 +72,19 @@ final class UltraccCardTest extends TestCase
         $this->instance($this->card(), ['service' => 'seedbox', 'traffic_quota' => 0]);
     }
 
+    public function testLinkMustBeAnUrl(): void
+    {
+        $this->expectException(ExceptionInterface::class);
+
+        $this->instance($this->card(), ['service' => 'seedbox', 'link' => 'cp.ultra.cc']);
+    }
+
     public function testDescribe(): void
     {
         $card = $this->card();
 
         self::assertSame(
-            ['title' => 'Seedbox', 'url' => 'https://tom.serveur.usbx.example/qbittorrent', 'icon' => 'sh-qbittorrent'],
+            ['title' => 'Seedbox', 'link' => 'https://cp.ultra.cc/', 'icon' => 'sh-qbittorrent'],
             $card->describe($this->instance($card), $this->dashboard),
         );
         self::assertSame('Abonnement', $card->describe($this->instance($card, title: 'Abonnement'), $this->dashboard)['title']);
@@ -93,7 +100,7 @@ final class UltraccCardTest extends TestCase
         $data = $card->fetch($this->instance($card, ['service' => 'seedbox', 'traffic_quota' => 2000]), $this->dashboard);
 
         self::assertSame(['https://tom.serveur.usbx.example/ultra-api/total-stats'], $this->urls);
-        self::assertSame(['used' => 632.0, 'total' => 932.0, 'free' => 300.0, 'percent' => 67.81], $data['storage']);
+        self::assertSame(['used' => 632 * 1024 ** 3, 'total' => 932 * 1024 ** 3, 'free' => 322122547200, 'percent' => 67.81], $data['storage']);
         self::assertSame([
             'percent' => 24.5,
             'used' => 490.0,

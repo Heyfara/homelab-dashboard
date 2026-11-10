@@ -14,7 +14,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final readonly class UltraccClient
 {
-    private const UNITS = ['K' => 1 / 1024 ** 2, 'M' => 1 / 1024, 'G' => 1, 'T' => 1024];
+    /** Unités de `quota -s` : binaires (le panneau d'Ultra.cc affiche des Go décimaux). */
+    private const UNITS = ['K' => 1024, 'M' => 1024 ** 2, 'G' => 1024 ** 3, 'T' => 1024 ** 4];
 
     public function __construct(
         private HttpClientInterface $httpClient,
@@ -60,19 +61,19 @@ final readonly class UltraccClient
         $utc = new \DateTimeZone('UTC');
 
         return new UltraccStats(
-            usedGiB: self::toGiB($info['used_storage_value'], $info['used_storage_unit'] ?? 'G'),
-            totalGiB: self::toGiB($info['total_storage_value'], $info['total_storage_unit'] ?? 'G'),
-            freeGiB: round($info['free_storage_bytes'] / 1024 ** 3, 2),
+            usedBytes: self::toBytes($info['used_storage_value'], $info['used_storage_unit'] ?? 'G'),
+            totalBytes: self::toBytes($info['total_storage_value'], $info['total_storage_unit'] ?? 'G'),
+            freeBytes: (int) $info['free_storage_bytes'],
             trafficUsedPercent: round((float) $info['traffic_used_percentage'], 2),
             lastTrafficReset: new \DateTimeImmutable($info['last_traffic_reset'], $utc),
             nextTrafficReset: new \DateTimeImmutable($info['next_traffic_reset'], $utc),
         );
     }
 
-    private static function toGiB(int|float $value, string $unit): float
+    private static function toBytes(int|float $value, string $unit): int
     {
         $factor = self::UNITS[strtoupper($unit)] ?? throw new SourceUnavailableException(\sprintf('Unité de stockage inconnue « %s » dans l\'API Ultra.cc', $unit));
 
-        return (float) ($value * $factor);
+        return (int) round($value * $factor);
     }
 }

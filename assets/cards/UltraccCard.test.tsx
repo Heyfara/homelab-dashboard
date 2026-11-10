@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { CardResult, CardView } from '../http/types'
-import { formatTrafficUsage, trafficOutlook, UltraccCard, type UltraccData, type UltraccProps } from './UltraccCard'
+import { formatDecimalUsage, trafficOutlook, UltraccCard, type UltraccData, type UltraccProps } from './UltraccCard'
 
 const card: CardView<UltraccProps> = {
   id: 'tom-ultracc-abc123',
@@ -10,11 +10,11 @@ const card: CardView<UltraccProps> = {
   span: 2,
   rows: 1,
   refresh: 900,
-  props: { title: 'Seedbox', url: 'https://tom.serveur.usbx.example/qbittorrent', icon: 'sh-qbittorrent' },
+  props: { title: 'Seedbox', link: 'https://cp.ultra.example/', icon: 'sh-qbittorrent' },
 }
 
 const data: UltraccData = {
-  storage: { used: 632, total: 932, free: 300, percent: 67.81 },
+  storage: { used: 678604832768, total: 1000727379968, free: 322_122_547_200, percent: 67.81 },
   traffic: { percent: 24.5, used: 490, quota: 2000, lastReset: '2026-03-10T00:00:00+00:00', nextReset: '2026-04-10T00:00:00+00:00', projectedPercent: 75.95 },
 }
 
@@ -27,8 +27,9 @@ describe('UltraccCard', () => {
 
     const storage = screen.getByRole('group', { name: 'Stockage' })
     expect(screen.getByRole('progressbar', { name: /Stockage : 67,8 %/ })).toBeTruthy()
-    expect(text(storage)).toContain('632 / 932 Go')
-    expect(text(storage)).toContain('300 Go libres')
+    // Go décimaux, comme le panneau d'Ultra.cc (932 Gio = 1 To).
+    expect(text(storage)).toContain('678,6 Go / 1 To')
+    expect(text(storage)).toContain('322,1 Go libres')
   })
 
   it('affiche le trafic du mois, le volume et la remise à zéro', () => {
@@ -52,10 +53,10 @@ describe('UltraccCard', () => {
     expect(text(screen.getByRole('group', { name: 'Trafic du mois' }))).not.toContain('Go /')
   })
 
-  it('lie le titre au service', () => {
+  it('propose d’ouvrir le panneau Ultra.cc', () => {
     render(<UltraccCard card={card} result={result(data)} />)
 
-    expect(screen.getByRole('link', { name: /Seedbox/ }).getAttribute('href')).toBe('https://tom.serveur.usbx.example/qbittorrent')
+    expect(screen.getByRole('link', { name: 'Ouvrir Ultra.cc →' }).getAttribute('href')).toBe('https://cp.ultra.example/')
   })
 
   it('affiche l’icône de la carte', () => {
@@ -90,9 +91,9 @@ describe('trafficOutlook', () => {
   })
 })
 
-describe('formatTrafficUsage', () => {
+describe('formatDecimalUsage', () => {
   it('écrit l’unité une seule fois si elle est commune', () => {
-    expect(formatTrafficUsage(490, 2000)).toBe('490 Go / 2 To')
-    expect(formatTrafficUsage(1200, 2000)).toBe('1,2 / 2 To')
+    expect(formatDecimalUsage(490e9, 2000e9)).toBe('490 Go / 2 To')
+    expect(formatDecimalUsage(1200e9, 2000e9)).toBe('1,2 / 2 To')
   })
 })

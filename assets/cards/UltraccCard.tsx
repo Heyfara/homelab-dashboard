@@ -1,5 +1,4 @@
 import type { CardComponent } from './registry'
-import { formatGiB, formatUsage } from './MachineCard'
 import { ExternalLink } from '../ui/ExternalLink'
 import { formatBytes, formatNumber } from '../ui/format'
 import { RingGauge } from '../ui/RingGauge'
@@ -8,9 +7,9 @@ import type { Tone } from '../ui/StatusPill'
 import type { ReactNode } from 'react'
 
 /** Props de UltraccCard::describe() côté PHP. */
-export type UltraccProps = { title: string; url: string; icon: string | null }
+export type UltraccProps = { title: string; link: string; icon: string | null }
 
-/** Données de UltraccCard::fetch() côté PHP. Stockage en Gio, trafic en Go (option traffic_quota). */
+/** Données de UltraccCard::fetch() côté PHP. Stockage en octets, trafic en Go (option traffic_quota). */
 export type UltraccData = {
   storage: { used: number; total: number; free: number; percent: number | null }
   traffic: {
@@ -54,10 +53,10 @@ export function trafficOutlook(percent: number, projected: number | null, reset:
   return { tone: projected >= 85 ? 'warn' : 'ok', label }
 }
 
-/** Trafic en Go décimaux (comme Ultra.cc) : « 490 Go / 2 To », « 1,2 / 2 To ». */
-export function formatTrafficUsage(usedGb: number, quotaGb: number): string {
-  const [u, uu] = formatBytes(usedGb * 1e9).split(' ')
-  const [q, qu] = formatBytes(quotaGb * 1e9).split(' ')
+/** Octets en unités décimales, comme le panneau d'Ultra.cc : « 490 Go / 2 To », « 1,2 / 2 To ». */
+export function formatDecimalUsage(used: number, total: number): string {
+  const [u, uu] = formatBytes(used).split(' ')
+  const [q, qu] = formatBytes(total).split(' ')
   return uu === qu ? `${u} / ${q} ${qu}` : `${u} ${uu} / ${q} ${qu}`
 }
 
@@ -66,7 +65,7 @@ const storageTone = (percent: number): Tone => (percent >= 95 ? 'down' : percent
 
 export const UltraccCard: CardComponent<UltraccProps, UltraccData> = ({ card, result }) => {
   const data = result?.status === 'ok' ? result.data : null
-  const { title, url, icon } = card.props
+  const { title, link, icon } = card.props
 
   return (
     <div className="flex h-full flex-col gap-3 tabular-nums">
@@ -74,8 +73,9 @@ export const UltraccCard: CardComponent<UltraccProps, UltraccData> = ({ card, re
         <span className="size-6 shrink-0 [&>*]:size-6 [&>span]:rounded-md [&>span]:text-xs">
           <ServiceIcon icon={icon} name={title} />
         </span>
-        <ExternalLink href={url} className="min-w-0 flex-1 truncate font-semibold text-zinc-900 hover:underline focus-visible:outline-2 focus-visible:outline-indigo-500 dark:text-slate-50">
-          {card.title ?? title}
+        <h3 className="min-w-0 flex-1 truncate font-semibold text-zinc-900 dark:text-slate-50">{card.title ?? title}</h3>
+        <ExternalLink href={link} className="shrink-0 rounded-md px-2 py-0.5 text-sm text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 focus-visible:outline-2 focus-visible:outline-indigo-500 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100">
+          Ouvrir Ultra.cc →
         </ExternalLink>
       </header>
 
@@ -87,8 +87,8 @@ export const UltraccCard: CardComponent<UltraccProps, UltraccData> = ({ card, re
       ) : (
         <div className="grid min-h-0 flex-1 grid-cols-2 items-center gap-3">
           <Gauge name="Stockage" percent={data.storage.percent ?? 0} tone={data.storage.percent === null ? 'unknown' : storageTone(data.storage.percent)}>
-            <span className="truncate font-semibold text-zinc-900 dark:text-slate-50">{formatUsage(data.storage.used, data.storage.total)}</span>
-            <span className="truncate text-zinc-500 dark:text-slate-400">{formatGiB(data.storage.free).join(' ')} libres</span>
+            <span className="truncate font-semibold text-zinc-900 dark:text-slate-50">{formatDecimalUsage(data.storage.used, data.storage.total)}</span>
+            <span className="truncate text-zinc-500 dark:text-slate-400">{formatBytes(data.storage.free)} libres</span>
           </Gauge>
           <Traffic traffic={data.traffic} />
         </div>
@@ -105,7 +105,7 @@ function Traffic({ traffic }: { traffic: UltraccData['traffic'] }) {
     <Gauge name="Trafic du mois" short="Trafic" percent={traffic.percent} tone={outlook.tone}>
       {traffic.used !== null && traffic.quota !== null && (
         <span className="truncate font-semibold text-zinc-900 dark:text-slate-50">
-          {formatTrafficUsage(traffic.used, traffic.quota)}
+          {formatDecimalUsage(traffic.used * 1e9, traffic.quota * 1e9)}
         </span>
       )}
       <span className={`truncate ${LABEL[outlook.tone]}`} title={`Remise à zéro le ${reset}`}>
