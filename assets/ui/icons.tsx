@@ -67,6 +67,12 @@ export const ServerIcon = ({ className }: P) => (
     <path d="M8 7.5h.01M8 16.5h.01" />
   </Icon>
 )
+export const DatabaseIcon = ({ className }: P) => (
+  <Icon className={className}>
+    <ellipse cx="12" cy="5.5" rx="7.5" ry="2.5" />
+    <path d="M4.5 5.5v13c0 1.4 3.4 2.5 7.5 2.5s7.5-1.1 7.5-2.5v-13M4.5 12c0 1.4 3.4 2.5 7.5 2.5s7.5-1.1 7.5-2.5" />
+  </Icon>
+)
 export const ThermometerIcon = ({ className }: P) => (
   <Icon className={className}>
     <path d="M10 13.5V5a2 2 0 1 1 4 0v8.5a4 4 0 1 1-4 0Z" />

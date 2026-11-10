@@ -111,6 +111,15 @@ Beszel) ne mesure ni la mémoire ni le CPU par container. La carte `containers`
 masque ces 0. Pour les mesurer, ajouter `cgroup_memory=1 cgroup_enable=memory`
 à `/boot/firmware/cmdline.txt` puis redémarrer le Pi.
 
+## Carte `storage` : total trop petit ou creux sur la courbe
+
+Les résolutions longues de Beszel (120 et 480 min) sont des moyennes. La
+tranche où le volume apparaît (nouveau disque, volume renommé, agent
+redémarré) compte des zéros pour les minutes sans mesure : 1 To au lieu de
+3,6 To, par exemple. La carte lit donc les valeurs actuelles à la minute et
+ignore les tranches dont le total s'écarte du total actuel. Une tendance
+absente juste après un changement de volume est normale (2 jours de recul).
+
 ## Logs
 
 - Dev : `docker compose logs -f dashboard nginx`, et `var/log/dev.log`.

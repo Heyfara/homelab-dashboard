@@ -20,6 +20,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  *       period: 24h
  *       charts: [cpu, memory, network]
  *       disk_names: { sdb1: RAID }
+ *       hide_disks: [NAS]     # volume déjà montré par une carte storage
  *       span: 2
  *       rows: 2
  */
@@ -51,7 +52,10 @@ final readonly class MachineCard implements CardTypeInterface
             ->setAllowedValues('charts', static fn (array $charts): bool => [] === array_diff($charts, self::CHARTS))
             ->setDefault('disk_names', [])
             ->setAllowedTypes('disk_names', 'string[]')
-            ->setInfo('disk_names', 'noms lisibles des disques supplémentaires : { sdb1: RAID }');
+            ->setInfo('disk_names', 'noms lisibles des disques supplémentaires : { sdb1: RAID }')
+            ->setDefault('hide_disks', [])
+            ->setAllowedTypes('hide_disks', 'string[]')
+            ->setInfo('hide_disks', 'disques supplémentaires à ne pas afficher (nom Beszel) : [NAS]');
     }
 
     public function describe(CardInstance $card, Dashboard $dashboard): array
@@ -71,6 +75,9 @@ final readonly class MachineCard implements CardTypeInterface
 
         $disks = [['name' => 'Système', 'percent' => $info['dp'] ?? null, 'used' => $latest['du'] ?? null, 'total' => $latest['d'] ?? null]];
         foreach ($info['efs'] ?? [] as $name => $percent) {
+            if (\in_array((string) $name, $card->options['hide_disks'], true)) {
+                continue;
+            }
             $disks[] = [
                 'name' => $card->options['disk_names'][$name] ?? $name,
                 'percent' => $percent,
@@ -95,6 +102,8 @@ final readonly class MachineCard implements CardTypeInterface
             ],
             'memory' => ['used' => $latest['mu'] ?? null, 'total' => $latest['m'] ?? null],
             'disks' => $disks,
+            // Disque système : débits de lecture et d'écriture (octets/s).
+            'diskIo' => isset($latest['dio']) ? ['read' => $latest['dio'][0], 'write' => $latest['dio'][1]] : null,
             'series' => self::series($stats, $card->options['charts']),
         ];
     }

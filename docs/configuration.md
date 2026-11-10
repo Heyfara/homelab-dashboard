@@ -244,7 +244,10 @@ services:
 
 Une machine suivie par Beszel : nom, IP, état (*En ligne*, *Hors ligne*, *En
 pause*, *En attente*), température, temps depuis le dernier démarrage ; une
-jauge par disque (vert, ambre dès 75 %, rouge dès 90 %) ; un graphique par
+jauge par disque (vert, ambre dès 75 %, rouge dès 90 %), puis les débits du
+disque système en deux barres verticales, lecture (↓) et écriture (↑),
+moyennés sur la dernière mesure de la période ; échelle logarithmique
+(1 Ko/s en bas, 1 Mo/s à mi-hauteur, 1 Go/s en haut) ; un graphique par
 mesure, avec la valeur actuelle. Survoler un graphique (ou le parcourir au
 clavier : Tab puis flèches) donne l'heure et la valeur de chaque série.
 
@@ -254,6 +257,7 @@ clavier : Tab puis flèches) donne l'heure et la valeur de chaque série.
 | `period` | `24h` | `1h`, `12h`, `24h`, `7d`, `30d` (résolutions 1, 10, 20, 120 et 480 min de Beszel) |
 | `charts` | `[cpu, memory, network]` | parmi `cpu`, `memory`, `network`, `temperature` |
 | `disk_names` | `{}` | noms lisibles des disques supplémentaires : `{ sdb1: RAID }` |
+| `hide_disks` | `[]` | disques supplémentaires à ne pas afficher (nom Beszel), par exemple un volume montré par une carte `storage` : `[NAS]` |
 
 ```yaml
 - { type: machine, host: beta, span: 2, rows: 2, disk_names: { sdb1: RAID } }
@@ -262,6 +266,36 @@ clavier : Tab puis flèches) donne l'heure et la valeur de chaque série.
 Tailles comme dans Beszel (Go binaires). Réseau : envoyé (violet) et reçu
 (bleu), en octets/s. Température : le capteur le plus chaud. Une machine hors
 ligne garde ses dernières valeurs connues.
+
+### `storage`
+
+Remplissage d'un volume suivi par Beszel (un des `EXTRA_FILESYSTEMS` de
+l'agent) : jauge (mêmes couleurs que `machine`), utilisé / total, place libre,
+courbe de la place utilisée sur la période, rythme de croissance (« +150
+Go/mois ») et délai estimé avant qu'il soit plein. Le rythme est la pente de la
+droite des moindres carrés sur les mesures de la période ; il n'apparaît
+qu'après 2 jours de mesures, et le délai seulement si le volume grossit.
+Les valeurs actuelles viennent de la dernière minute ; la courbe et le rythme
+ignorent les tranches dont le total s'écarte de plus de 1 % du total actuel
+(tranche partielle, voir `depannage.md`, ou disque ajouté : la tendance
+repart alors de zéro).
+
+| Option | Défaut | Rôle |
+|---|---|---|
+| `host` | obligatoire | machine de `hosts`, avec un système Beszel |
+| `filesystem` | obligatoire | nom du volume dans Beszel |
+| `period` | `30d` | `7d` ou `30d` (résolutions 120 et 480 min de Beszel) |
+| `pool` | aucun | étiquette d'un pool btrfs ou ZFS : pastille *Sain* (ONLINE), *Dégradé* (DEGRADED, un disque manque) ou *État inconnu* (pool non vu par Beszel) |
+
+```yaml
+- { type: storage, host: beta, filesystem: NAS, pool: tank, title: NAS, span: 2 }
+```
+
+Le nom est celui que montre Beszel : par défaut le périphérique
+(`sdb1`, `ata-…`), qui change avec le disque. Pour un nom stable, le donner
+à l'agent : `EXTRA_FILESYSTEMS=/mnt/raid__NAS`. Un nom inconnu affiche
+sur la carte la liste des volumes suivis. Sur un pool btrfs raid1, Beszel
+donne la capacité utile (après duplication), pas la somme des disques.
 
 ### `github-prs`
 

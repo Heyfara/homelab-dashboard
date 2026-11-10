@@ -17,6 +17,8 @@ export type MachineData = {
   now: { cpu: number | null; memory: number | null; load: number[]; temperature: number | null }
   memory: { used: number | null; total: number | null }
   disks: Disk[]
+  /** Disque système : débits de lecture et d'écriture (octets/s, moyenne de la dernière mesure) */
+  diskIo: { read: number; write: number } | null
   series: {
     at: string[]
     cpu?: (number | null)[]
@@ -32,6 +34,12 @@ const STATUS: Record<string, { tone: Tone; label: string }> = {
   down: { tone: 'down', label: 'Hors ligne' },
   paused: { tone: 'warn', label: 'En pause' },
   pending: { tone: 'unknown', label: 'En attente' },
+}
+
+/** Hauteur d'une barre de débit, échelle logarithmique : 1 Ko/s → 0, 1 Mo/s → ½, 1 Go/s → 1. */
+export function throughputLevel(bytesPerSecond: number): number {
+  if (bytesPerSecond <= 1000) return 0
+  return Math.min(1, (Math.log10(bytesPerSecond) - 3) / 6)
 }
 
 /** Un disque plein est un état : vert, puis ambre dès 75 %, rouge dès 90 %. */
@@ -50,7 +58,7 @@ const pct = (v: number) => `${formatNumber(v)} %`
 const celsius = (v: number) => `${formatNumber(Math.round(v))} °C`
 
 /** Tailles telles que Beszel les donne (Go binaires) : 1,7 To au-delà de 1000 Go. */
-function formatGiB(gb: number): [string, 'Go' | 'To'] {
+export function formatGiB(gb: number): [string, 'Go' | 'To'] {
   return gb >= 1000 ? [formatNumber(gb / 1024), 'To'] : [formatNumber(gb), 'Go']
 }
 
@@ -101,11 +109,14 @@ export const MachineCard: CardComponent<MachineProps, MachineData> = ({ card, re
         </span>
       </header>
 
-      <div className="grid min-h-0 flex-1 grid-cols-[auto_1fr] gap-5">
-        <ul className="flex flex-col gap-3">
+      {/* Colonne de jauges de largeur fixe : les graphiques commencent au même endroit sur toutes les cartes. */}
+      <div className="grid min-h-0 flex-1 grid-cols-[6rem_1fr] gap-4">
+        {/* Mêmes rangées que les graphiques : chaque jauge en face d'une rangée. */}
+        <ul className="grid min-h-0 auto-rows-fr gap-2">
           {data.disks.map((disk) => (
             <DiskGauge key={disk.name} disk={disk} />
           ))}
+          {data.diskIo && <DiskThroughput io={data.diskIo} />}
         </ul>
         {/* Processeur et Mémoire côte à côte, Réseau (deux séries) sur toute la largeur. */}
         <div className="grid min-h-0 min-w-0 auto-rows-fr grid-cols-2 gap-2 [&>[data-wide]]:col-span-2">
@@ -173,7 +184,7 @@ function DiskGauge({ disk }: { disk: Disk }) {
   const tone = disk.percent !== null ? diskTone(percent) : 'unknown'
 
   return (
-    <li className="flex flex-col items-center gap-1 text-center">
+    <li className="flex flex-col items-center justify-center gap-1 text-center">
       <RingGauge value={percent / 100} label={`Disque ${disk.name} : ${pct(percent)}`} className={`size-14 ${RING[tone]}`}>
         <span className="text-xs font-semibold text-zinc-900 dark:text-slate-50">{Math.round(percent)} %</span>
       </RingGauge>
@@ -184,6 +195,33 @@ function DiskGauge({ disk }: { disk: Disk }) {
         </span>
       )}
     </li>
+  )
+}
+
+function DiskThroughput({ io }: { io: NonNullable<MachineData['diskIo']> }) {
+  return (
+    <li className="flex flex-col items-center justify-center gap-1 text-center" title="Échelle logarithmique : 1 Ko/s en bas, 1 Mo/s à mi-hauteur, 1 Go/s en haut">
+      <div className="flex h-14 items-end gap-2">
+        <ThroughputBar label="Lecture disque" value={io.read} className="text-down" />
+        <ThroughputBar label="Écriture disque" value={io.write} className="text-up" />
+      </div>
+      <span className="text-xs font-medium text-zinc-700 dark:text-slate-200">Disque</span>
+      <span className="flex flex-col text-[0.65rem] leading-tight text-zinc-500 dark:text-slate-400">
+        <span title="Lecture">↓ {formatSpeed(io.read)}</span>
+        <span title="Écriture">↑ {formatSpeed(io.write)}</span>
+      </span>
+    </li>
+  )
+}
+
+/** Barre verticale : piste dans la couleur courante atténuée, remplissage par le bas. */
+function ThroughputBar({ label, value, className }: { label: string; value: number; className: string }) {
+  const level = throughputLevel(value)
+  return (
+    <div role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={1} aria-valuenow={level} aria-valuetext={formatSpeed(value)} title={`${label} : ${formatSpeed(value)}`}
+      className={`relative flex h-full w-3 items-end overflow-hidden rounded-full bg-current/15 ${className}`}>
+      <div className="w-full rounded-full bg-current" style={{ height: `${Math.round(level * 100)}%` }} />
+    </div>
   )
 }
 

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { CardResult, CardView } from '../http/types'
-import { diskTone, formatUsage, MachineCard, type MachineData, type MachineProps } from './MachineCard'
+import { diskTone, formatUsage, throughputLevel, MachineCard, type MachineData, type MachineProps } from './MachineCard'
 
 const card: CardView<MachineProps> = { id: 'm', type: 'machine', title: null, span: 2, rows: 2, refresh: 60, props: { title: 'alpha', system: 'Alpha' } }
 
@@ -14,6 +14,7 @@ const data: MachineData = {
     { name: 'Système', percent: 32.04, used: 142.86, total: 465.88 },
     { name: 'RAID', percent: 92.1, used: 1690, total: 1832.68 },
   ],
+  diskIo: { read: 13858, write: 69770 },
   series: { at, cpu: [2.5, 3.53], memory: [30, 31.8], netSent: [10000, 12974], netReceived: [20000, 9631] },
 }
 const result = (d: MachineData): CardResult<MachineData> => ({ status: 'ok', data: d, error: null, fetchedAt: '2026-10-19T19:31:00+00:00' })
@@ -25,6 +26,16 @@ describe('diskTone', () => {
     [80, 'warn'],
     [92, 'down'],
   ] as const)('%d %% → %s', (percent, tone) => expect(diskTone(percent)).toBe(tone))
+})
+
+describe('throughputLevel', () => {
+  it.each([
+    [0, 0],
+    [1000, 0],
+    [1e6, 0.5],
+    [1e9, 1],
+    [5e9, 1],
+  ])('%d o/s → %d', (bytes, level) => expect(throughputLevel(bytes)).toBeCloseTo(level))
 })
 
 describe('formatUsage', () => {
@@ -61,6 +72,23 @@ describe('MachineCard', () => {
     const raid = screen.getByRole('progressbar', { name: /RAID/ })
     expect(text(raid.closest('li')!)).toContain('1,7 / 1,8 To')
     expect(raid.className).toContain('text-rose')
+  })
+
+  it('débits du disque système en deux barres verticales', () => {
+    render(<MachineCard card={card} result={result(data)} />)
+
+    const read = screen.getByRole('meter', { name: 'Lecture disque' })
+    expect(read.getAttribute('aria-valuetext')).toBe('13,9 Ko/s')
+    const write = screen.getByRole('meter', { name: 'Écriture disque' })
+    expect(write.getAttribute('aria-valuetext')).toBe('69,8 Ko/s')
+    // Échelle logarithmique 1 Ko/s → 1 Go/s : 69,8 Ko/s ≈ 31 % de la hauteur.
+    expect((write.firstElementChild as HTMLElement).style.height).toBe('31%')
+  })
+
+  it('pas de débits sans mesure', () => {
+    render(<MachineCard card={card} result={result({ ...data, diskIo: null })} />)
+
+    expect(screen.queryByRole('meter')).toBeNull()
   })
 
   it('un graphique par mesure demandée, avec la valeur actuelle', () => {

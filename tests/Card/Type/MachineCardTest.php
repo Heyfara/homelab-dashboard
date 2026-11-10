@@ -80,7 +80,7 @@ final class MachineCardTest extends TestCase
     public function testOptionsDefaults(): void
     {
         self::assertEquals(
-            ['host' => 'alpha', 'period' => '24h', 'charts' => ['cpu', 'memory', 'network'], 'disk_names' => []],
+            ['host' => 'alpha', 'period' => '24h', 'charts' => ['cpu', 'memory', 'network'], 'disk_names' => [], 'hide_disks' => []],
             $this->instance($this->card())->options,
         );
     }
@@ -130,6 +130,18 @@ final class MachineCardTest extends TestCase
         ], $disks);
     }
 
+    public function testDiskThroughput(): void
+    {
+        self::assertSame(['read' => 13858, 'write' => 69770], $this->fetch()['diskIo'], 'octets/s, dernière mesure');
+    }
+
+    public function testHiddenDisks(): void
+    {
+        $disks = $this->fetch(['hide_disks' => ['media']])['disks'];
+
+        self::assertSame(['Système'], array_column($disks, 'name'), 'volume montré par sa propre carte storage');
+    }
+
     /**
      * @return iterable<string, array{string, string}>
      */
@@ -171,5 +183,6 @@ final class MachineCardTest extends TestCase
         self::assertNull($data['now']['temperature']);
         self::assertSame([], $data['series']['at']);
         self::assertSame([['name' => 'Système', 'percent' => 2.94, 'used' => null, 'total' => null]], $data['disks']);
+        self::assertNull($data['diskIo'], 'pas de mesure');
     }
 }
