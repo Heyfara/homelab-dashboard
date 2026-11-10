@@ -109,8 +109,10 @@ export const MachineCard: CardComponent<MachineProps, MachineData> = ({ card, re
         </span>
       </header>
 
-      <div className="grid min-h-0 flex-1 grid-cols-[auto_1fr] gap-5">
-        <ul className="flex flex-col gap-3">
+      {/* Colonne de jauges de largeur fixe : les graphiques commencent au même endroit sur toutes les cartes. */}
+      <div className="grid min-h-0 flex-1 grid-cols-[6rem_1fr] gap-4">
+        {/* Mêmes rangées que les graphiques : chaque jauge en face d'une rangée. */}
+        <ul className="grid min-h-0 auto-rows-fr gap-2">
           {data.disks.map((disk) => (
             <DiskGauge key={disk.name} disk={disk} />
           ))}
@@ -182,7 +184,7 @@ function DiskGauge({ disk }: { disk: Disk }) {
   const tone = disk.percent !== null ? diskTone(percent) : 'unknown'
 
   return (
-    <li className="flex flex-col items-center gap-1 text-center">
+    <li className="flex flex-col items-center justify-center gap-1 text-center">
       <RingGauge value={percent / 100} label={`Disque ${disk.name} : ${pct(percent)}`} className={`size-14 ${RING[tone]}`}>
         <span className="text-xs font-semibold text-zinc-900 dark:text-slate-50">{Math.round(percent)} %</span>
       </RingGauge>
@@ -198,7 +200,7 @@ function DiskGauge({ disk }: { disk: Disk }) {
 
 function DiskThroughput({ io }: { io: NonNullable<MachineData['diskIo']> }) {
   return (
-    <li className="flex flex-col items-center gap-1 text-center" title="Échelle logarithmique : 1 Ko/s en bas, 1 Mo/s à mi-hauteur, 1 Go/s en haut">
+    <li className="flex flex-col items-center justify-center gap-1 text-center" title="Échelle logarithmique : 1 Ko/s en bas, 1 Mo/s à mi-hauteur, 1 Go/s en haut">
       <div className="flex h-14 items-end gap-2">
         <ThroughputBar label="Lecture disque" value={io.read} className="text-down" />
         <ThroughputBar label="Écriture disque" value={io.write} className="text-up" />
