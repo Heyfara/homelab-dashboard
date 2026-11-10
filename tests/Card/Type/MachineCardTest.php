@@ -130,9 +130,9 @@ final class MachineCardTest extends TestCase
         ], $disks);
     }
 
-    public function testDiskActivity(): void
+    public function testDiskThroughput(): void
     {
-        self::assertSame(['busy' => 12.5, 'read' => 13858, 'write' => 69770], $this->fetch()['diskIo'], 'occupation % et octets/s, dernière mesure');
+        self::assertSame(['read' => 13858, 'write' => 69770], $this->fetch()['diskIo'], 'octets/s, dernière mesure');
     }
 
     public function testHiddenDisks(): void

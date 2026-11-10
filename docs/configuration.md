@@ -244,10 +244,10 @@ services:
 
 Une machine suivie par Beszel : nom, IP, état (*En ligne*, *Hors ligne*, *En
 pause*, *En attente*), température, temps depuis le dernier démarrage ; une
-jauge par disque (vert, ambre dès 75 %, rouge dès 90 %), puis l'activité du
-disque système : part du temps où il traite des entrées/sorties (comme
-`iostat`, ambre dès 50 %, rouge dès 90 %), avec les débits de lecture (↓) et
-d'écriture (↑), moyennés sur la dernière mesure de la période ; un graphique par
+jauge par disque (vert, ambre dès 75 %, rouge dès 90 %), puis les débits du
+disque système en deux barres verticales, lecture (↓) et écriture (↑),
+moyennés sur la dernière mesure de la période ; échelle logarithmique
+(1 Ko/s en bas, 1 Mo/s à mi-hauteur, 1 Go/s en haut) ; un graphique par
 mesure, avec la valeur actuelle. Survoler un graphique (ou le parcourir au
 clavier : Tab puis flèches) donne l'heure et la valeur de chaque série.
 
