@@ -10,6 +10,9 @@ describe('iconUrl', () => {
     ['sh-immich.png', 'https://cdn.jsdelivr.net/gh/selfhst/icons/png/immich.png'],
     ['sh-immich-dark.svg', 'https://cdn.jsdelivr.net/gh/selfhst/icons/svg/immich-dark.svg'],
     ['https://exemple.org/logo.png', 'https://exemple.org/logo.png'],
+    // Fichier livré avec le dashboard (assets/public/icons/), servi sous la base de Vite.
+    ['ultracc.svg', '/icons/ultracc.svg'],
+    ['../secret.svg', null],
     ['immich', null],
     [null, null],
   ])('%s', (icon, url) => expect(iconUrl(icon)).toBe(url))

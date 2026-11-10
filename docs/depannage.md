@@ -14,6 +14,7 @@ Le texte en bas de la carte vient de l'une de deux sources :
 | « Clé API Jellyfin absente / refusée » | `JELLYFIN_API_KEY` vide ou révoquée | créer une clé dans Jellyfin (Tableau de bord → Clés API) |
 | « Utilisateur Jellyfin inconnu « x » (utilisateurs : …) » | option `user` fausse | prendre un nom de la liste |
 | « Connexion à qBittorrent refusée (HTTP 401) … nouvel essai dans 10 min » | identifiants faux, **ou** adresse absente de `WebUI\ServerDomains` (une IP par exemple : 401 aussi) | corriger `QBITTORRENT_USERNAME` / `QBITTORRENT_PASSWORD` ; viser un nom listé dans `ServerDomains` ; le refus est retenu 10 min (vider le cache pour réessayer tout de suite : `bin/console cache:pool:clear cache.app`) |
+| « API Ultra.cc introuvable (404) » | script Ultra-API pas installé, ou route en `total_stats` (doc d'Ultra.cc) | installer le script sur la seedbox ; la carte appelle `/ultra-api/total-stats` (tiret) |
 | « Clé API C411 refusée (401) » / « … pas le scope « Profil (lecture) » (403) » | clé fausse, ou créée sans le scope | créer une nouvelle clé en cochant *Profil (lecture)* |
 | « Limite de l'API C411 atteinte (429) » | plus de 30 requêtes/min sur la clé (Torznab compris) | rien à faire : les appels reprennent après une minute |
 | « GitHub refuse la recherche : … cannot be searched … » | un des `repos` n'existe pas, ou le jeton n'y a pas accès (dépôt privé sans jeton) | vérifier l'orthographe ; donner au jeton l'accès à ce dépôt |

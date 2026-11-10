@@ -32,6 +32,7 @@ JELLYFIN_API_KEY=…      # Jellyfin → Tableau de bord → Clés API → +, no
 QBITTORRENT_USERNAME=…  # compte WebUI de qBittorrent
 QBITTORRENT_PASSWORD=…
 C411_API_SECRET=…       # clé C411, scope « Profil (lecture) »
+ULTRACC_API_TOKEN=…     # jeton du script Ultra-API de la seedbox
 GITHUB_TOKEN=…          # jeton fine-grained, lecture seule (Pull requests + Issues)
 B2_KEY_ID=…             # clé d'application Backblaze, type Read Only
 B2_APPLICATION_KEY=…

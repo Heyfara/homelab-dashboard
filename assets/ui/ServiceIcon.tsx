@@ -8,6 +8,7 @@ const SELFHST = 'https://cdn.jsdelivr.net/gh/selfhst/icons'
  *   pour toutes les icônes ; « sh-<nom>.svg » ou « .png » pour forcer le format,
  *   « sh-<nom>-light.svg » / « -dark.svg » pour les variantes quand elles existent ;
  * - une URL : l'image telle quelle ;
+ * - « <nom>.svg|png|webp » : fichier livré avec le dashboard (assets/public/icons/) ;
  * - sinon (ou si l'image ne charge pas) : l'initiale du nom.
  */
 export function iconUrl(icon: string | null): string | null {
@@ -17,6 +18,7 @@ export function iconUrl(icon: string | null): string | null {
     return `${SELFHST}/${ext}/${name}.${ext}`
   }
   if (/^https?:\/\//.test(icon)) return icon
+  if (/^[\w-]+\.(svg|png|webp)$/.test(icon)) return `${import.meta.env.BASE_URL}icons/${icon}`
   return null
 }
 
