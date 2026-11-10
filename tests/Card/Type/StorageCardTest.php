@@ -33,6 +33,9 @@ final class StorageCardTest extends TestCase
     /** Dernière mesure à la minute : [Go utilisés, Go au total] */
     private array $latest = [1055.15, 1832.68];
 
+    /** Pools btrfs/ZFS de la dernière minute (champ z de Beszel) */
+    private array $pools = ['b:1234-abcd' => ['n' => 'tank', 'h' => 'ONLINE', 'hu' => true, 'd' => 1832.6, 'du' => 1055.1]];
+
     protected function setUp(): void
     {
         $this->dashboard = new Dashboard(new Settings(4, 30), [
@@ -59,10 +62,15 @@ final class StorageCardTest extends TestCase
             $this->statsTypes[] = $type[1];
             $points = '1m' === $type[1] ? [['2026-10-19 08:10:00.000Z', ...$this->latest]] : $this->points;
 
-            return new JsonMockResponse(['items' => array_map(
+            $items = array_map(
                 static fn (array $p): array => ['created' => $p[0], 'stats' => ['cpu' => 1, 'efs' => null === $p[1] ? [] : ['media' => ['d' => $p[2], 'du' => $p[1]]]]],
                 $points,
-            )]);
+            );
+            if ('1m' === $type[1]) {
+                $items[0]['stats']['z'] = $this->pools;
+            }
+
+            return new JsonMockResponse(['items' => $items]);
         });
 
         return new StorageCard(new BeszelClient($http, new ArrayAdapter(), 'http://beszel', 'u', 'p'));
@@ -91,7 +99,7 @@ final class StorageCardTest extends TestCase
 
     public function testOptionsDefaults(): void
     {
-        self::assertEquals(['host' => 'alpha', 'filesystem' => 'media', 'period' => '30d'], $this->instance($this->card())->options);
+        self::assertEquals(['host' => 'alpha', 'filesystem' => 'media', 'period' => '30d', 'pool' => null], $this->instance($this->card())->options);
     }
 
     /**
@@ -211,6 +219,34 @@ final class StorageCardTest extends TestCase
         self::assertNull($data['series']['used'][0], 'pas de faux creux sur la courbe');
         self::assertSame(9, $data['growth']['days']);
         self::assertEqualsWithDelta(5.0, $data['growth']['perDay'], 0.001);
+    }
+
+    public function testNoPoolHealthUnlessAsked(): void
+    {
+        self::assertNull($this->fetch()['health']);
+    }
+
+    /**
+     * @return iterable<array{string, string}>
+     */
+    public static function poolHealth(): iterable
+    {
+        yield ['ONLINE', 'ONLINE'];
+        yield ['DEGRADED', 'DEGRADED'];
+        yield ['UNKNOWN', 'UNKNOWN'];
+    }
+
+    #[DataProvider('poolHealth')]
+    public function testPoolHealthByName(string $beszel, string $expected): void
+    {
+        $this->pools['b:1234-abcd']['h'] = $beszel;
+
+        self::assertSame($expected, $this->fetch(['pool' => 'tank'])['health']);
+    }
+
+    public function testPoolMissingFromBeszelIsUnknown(): void
+    {
+        self::assertSame('UNKNOWN', $this->fetch(['pool' => 'autre'])['health']);
     }
 
     public function testUnknownFilesystemListsTheKnownOnes(): void

@@ -21,6 +21,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  *       host: beta
  *       filesystem: NAS     # nom donné par Beszel (EXTRA_FILESYSTEMS=/mnt/raid__NAS)
  *       period: 30d
+ *       pool: nas           # facultatif : état du pool btrfs/ZFS (étiquette du pool)
  *       span: 2
  */
 #[AsCard('storage')]
@@ -51,7 +52,10 @@ final readonly class StorageCard implements CardTypeInterface
             ->setAllowedTypes('filesystem', 'string')
             ->setInfo('filesystem', 'nom du volume dans Beszel (EXTRA_FILESYSTEMS de l\'agent)')
             ->setDefault('period', '30d')
-            ->setAllowedValues('period', array_keys(self::PERIODS));
+            ->setAllowedValues('period', array_keys(self::PERIODS))
+            ->setDefault('pool', null)
+            ->setAllowedTypes('pool', ['null', 'string'])
+            ->setInfo('pool', 'étiquette du pool btrfs ou ZFS dont afficher l\'état (ONLINE, DEGRADED…)');
     }
 
     public function describe(CardInstance $card, Dashboard $dashboard): array
@@ -75,7 +79,8 @@ final readonly class StorageCard implements CardTypeInterface
         // Les tranches longues sont des moyennes : celle où le volume apparaît (ou
         // l'agent redémarre) compte des zéros. Valeurs actuelles = la dernière minute.
         $minutes = $this->beszel->stats($systemName, '1m');
-        $latest = [] !== $minutes ? ($minutes[\count($minutes) - 1]->values['efs'][$fs] ?? []) : [];
+        $lastMinute = [] !== $minutes ? $minutes[\count($minutes) - 1]->values : [];
+        $latest = $lastMinute['efs'][$fs] ?? [];
         $usedNow = isset($latest['du']) ? (float) $latest['du'] : null;
         $total = isset($latest['d']) ? (float) $latest['d'] : null;
         $free = null !== $usedNow && null !== $total ? $total - $usedNow : null;
@@ -86,12 +91,30 @@ final readonly class StorageCard implements CardTypeInterface
             'used' => $usedNow,
             'total' => $total,
             'free' => $free,
+            'health' => null === $card->options['pool'] ? null : self::health($lastMinute['z'] ?? [], $card->options['pool']),
             'growth' => self::growth($stats, $used, $free),
             'series' => [
                 'at' => array_map(static fn (BeszelStat $s): string => $s->at->format(\DATE_ATOM), $stats),
                 'used' => $used,
             ],
         ];
+    }
+
+    /**
+     * État du pool d'après Beszel : ONLINE, DEGRADED (disque manquant) ou UNKNOWN.
+     * Pool absent de la dernière mesure : UNKNOWN.
+     *
+     * @param array<string, array{n?: string, h?: string}> $pools clés « b:<uuid> » (btrfs) ou nom (ZFS)
+     */
+    private static function health(array $pools, string $name): string
+    {
+        foreach ($pools as $key => $pool) {
+            if ($name === ($pool['n'] ?? $key)) {
+                return $pool['h'] ?? 'UNKNOWN';
+            }
+        }
+
+        return 'UNKNOWN';
     }
 
     /**

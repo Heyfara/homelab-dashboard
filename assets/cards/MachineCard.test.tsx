@@ -14,6 +14,7 @@ const data: MachineData = {
     { name: 'Système', percent: 32.04, used: 142.86, total: 465.88 },
     { name: 'RAID', percent: 92.1, used: 1690, total: 1832.68 },
   ],
+  swap: { percent: 96, used: 3.83, total: 4 },
   series: { at, cpu: [2.5, 3.53], memory: [30, 31.8], netSent: [10000, 12974], netReceived: [20000, 9631] },
 }
 const result = (d: MachineData): CardResult<MachineData> => ({ status: 'ok', data: d, error: null, fetchedAt: '2026-10-19T19:31:00+00:00' })
@@ -61,6 +62,21 @@ describe('MachineCard', () => {
     const raid = screen.getByRole('progressbar', { name: /RAID/ })
     expect(text(raid.closest('li')!)).toContain('1,7 / 1,8 To')
     expect(raid.className).toContain('text-rose')
+  })
+
+  it('une jauge de swap sous les disques', () => {
+    render(<MachineCard card={card} result={result(data)} />)
+
+    const swap = screen.getByRole('progressbar', { name: /^Swap/ })
+    expect(swap.getAttribute('aria-valuenow')).toBe('96')
+    expect(text(swap.closest('li')!)).toContain('3,8 / 4 Go')
+    expect(swap.className).toContain('text-rose')
+  })
+
+  it('pas de jauge de swap sans swap', () => {
+    render(<MachineCard card={card} result={result({ ...data, swap: null })} />)
+
+    expect(screen.queryByRole('progressbar', { name: /^Swap/ })).toBeNull()
   })
 
   it('un graphique par mesure demandée, avec la valeur actuelle', () => {

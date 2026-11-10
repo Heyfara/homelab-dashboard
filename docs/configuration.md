@@ -244,7 +244,8 @@ services:
 
 Une machine suivie par Beszel : nom, IP, état (*En ligne*, *Hors ligne*, *En
 pause*, *En attente*), température, temps depuis le dernier démarrage ; une
-jauge par disque (vert, ambre dès 75 %, rouge dès 90 %) ; un graphique par
+jauge par disque (vert, ambre dès 75 %, rouge dès 90 %), puis une jauge de
+swap (mêmes seuils ; absente sur une machine sans swap) ; un graphique par
 mesure, avec la valeur actuelle. Survoler un graphique (ou le parcourir au
 clavier : Tab puis flèches) donne l'heure et la valeur de chaque série.
 
@@ -282,9 +283,10 @@ repart alors de zéro).
 | `host` | obligatoire | machine de `hosts`, avec un système Beszel |
 | `filesystem` | obligatoire | nom du volume dans Beszel |
 | `period` | `30d` | `7d` ou `30d` (résolutions 120 et 480 min de Beszel) |
+| `pool` | aucun | étiquette d'un pool btrfs ou ZFS : pastille *Sain* (ONLINE), *Dégradé* (DEGRADED, un disque manque) ou *État inconnu* (pool non vu par Beszel) |
 
 ```yaml
-- { type: storage, host: beta, filesystem: NAS, title: NAS, span: 2 }
+- { type: storage, host: beta, filesystem: NAS, pool: tank, title: NAS, span: 2 }
 ```
 
 Le nom est celui que montre Beszel : par défaut le périphérique

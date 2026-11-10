@@ -10,6 +10,7 @@ const data: StorageData = {
   used: 1055.15,
   total: 1832.68,
   free: 777.53,
+  health: null,
   growth: { perDay: 5, fullInDays: 155.5, days: 10 },
   series: { at: ['2026-10-09T08:00:00+00:00', '2026-10-19T08:00:00+00:00'], used: [1005.15, 1055.15] },
 }
@@ -70,6 +71,22 @@ describe('StorageCard', () => {
     const { container } = render(<StorageCard card={card} result={result({ ...data, growth: null })} />)
 
     expect(text(container)).toContain('tendance après 2 jours de mesures')
+  })
+
+  it.each([
+    ['ONLINE', 'Sain'],
+    ['DEGRADED', 'Dégradé'],
+    ['UNKNOWN', 'État inconnu'],
+  ] as const)('état du pool %s → « %s »', (health, label) => {
+    render(<StorageCard card={card} result={result({ ...data, health })} />)
+
+    screen.getByText(label)
+  })
+
+  it('pas d’état sans pool configuré', () => {
+    render(<StorageCard card={card} result={result(data)} />)
+
+    expect(screen.queryByText('Sain')).toBeNull()
   })
 
   it('annonce le chargement', () => {

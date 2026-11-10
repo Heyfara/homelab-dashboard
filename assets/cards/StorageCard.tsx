@@ -3,7 +3,7 @@ import { diskTone, formatGiB, formatUsage } from './MachineCard'
 import { formatNumber } from '../ui/format'
 import { DatabaseIcon } from '../ui/icons'
 import { RingGauge } from '../ui/RingGauge'
-import type { Tone } from '../ui/StatusPill'
+import { StatusPill, type Tone } from '../ui/StatusPill'
 import { TimeSeries } from '../ui/TimeSeries'
 
 /** Props de StorageCard::describe() côté PHP. */
@@ -15,6 +15,8 @@ export type StorageData = {
   used: number | null
   total: number | null
   free: number | null
+  /** État du pool btrfs/ZFS (option pool), null si non demandé */
+  health: 'ONLINE' | 'DEGRADED' | 'UNKNOWN' | string | null
   /** Droite des moindres carrés sur la période ; null tant que le recul manque. */
   growth: { perDay: number; fullInDays: number | null; days: number } | null
   series: { at: string[]; used: (number | null)[] }
@@ -25,6 +27,11 @@ const RING: Record<Tone, string> = {
   warn: 'text-amber-500 dark:text-amber-400',
   down: 'text-rose-600 dark:text-rose-400',
   unknown: 'text-zinc-400',
+}
+
+const HEALTH: Record<string, { tone: Tone; label: string }> = {
+  ONLINE: { tone: 'ok', label: 'Sain' },
+  DEGRADED: { tone: 'down', label: 'Dégradé' },
 }
 
 const size = (gb: number) => formatGiB(gb).join(' ')
@@ -68,6 +75,7 @@ export const StorageCard: CardComponent<StorageProps, StorageData> = ({ card, re
           <DatabaseIcon className="size-4" />
         </span>
         <h3 className="truncate font-semibold text-zinc-900 dark:text-slate-50">{title}</h3>
+        {data.health !== null && <PoolHealth health={data.health} />}
         <span className="flex-1" />
         <span className="shrink-0 text-xs text-zinc-500 dark:text-slate-400">
           {growth === null ? (
@@ -106,4 +114,9 @@ export const StorageCard: CardComponent<StorageProps, StorageData> = ({ card, re
       </div>
     </div>
   )
+}
+
+function PoolHealth({ health }: { health: string }) {
+  const { tone, label } = HEALTH[health] ?? { tone: 'unknown' as Tone, label: 'État inconnu' }
+  return <StatusPill tone={tone} label={label} />
 }

@@ -17,6 +17,8 @@ export type MachineData = {
   now: { cpu: number | null; memory: number | null; load: number[]; temperature: number | null }
   memory: { used: number | null; total: number | null }
   disks: Disk[]
+  /** Swap de la dernière mesure (Go binaires), null sans swap */
+  swap: { percent: number; used: number; total: number } | null
   series: {
     at: string[]
     cpu?: (number | null)[]
@@ -106,6 +108,7 @@ export const MachineCard: CardComponent<MachineProps, MachineData> = ({ card, re
           {data.disks.map((disk) => (
             <DiskGauge key={disk.name} disk={disk} />
           ))}
+          {data.swap && <DiskGauge disk={{ name: 'Swap', ...data.swap }} label="Swap" />}
         </ul>
         {/* Processeur et Mémoire côte à côte, Réseau (deux séries) sur toute la largeur. */}
         <div className="grid min-h-0 min-w-0 auto-rows-fr grid-cols-2 gap-2 [&>[data-wide]]:col-span-2">
@@ -168,13 +171,14 @@ export const MachineCard: CardComponent<MachineProps, MachineData> = ({ card, re
   )
 }
 
-function DiskGauge({ disk }: { disk: Disk }) {
+/** Jauge d'un disque, ou du swap (`label` remplace « Disque <nom> »). */
+function DiskGauge({ disk, label = `Disque ${disk.name}` }: { disk: Disk; label?: string }) {
   const percent = disk.percent ?? 0
   const tone = disk.percent !== null ? diskTone(percent) : 'unknown'
 
   return (
     <li className="flex flex-col items-center gap-1 text-center">
-      <RingGauge value={percent / 100} label={`Disque ${disk.name} : ${pct(percent)}`} className={`size-14 ${RING[tone]}`}>
+      <RingGauge value={percent / 100} label={`${label} : ${pct(percent)}`} className={`size-14 ${RING[tone]}`}>
         <span className="text-xs font-semibold text-zinc-900 dark:text-slate-50">{Math.round(percent)} %</span>
       </RingGauge>
       <span className="max-w-20 truncate text-xs font-medium text-zinc-700 dark:text-slate-200">{disk.name}</span>
