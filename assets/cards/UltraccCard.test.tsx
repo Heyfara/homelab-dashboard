@@ -58,6 +58,12 @@ describe('UltraccCard', () => {
     expect(screen.getByRole('link', { name: /Seedbox/ }).getAttribute('href')).toBe('https://tom.serveur.usbx.example/qbittorrent')
   })
 
+  it('affiche l’icône de la carte', () => {
+    const { container } = render(<UltraccCard card={{ ...card, props: { ...card.props, icon: 'ultracc.svg' } }} result={result(data)} />)
+
+    expect(container.querySelector('img')?.getAttribute('src')).toBe('/icons/ultracc.svg')
+  })
+
   it('montre un squelette pendant le chargement', () => {
     const { container } = render(<UltraccCard card={card} result={null} />)
 

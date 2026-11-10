@@ -107,6 +107,7 @@ Même convention que Homepage. Les noms sont ceux de <https://selfh.st/icons>
 | `sh-immich.svg`, `sh-immich.png` | format forcé ; le SVG n'existe pas pour toutes |
 | `sh-immich-light.svg`, `sh-immich-dark.svg` | variantes claire/sombre, quand elles existent |
 | `https://…` | image quelconque |
+| `ultracc.svg` | fichier livré avec le dashboard, dans `assets/public/icons/` (logos absents de selfh.st) |
 
 Une icône introuvable affiche l'initiale du nom du service.
 
@@ -313,9 +314,10 @@ jour après la remise à zéro (trop peu de recul).
 |---|---|---|
 | `service` | obligatoire | service du catalogue dont l'`url` est sur l'hôte Ultra.cc (seuls schéma et hôte comptent ; le titre le lie) |
 | `traffic_quota` | aucun | quota de trafic mensuel de l'offre, en Go (l'API ne donne qu'un pourcentage) |
+| `icon` | celle du service | icône de la carte ; `ultracc.svg` = logo d'Ultra.cc livré avec le dashboard |
 
 ```yaml
-- { type: ultracc, service: seedbox, traffic_quota: 2000, span: 2, refresh: 900 }
+- { type: ultracc, service: seedbox, traffic_quota: 2000, icon: ultracc.svg, span: 2, refresh: 900 }
 ```
 
 La source est le script non officiel « Ultra-API », à installer en SSH sur la

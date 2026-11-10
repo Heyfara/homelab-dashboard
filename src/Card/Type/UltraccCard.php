@@ -18,6 +18,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  *     - type: ultracc
  *       service: seedbox        # service avec une url sur l'hôte Ultra.cc
  *       traffic_quota: 2000     # facultatif : quota de trafic en Go, pour afficher le volume
+ *       icon: ultracc.svg       # facultatif : remplace l'icône du service
  *       span: 2
  *       refresh: 900
  */
@@ -44,14 +45,17 @@ final readonly class UltraccCard implements CardTypeInterface
             ->setDefault('traffic_quota', null)
             ->setAllowedTypes('traffic_quota', ['null', 'int'])
             ->setAllowedValues('traffic_quota', static fn (?int $q): bool => null === $q || $q > 0)
-            ->setInfo('traffic_quota', 'quota de trafic mensuel en Go (l\'API ne donne qu\'un pourcentage)');
+            ->setInfo('traffic_quota', 'quota de trafic mensuel en Go (l\'API ne donne qu\'un pourcentage)')
+            ->setDefault('icon', null)
+            ->setAllowedTypes('icon', ['null', 'string'])
+            ->setInfo('icon', 'icône de la carte (même convention que les services), sinon celle du service');
     }
 
     public function describe(CardInstance $card, Dashboard $dashboard): array
     {
         $service = $dashboard->services[$card->options['service']];
 
-        return ['title' => $card->title ?? $service->name, 'url' => $service->url, 'icon' => $service->icon];
+        return ['title' => $card->title ?? $service->name, 'url' => $service->url, 'icon' => $card->options['icon'] ?? $service->icon];
     }
 
     public function fetch(CardInstance $card, Dashboard $dashboard): array

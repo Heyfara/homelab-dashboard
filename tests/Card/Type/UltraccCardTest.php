@@ -55,7 +55,7 @@ final class UltraccCardTest extends TestCase
 
     public function testOptionsDefaults(): void
     {
-        self::assertEquals(['service' => 'seedbox', 'traffic_quota' => null], $this->instance($this->card())->options);
+        self::assertEquals(['service' => 'seedbox', 'traffic_quota' => null, 'icon' => null], $this->instance($this->card())->options);
     }
 
     public function testServiceMustHaveAnUrl(): void
@@ -81,6 +81,8 @@ final class UltraccCardTest extends TestCase
             $card->describe($this->instance($card), $this->dashboard),
         );
         self::assertSame('Abonnement', $card->describe($this->instance($card, title: 'Abonnement'), $this->dashboard)['title']);
+        // L'icône de la carte remplace celle du service (qBittorrent sur la seedbox).
+        self::assertSame('ultracc.svg', $card->describe($this->instance($card, ['service' => 'seedbox', 'icon' => 'ultracc.svg']), $this->dashboard)['icon']);
     }
 
     public function testFetch(): void
