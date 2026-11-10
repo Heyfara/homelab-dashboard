@@ -254,6 +254,7 @@ clavier : Tab puis flèches) donne l'heure et la valeur de chaque série.
 | `period` | `24h` | `1h`, `12h`, `24h`, `7d`, `30d` (résolutions 1, 10, 20, 120 et 480 min de Beszel) |
 | `charts` | `[cpu, memory, network]` | parmi `cpu`, `memory`, `network`, `temperature` |
 | `disk_names` | `{}` | noms lisibles des disques supplémentaires : `{ sdb1: RAID }` |
+| `hide_disks` | `[]` | disques supplémentaires à ne pas afficher (nom Beszel), par exemple un volume montré par une carte `storage` : `[NAS]` |
 
 ```yaml
 - { type: machine, host: beta, span: 2, rows: 2, disk_names: { sdb1: RAID } }

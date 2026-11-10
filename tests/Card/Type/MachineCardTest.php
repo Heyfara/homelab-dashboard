@@ -80,7 +80,7 @@ final class MachineCardTest extends TestCase
     public function testOptionsDefaults(): void
     {
         self::assertEquals(
-            ['host' => 'alpha', 'period' => '24h', 'charts' => ['cpu', 'memory', 'network'], 'disk_names' => []],
+            ['host' => 'alpha', 'period' => '24h', 'charts' => ['cpu', 'memory', 'network'], 'disk_names' => [], 'hide_disks' => []],
             $this->instance($this->card())->options,
         );
     }
@@ -128,6 +128,13 @@ final class MachineCardTest extends TestCase
             ['name' => 'Système', 'percent' => 32.04, 'used' => 142.86, 'total' => 465.88],
             ['name' => 'RAID', 'percent' => 57.57, 'used' => 1055.15, 'total' => 1832.68],
         ], $disks);
+    }
+
+    public function testHiddenDisks(): void
+    {
+        $disks = $this->fetch(['hide_disks' => ['media']])['disks'];
+
+        self::assertSame(['Système'], array_column($disks, 'name'), 'volume montré par sa propre carte storage');
     }
 
     /**
