@@ -300,13 +300,14 @@ donne la capacité utile (après duplication), pas la somme des disques.
 
 ### `ultracc`
 
-Abonnement à une seedbox Ultra.cc : deux jauges. *Stockage* : utilisé /
-total et place libre (ambre dès 85 %, rouge dès 95 %). *Trafic du mois* :
-pourcentage consommé, volume si `traffic_quota` est donné, date de la remise à
-zéro et projection au rythme actuel jusqu'à cette date (« ≈ 76 % à ce
-rythme »). Au-delà du quota, Ultra.cc bride le débit : la jauge passe ambre
-dès 85 % projetés, rouge au-delà de 100 %. Pas de projection le premier jour
-après la remise à zéro (trop peu de recul).
+Abonnement à une seedbox Ultra.cc : deux jauges côte à côte, faites pour
+`span: 2` sur une rangée. *Stockage* : utilisé / total et place libre (ambre
+dès 85 %, rouge dès 95 %). *Trafic du mois* : pourcentage consommé, volume si
+`traffic_quota` est donné, date de la remise à zéro et projection au rythme
+actuel jusqu'à cette date (« ≈ 76 % au 6 déc. ») ; sans projection, la date de
+remise à zéro. Au-delà du quota, Ultra.cc bride le débit : la jauge passe
+ambre dès 85 % projetés, rouge au-delà de 100 %. Pas de projection le premier
+jour après la remise à zéro (trop peu de recul).
 
 | Option | Défaut | Rôle |
 |---|---|---|
@@ -314,7 +315,7 @@ après la remise à zéro (trop peu de recul).
 | `traffic_quota` | aucun | quota de trafic mensuel de l'offre, en Go (l'API ne donne qu'un pourcentage) |
 
 ```yaml
-- { type: ultracc, service: seedbox, traffic_quota: 2000, rows: 2, refresh: 900 }
+- { type: ultracc, service: seedbox, traffic_quota: 2000, span: 2, refresh: 900 }
 ```
 
 La source est le script non officiel « Ultra-API », à installer en SSH sur la

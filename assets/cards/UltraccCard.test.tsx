@@ -7,8 +7,8 @@ const card: CardView<UltraccProps> = {
   id: 'tom-ultracc-abc123',
   type: 'ultracc',
   title: null,
-  span: 1,
-  rows: 2,
+  span: 2,
+  rows: 1,
   refresh: 900,
   props: { title: 'Seedbox', url: 'https://tom.serveur.usbx.example/qbittorrent', icon: 'sh-qbittorrent' },
 }
@@ -37,8 +37,13 @@ describe('UltraccCard', () => {
     const traffic = screen.getByRole('group', { name: 'Trafic du mois' })
     expect(screen.getByRole('progressbar', { name: /Trafic : 24,5 %/ })).toBeTruthy()
     expect(text(traffic)).toContain('490 Go / 2 To')
-    expect(text(traffic)).toContain('10 avr.')
-    expect(text(traffic)).toContain('≈ 76 % à ce rythme')
+    expect(text(traffic)).toContain('≈ 76 % au 10 avr.')
+  })
+
+  it('sans projection, montre la date de remise à zéro', () => {
+    render(<UltraccCard card={card} result={result({ ...data, traffic: { ...data.traffic, projectedPercent: null } })} />)
+
+    expect(text(screen.getByRole('group', { name: 'Trafic du mois' }))).toContain('remise à zéro le 10 avr.')
   })
 
   it('sans quota, ne montre que le pourcentage', () => {
@@ -62,20 +67,20 @@ describe('UltraccCard', () => {
 
 describe('trafficOutlook', () => {
   it('reste vert sous 85 % projetés', () => {
-    expect(trafficOutlook(24.5, 75.95)).toEqual({ tone: 'ok', label: '≈ 76 % à ce rythme' })
+    expect(trafficOutlook(24.5, 75.95, '10 avr.')).toEqual({ tone: 'ok', label: '≈ 76 % au 10 avr.' })
   })
 
   it('passe ambre à l’approche du quota', () => {
-    expect(trafficOutlook(40, 90)).toEqual({ tone: 'warn', label: '≈ 90 % à ce rythme' })
+    expect(trafficOutlook(40, 90, '10 avr.')).toEqual({ tone: 'warn', label: '≈ 90 % au 10 avr.' })
   })
 
   it('annonce le bridage si la projection dépasse le quota', () => {
-    expect(trafficOutlook(60, 130)).toEqual({ tone: 'down', label: '≈ 130 % à ce rythme : bridage probable' })
+    expect(trafficOutlook(60, 130, '10 avr.')).toEqual({ tone: 'down', label: '≈ 130 % : bridage' })
   })
 
   it('sans projection (1er jour), se fie au pourcentage consommé', () => {
-    expect(trafficOutlook(2, null)).toEqual({ tone: 'ok', label: null })
-    expect(trafficOutlook(100, null)).toEqual({ tone: 'down', label: 'quota atteint : débit bridé' })
+    expect(trafficOutlook(2, null, '10 avr.')).toEqual({ tone: 'ok', label: null })
+    expect(trafficOutlook(100, null, '10 avr.')).toEqual({ tone: 'down', label: 'bridé jusqu’au 10 avr.' })
   })
 })
 

@@ -18,7 +18,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  *     - type: ultracc
  *       service: seedbox        # service avec une url sur l'hôte Ultra.cc
  *       traffic_quota: 2000     # facultatif : quota de trafic en Go, pour afficher le volume
- *       rows: 2
+ *       span: 2
  *       refresh: 900
  */
 #[AsCard('ultracc')]
