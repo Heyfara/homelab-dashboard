@@ -102,6 +102,12 @@ final readonly class MachineCard implements CardTypeInterface
             ],
             'memory' => ['used' => $latest['mu'] ?? null, 'total' => $latest['m'] ?? null],
             'disks' => $disks,
+            // Disque système : occupation des E/S (% du temps, comme iostat) et débits.
+            'diskIo' => isset($latest['dios'][2]) ? [
+                'busy' => $latest['dios'][2],
+                'read' => $latest['dio'][0] ?? 0,
+                'write' => $latest['dio'][1] ?? 0,
+            ] : null,
             'series' => self::series($stats, $card->options['charts']),
         ];
     }

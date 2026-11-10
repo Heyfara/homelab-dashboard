@@ -130,6 +130,11 @@ final class MachineCardTest extends TestCase
         ], $disks);
     }
 
+    public function testDiskActivity(): void
+    {
+        self::assertSame(['busy' => 12.5, 'read' => 13858, 'write' => 69770], $this->fetch()['diskIo'], 'occupation % et octets/s, dernière mesure');
+    }
+
     public function testHiddenDisks(): void
     {
         $disks = $this->fetch(['hide_disks' => ['media']])['disks'];
@@ -178,5 +183,6 @@ final class MachineCardTest extends TestCase
         self::assertNull($data['now']['temperature']);
         self::assertSame([], $data['series']['at']);
         self::assertSame([['name' => 'Système', 'percent' => 2.94, 'used' => null, 'total' => null]], $data['disks']);
+        self::assertNull($data['diskIo'], 'pas de mesure');
     }
 }

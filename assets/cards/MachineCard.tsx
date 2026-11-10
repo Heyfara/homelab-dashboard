@@ -17,6 +17,8 @@ export type MachineData = {
   now: { cpu: number | null; memory: number | null; load: number[]; temperature: number | null }
   memory: { used: number | null; total: number | null }
   disks: Disk[]
+  /** Disque système : occupation des E/S (%, moyenne de la dernière mesure) et débits (octets/s) */
+  diskIo: { busy: number; read: number; write: number } | null
   series: {
     at: string[]
     cpu?: (number | null)[]
@@ -32,6 +34,11 @@ const STATUS: Record<string, { tone: Tone; label: string }> = {
   down: { tone: 'down', label: 'Hors ligne' },
   paused: { tone: 'warn', label: 'En pause' },
   pending: { tone: 'unknown', label: 'En attente' },
+}
+
+/** Un disque occupé en continu ralentit tout : ambre dès 50 %, rouge dès 90 %. */
+export function ioTone(busy: number): Tone {
+  return busy >= 90 ? 'down' : busy >= 50 ? 'warn' : 'ok'
 }
 
 /** Un disque plein est un état : vert, puis ambre dès 75 %, rouge dès 90 %. */
@@ -106,6 +113,7 @@ export const MachineCard: CardComponent<MachineProps, MachineData> = ({ card, re
           {data.disks.map((disk) => (
             <DiskGauge key={disk.name} disk={disk} />
           ))}
+          {data.diskIo && <DiskActivity io={data.diskIo} />}
         </ul>
         {/* Processeur et Mémoire côte à côte, Réseau (deux séries) sur toute la largeur. */}
         <div className="grid min-h-0 min-w-0 auto-rows-fr grid-cols-2 gap-2 [&>[data-wide]]:col-span-2">
@@ -183,6 +191,21 @@ function DiskGauge({ disk }: { disk: Disk }) {
           {formatUsage(disk.used, disk.total)}
         </span>
       )}
+    </li>
+  )
+}
+
+function DiskActivity({ io }: { io: NonNullable<MachineData['diskIo']> }) {
+  return (
+    <li className="flex flex-col items-center gap-1 text-center">
+      <RingGauge value={io.busy / 100} label={`Activité disque : ${pct(io.busy)} du temps`} className={`size-14 ${RING[ioTone(io.busy)]}`}>
+        <span className="text-xs font-semibold text-zinc-900 dark:text-slate-50">{Math.round(io.busy)} %</span>
+      </RingGauge>
+      <span className="text-xs font-medium text-zinc-700 dark:text-slate-200">Activité</span>
+      <span className="flex flex-col text-[0.65rem] leading-tight text-zinc-500 dark:text-slate-400">
+        <span title="Lecture">↓ {formatSpeed(io.read)}</span>
+        <span title="Écriture">↑ {formatSpeed(io.write)}</span>
+      </span>
     </li>
   )
 }

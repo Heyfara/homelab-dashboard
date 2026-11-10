@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { CardResult, CardView } from '../http/types'
-import { diskTone, formatUsage, MachineCard, type MachineData, type MachineProps } from './MachineCard'
+import { diskTone, formatUsage, ioTone, MachineCard, type MachineData, type MachineProps } from './MachineCard'
 
 const card: CardView<MachineProps> = { id: 'm', type: 'machine', title: null, span: 2, rows: 2, refresh: 60, props: { title: 'alpha', system: 'Alpha' } }
 
@@ -14,6 +14,7 @@ const data: MachineData = {
     { name: 'Système', percent: 32.04, used: 142.86, total: 465.88 },
     { name: 'RAID', percent: 92.1, used: 1690, total: 1832.68 },
   ],
+  diskIo: { busy: 12.5, read: 13858, write: 69770 },
   series: { at, cpu: [2.5, 3.53], memory: [30, 31.8], netSent: [10000, 12974], netReceived: [20000, 9631] },
 }
 const result = (d: MachineData): CardResult<MachineData> => ({ status: 'ok', data: d, error: null, fetchedAt: '2026-10-19T19:31:00+00:00' })
@@ -25,6 +26,14 @@ describe('diskTone', () => {
     [80, 'warn'],
     [92, 'down'],
   ] as const)('%d %% → %s', (percent, tone) => expect(diskTone(percent)).toBe(tone))
+})
+
+describe('ioTone', () => {
+  it.each([
+    [12, 'ok'],
+    [60, 'warn'],
+    [95, 'down'],
+  ] as const)('%d %% → %s', (busy, tone) => expect(ioTone(busy)).toBe(tone))
 })
 
 describe('formatUsage', () => {
@@ -61,6 +70,23 @@ describe('MachineCard', () => {
     const raid = screen.getByRole('progressbar', { name: /RAID/ })
     expect(text(raid.closest('li')!)).toContain('1,7 / 1,8 To')
     expect(raid.className).toContain('text-rose')
+  })
+
+  it('activité du disque système : occupation et débits', () => {
+    render(<MachineCard card={card} result={result(data)} />)
+
+    const io = screen.getByRole('progressbar', { name: /^Activité disque/ })
+    expect(io.getAttribute('aria-valuenow')).toBe('13')
+    const item = text(io.closest('li')!)
+    expect(item).toContain('Activité')
+    expect(item).toContain('↓ 13,9 Ko/s')
+    expect(item).toContain('↑ 69,8 Ko/s')
+  })
+
+  it('pas d’activité disque sans mesure', () => {
+    render(<MachineCard card={card} result={result({ ...data, diskIo: null })} />)
+
+    expect(screen.queryByRole('progressbar', { name: /^Activité disque/ })).toBeNull()
   })
 
   it('un graphique par mesure demandée, avec la valeur actuelle', () => {
