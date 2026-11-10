@@ -244,8 +244,7 @@ services:
 
 Une machine suivie par Beszel : nom, IP, état (*En ligne*, *Hors ligne*, *En
 pause*, *En attente*), température, temps depuis le dernier démarrage ; une
-jauge par disque (vert, ambre dès 75 %, rouge dès 90 %), puis une jauge de
-swap (mêmes seuils ; absente sur une machine sans swap) ; un graphique par
+jauge par disque (vert, ambre dès 75 %, rouge dès 90 %) ; un graphique par
 mesure, avec la valeur actuelle. Survoler un graphique (ou le parcourir au
 clavier : Tab puis flèches) donne l'heure et la valeur de chaque série.
 

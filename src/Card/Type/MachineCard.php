@@ -102,29 +102,7 @@ final readonly class MachineCard implements CardTypeInterface
             ],
             'memory' => ['used' => $latest['mu'] ?? null, 'total' => $latest['m'] ?? null],
             'disks' => $disks,
-            'swap' => self::swap($latest['swap'] ?? null),
             'series' => self::series($stats, $card->options['charts']),
-        ];
-    }
-
-    /**
-     * Swap de la dernière mesure, en Go binaires comme les disques ; null sans swap.
-     *
-     * @param array{int, int}|null $bytes [total, utilisé] en octets (Beszel ≥ 0.13)
-     *
-     * @return array{percent: float, used: float, total: float}|null
-     */
-    private static function swap(?array $bytes): ?array
-    {
-        [$total, $used] = $bytes ?? [0, 0];
-        if ($total <= 0) {
-            return null;
-        }
-
-        return [
-            'percent' => round($used / $total * 100, 2),
-            'used' => round($used / 1024 ** 3, 2),
-            'total' => round($total / 1024 ** 3, 2),
         ];
     }
 

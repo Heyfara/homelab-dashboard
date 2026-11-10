@@ -130,11 +130,6 @@ final class MachineCardTest extends TestCase
         ], $disks);
     }
 
-    public function testSwapFromTheLatestMeasure(): void
-    {
-        self::assertSame(['percent' => 25.0, 'used' => 1.0, 'total' => 4.0], $this->fetch()['swap'], 'Go binaires, comme les disques');
-    }
-
     public function testHiddenDisks(): void
     {
         $disks = $this->fetch(['hide_disks' => ['media']])['disks'];
@@ -183,6 +178,5 @@ final class MachineCardTest extends TestCase
         self::assertNull($data['now']['temperature']);
         self::assertSame([], $data['series']['at']);
         self::assertSame([['name' => 'Système', 'percent' => 2.94, 'used' => null, 'total' => null]], $data['disks']);
-        self::assertNull($data['swap'], 'pas de mesure, ou machine sans swap');
     }
 }
