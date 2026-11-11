@@ -7,7 +7,8 @@ const tones: Record<Tone, string> = {
   unknown: 'bg-zinc-100 text-zinc-600 dark:bg-slate-800 dark:text-slate-400',
 }
 
-const dots: Record<Tone, string> = {
+/** Couleur de la pastille d’un état (aussi utilisée par le lanceur de services). */
+export const toneDot: Record<Tone, string> = {
   ok: 'bg-emerald-500',
   warn: 'bg-amber-500',
   down: 'bg-rose-500',
@@ -17,7 +18,7 @@ const dots: Record<Tone, string> = {
 export function StatusPill({ tone, label }: { tone: Tone; label: string }) {
   return (
     <span className={`inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${tones[tone]}`}>
-      <span className={`size-1.5 rounded-full ${dots[tone]}`} aria-hidden="true" />
+      <span className={`size-1.5 rounded-full ${toneDot[tone]}`} aria-hidden="true" />
       {label}
     </span>
   )

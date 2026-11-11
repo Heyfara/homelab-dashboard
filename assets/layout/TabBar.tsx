@@ -1,6 +1,6 @@
 import { useState, type MouseEvent } from 'react'
 import type { TabView } from '../http/types'
-import { ChevronsLeftIcon, ChevronsRightIcon, GridIcon, HomeIcon, ShieldIcon } from '../ui/icons'
+import { ChevronsLeftIcon, ChevronsRightIcon, GridIcon, HomeIcon, Printer3dIcon, ShieldIcon } from '../ui/icons'
 
 const COMPACT_KEY = 'dashboard.sidebar.compact'
 
@@ -27,11 +27,18 @@ const compactPref = {
 export const tabPath = (profile: string, tabs: TabView[], slug: string) =>
   slug === tabs[0]?.slug ? `/${profile}` : `/${profile}/${slug}`
 
+/** Icônes des noms d'onglet courants ; les autres ont une grille. */
+const knownTabIcons: Record<string, typeof GridIcon> = {
+  admin: ShieldIcon,
+  atelier: Printer3dIcon,
+}
+
+/** Icône d'un onglet : maison pour le premier, sinon selon son identifiant. */
+export const tabIcon = (slug: string, first: boolean) => (first ? HomeIcon : (knownTabIcons[slug] ?? GridIcon))
+
 function TabIcon({ slug, first, compact, current }: { slug: string; first: boolean; compact: boolean; current: boolean }) {
-  const className = `size-6 shrink-0 ${compact ? '' : 'lg:size-5'} ${current ? 'text-indigo-600 dark:text-indigo-400' : ''}`
-  if (first) return <HomeIcon className={className} />
-  if (slug === 'admin') return <ShieldIcon className={className} />
-  return <GridIcon className={className} />
+  const Icon = tabIcon(slug, first)
+  return <Icon className={`size-6 shrink-0 ${compact ? '' : 'lg:size-5'} ${current ? 'text-indigo-600 dark:text-indigo-400' : ''}`} />
 }
 
 /**

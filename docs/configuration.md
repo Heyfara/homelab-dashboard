@@ -110,7 +110,8 @@ les sections sont dans le même onglet n'affiche pas de barre d'onglets.
   avec le nom en minuscules sans accents (« Médias et jeux » → `/tom/medias-et-jeux`).
 - `config` et `cles` sont réservés (adresses de « Ma config »).
 - Seules les cartes de l'onglet ouvert sont chargées.
-- Sur ordinateur, les onglets sont dans une barre latérale toujours visible (icônes seules en dessous de 1024 px de large ; au-delà, bouton en haut de la barre pour passer en icônes seules, retenu par l.appareil) ; sur téléphone, en barre fixe en bas.
+- Icône de l'onglet : maison pour le premier, bouclier pour `Admin`, imprimante 3D pour `Atelier`, grille pour les autres.
+- Sur ordinateur, les onglets sont dans une barre latérale toujours visible (icônes seules en dessous de 1024 px de large ; au-delà, bouton en haut de la barre pour passer en icônes seules, retenu par l'appareil) ; sur téléphone, en barre fixe en bas.
 - « Réorganiser » déplace les cartes dans leur section, comme avant : changer une
   section d'onglet garde l'ordre choisi.
 
@@ -159,6 +160,36 @@ système Beszel), la réponse HTTP de `check`, sinon de `url`.
 (healthcheck en échec), *Arrêté* (absent de Beszel : arrêté ou supprimé),
 *Ne répond pas* (sonde HTTP sans réponse ou en 5xx), *Non surveillé* (ni
 container ni adresse).
+
+### `services`
+
+Lanceur : plusieurs services du catalogue en une grille d'icônes, chacune avec
+une pastille d'état. Remplace une série de cartes `service`.
+
+```yaml
+- type: services
+  title: Outils d'admin          # optionnel, « Services » par défaut
+  services: [dagu, healthchecks, pihole, wiki]
+  span: 2
+  rows: 2
+```
+
+| Option | Obligatoire | Rôle |
+|---|---|---|
+| `services` | oui | identifiants dans `services`, au moins un, dans l'ordre d'affichage |
+
+Même état que la carte `service` (Beszel pour le container, sonde HTTP sur
+`check` sinon `url`). Les sondes partent en parallèle et Beszel n'est lu qu'une
+fois par machine. Un service *Ne répond pas*, *Arrêté* ou *En difficulté* passe
+en tête avec un nom en rouge ; *Démarre*, *Redémarre* ou *En pause* juste
+après ; l'en-tête compte les problèmes. L'état exact s'affiche au survol. Un
+service sans `url` est affiché sans lien.
+
+Taille : les icônes sont réparties sur autant de lignes que la carte a de
+rangées (`rows: 2` et 6 services → 2 lignes de 3), espacées pour remplir la
+carte. Chaque icône garde au moins 4,5rem de large : sur écran étroit, la grille
+repasse à la ligne, et les icônes qui ne tiennent plus dans la hauteur sont
+coupées, d'où l'ordre « problèmes d'abord ».
 
 ### `jellyfin-latest`
 
