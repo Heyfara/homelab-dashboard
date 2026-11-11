@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { CardResult, CardView } from '../http/types'
 import type { CardComponent } from '../cards/registry'
+import { snapshots } from '../http/snapshots'
 import { CardSlot } from './CardSlot'
 
 const card: CardView = { id: 'c1', type: 'echo', title: 'Écho', span: 1, rows: 1, refresh: 30, props: { text: 'bonjour' } }
@@ -52,5 +53,30 @@ describe('CardSlot', () => {
     render(<CardSlot card={card} registry={registry} fetcher={fetcher} />)
 
     await screen.findByText(/Failed to fetch/)
+  })
+  it('affiche tout de suite les dernières données gardées, avec leur âge si elles sont vieilles', async () => {
+    const old = new Date(Date.now() - 3 * 3600_000).toISOString()
+    snapshots.saveCard('c1', { ...okResult, data: { n: 3 }, fetchedAt: old })
+    render(<CardSlot card={card} registry={registry} fetcher={() => new Promise<CardResult>(() => {})} />)
+
+    screen.getByText('bonjour 3')
+    screen.getByText(/Données d’il y a 3 heures/)
+  })
+
+  it('n’affiche pas l’âge de données récentes', async () => {
+    const fetcher = vi.fn(async (): Promise<CardResult> => ({ ...okResult, fetchedAt: new Date().toISOString() }))
+    render(<CardSlot card={card} registry={registry} fetcher={fetcher} />)
+
+    await screen.findByText('bonjour 7')
+    expect(screen.queryByText(/Données d’il y a/)).toBeNull()
+  })
+
+  it('garde les données d’un flux à part de celles de la carte', async () => {
+    const fetcher = vi.fn(async (_id: string, _signal: AbortSignal, feed?: string): Promise<CardResult> => (feed === 'live' ? { ...okResult, data: { n: 42 } } : okResult))
+    render(<CardSlot card={{ ...card, feeds: { live: 5 } }} registry={registry} fetcher={fetcher} />)
+
+    await screen.findByText('bonjour 7 live 42')
+    expect(snapshots.card('c1')?.data).toEqual({ n: 7 })
+    expect(snapshots.card('c1?feed=live')?.data).toEqual({ n: 42 })
   })
 })

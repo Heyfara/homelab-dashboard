@@ -40,7 +40,8 @@ export type DashboardView = {
 
 /** GET /api/cards/{id}. D = données vivantes du type. */
 export type CardResult<D = Record<string, unknown>> =
-  | { status: 'ok'; data: D; error: null; fetchedAt: string }
+  /** stale : valeur plus vieille que le `refresh` de la carte, que le serveur relit en ce moment */
+  | { status: 'ok'; data: D; error: null; fetchedAt: string; stale?: boolean }
   | { status: 'error'; data: null; error: string; fetchedAt: string }
 
 /** GET /api/profiles/{slug}/config : une section par carte configurable du profil. */
