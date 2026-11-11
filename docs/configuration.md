@@ -160,6 +160,34 @@ système Beszel), la réponse HTTP de `check`, sinon de `url`.
 *Ne répond pas* (sonde HTTP sans réponse ou en 5xx), *Non surveillé* (ni
 container ni adresse).
 
+### `services`
+
+Lanceur : plusieurs services du catalogue en une grille d'icônes, chacune avec
+une pastille d'état. Remplace une série de cartes `service`.
+
+```yaml
+- type: services
+  title: Outils d'admin          # optionnel, « Services » par défaut
+  services: [dagu, healthchecks, pihole, wiki]
+  span: 2
+  rows: 2
+```
+
+| Option | Obligatoire | Rôle |
+|---|---|---|
+| `services` | oui | identifiants dans `services`, au moins un, dans l'ordre d'affichage |
+
+Même état que la carte `service` (Beszel pour le container, sonde HTTP sur
+`check` sinon `url`). Les sondes partent en parallèle et Beszel n'est lu qu'une
+fois par machine. Un service *Ne répond pas*, *Arrêté* ou *En difficulté* passe
+en tête avec un nom en rouge ; *Démarre*, *Redémarre* ou *En pause* juste
+après ; l'en-tête compte les problèmes. L'état exact s'affiche au survol. Un
+service sans `url` est affiché sans lien.
+
+Taille : environ 6 icônes par rangée pour `span: 2` sur grand écran ; les
+icônes qui ne tiennent pas dans la hauteur (`rows`) sont coupées, d'où l'ordre
+« problèmes d'abord ».
+
 ### `jellyfin-latest`
 
 Derniers ajouts d'une médiathèque Jellyfin, en affiches cliquables (fiche du

@@ -61,4 +61,32 @@ final class HttpProbeTest extends TestCase
         self::assertNull($result->statusCode);
         self::assertStringContainsString('timed out', (string) $result->error);
     }
+    public function testProbeAllAnswersForEachKey(): void
+    {
+        $requested = [];
+        $http = new MockHttpClient(static function (string $method, string $url) use (&$requested) {
+            $requested[] = $url;
+
+            return match ($url) {
+                'http://a/' => new MockResponse('', ['http_code' => 200]),
+                'http://b/' => new MockResponse('', ['http_code' => 503]),
+                default => new MockResponse('', ['error' => 'Connection refused']),
+            };
+        });
+
+        $results = (new HttpProbe($http))->probeAll(['a' => 'http://a', 'b' => 'http://b', 'c' => 'http://c']);
+
+        self::assertSame(['a', 'b', 'c'], array_keys($results));
+        self::assertTrue($results['a']->up);
+        self::assertFalse($results['b']->up);
+        self::assertSame(503, $results['b']->statusCode);
+        self::assertFalse($results['c']->up);
+        self::assertStringContainsString('refused', (string) $results['c']->error);
+        self::assertSame(['http://a/', 'http://b/', 'http://c/'], $requested, 'toutes les requêtes partent avant la lecture des réponses');
+    }
+
+    public function testProbeAllWithNothing(): void
+    {
+        self::assertSame([], (new HttpProbe(new MockHttpClient()))->probeAll([]));
+    }
 }
