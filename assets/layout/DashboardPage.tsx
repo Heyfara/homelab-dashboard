@@ -168,7 +168,7 @@ export function DashboardPage({
   const activeTab = tabs.find((t) => t.slug === tab)?.slug ?? tabs[0]?.slug
   const inActiveTab = (section: (typeof sections)[number]) => tabs.length < 2 || (section.tab ?? tabs[0]!.slug) === activeTab
 
-  return (
+  const page = (
     <main className={`mx-auto flex max-w-7xl flex-col gap-8 px-4 py-6 sm:px-6 ${tabs.length > 1 ? 'pb-24 sm:pb-6' : ''}`}>
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -218,8 +218,6 @@ export function DashboardPage({
         )}
       </header>
 
-      {tabs.length > 1 && activeTab && <TabBar profile={slug} tabs={tabs} active={activeTab} onChange={(t) => onChangeTab?.(tabPath(slug, tabs, t))} />}
-
       {error &&
         (dashboard ? (
           <p role="status" className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-amber-200 dark:bg-amber-950 dark:text-amber-200 dark:ring-amber-900">
@@ -266,6 +264,16 @@ export function DashboardPage({
         </section>
       ))}
     </main>
+  )
+
+  // Plusieurs onglets : barre latérale à gauche sur ordinateur (barre fixe en bas sur téléphone).
+  if (tabs.length < 2 || !activeTab) return page
+
+  return (
+    <div className="sm:flex">
+      <TabBar profile={slug} tabs={tabs} active={activeTab} onChange={(t) => onChangeTab?.(tabPath(slug, tabs, t))} />
+      <div className="min-w-0 flex-1">{page}</div>
+    </div>
   )
 }
 

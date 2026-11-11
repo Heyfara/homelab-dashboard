@@ -210,6 +210,7 @@ describe('DashboardPage : onglets', () => {
     await screen.findByRole('region', { name: 'Services' })
     expect(screen.queryByRole('region', { name: 'Machines' })).toBeNull()
     expect(screen.getByRole('link', { name: 'Accueil' }).getAttribute('aria-current')).toBe('page')
+    expect(screen.getByRole('main').contains(screen.getByRole('navigation', { name: 'Onglets' }))).toBe(false) // barre latérale, à côté du contenu
 
     rerender(<DashboardPage slug="alice" tab="admin" onChangeProfile={() => {}} />)
     screen.getByRole('region', { name: 'Machines' })

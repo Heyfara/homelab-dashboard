@@ -33,4 +33,10 @@
   body {
     @apply bg-zinc-50 text-zinc-700 antialiased dark:bg-slate-950 dark:text-slate-300;
   }
+  /* Tailwind v4 laisse le curseur par défaut sur les boutons : main pour tous
+     ceux qu'on peut cliquer (recommandation de la doc Tailwind). */
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
 }
