@@ -48,6 +48,9 @@ final class ApiTest extends WebTestCase
         self::assertCount(2, $json['sections']);
         self::assertSame('Services', $json['sections'][0]['title']);
         self::assertSame(3, $json['sections'][0]['columns']);
+        self::assertSame([['slug' => 'accueil', 'title' => 'Accueil'], ['slug' => 'admin', 'title' => 'Admin']], $json['tabs']);
+        self::assertSame('accueil', $json['sections'][0]['tab']);
+        self::assertSame('admin', $json['sections'][1]['tab']);
 
         $card = $json['sections'][0]['cards'][0];
         self::assertMatchesRegularExpression('/^alice-service-[0-9a-f]{6}$/', $card['id']);

@@ -26,9 +26,11 @@ final class DashboardController extends AbstractController
             'profile' => ['slug' => $found->slug, 'name' => $found->name, 'color' => $found->color],
             'customized' => $customized,
             'settings' => ['columns' => $dashboard->settings->columns, 'refresh' => $dashboard->settings->refresh],
+            'tabs' => array_map(static fn (string $slug, string $title): array => ['slug' => $slug, 'title' => $title], array_keys($found->tabs()), $found->tabs()),
             'sections' => array_map(static fn (Section $section): array => [
                 'title' => $section->title,
                 'columns' => $section->columns,
+                'tab' => Section::tabSlug($section->tab),
                 'cards' => array_map(static fn (CardInstance $card): array => [
                     'id' => $card->id,
                     'type' => $card->type,

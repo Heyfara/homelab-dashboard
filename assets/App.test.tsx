@@ -89,4 +89,33 @@ describe('App', () => {
     await screen.findByRole('button', { name: '← Retour au dashboard' })
     expect(window.location.pathname).toBe('/alice/config')
   })
+  it('passe l’onglet de l’adresse au dashboard', async () => {
+    window.history.replaceState(null, '', '/alice/admin')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify({
+            ...dashboard('alice', 'Alice'),
+            tabs: [
+              { slug: 'accueil', title: 'Accueil' },
+              { slug: 'admin', title: 'Admin' },
+            ],
+            sections: [
+              { title: 'Au quotidien', columns: 4, tab: 'accueil', cards: [] },
+              { title: 'Machines', columns: 4, tab: 'admin', cards: [] },
+            ],
+          }),
+          { status: 200 },
+        ),
+      ),
+    )
+    render(<App />)
+
+    await screen.findByText('Machines')
+    expect(screen.queryByText('Au quotidien')).toBeNull()
+    ;(await screen.findByRole('link', { name: 'Accueil' })).click()
+    await screen.findByText('Au quotidien')
+    expect(window.location.pathname).toBe('/alice')
+  })
 })

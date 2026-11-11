@@ -3,6 +3,7 @@
 namespace App\Dashboard;
 
 use App\Dashboard\Model\Profile;
+use App\Dashboard\Model\Section;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
@@ -66,6 +67,18 @@ final class DashboardConfiguration implements ConfigurationInterface
                                     ->children()
                                         ->scalarNode('title')->isRequired()->end()
                                         ->integerNode('columns')->min(1)->max(12)->defaultNull()->end()
+                                        ->scalarNode('tab')
+                                            ->defaultValue(Section::DEFAULT_TAB)
+                                            ->info('onglet où la section s\'affiche')
+                                            ->validate()
+                                                ->ifTrue(static fn ($tab): bool => '' === Section::tabSlug((string) $tab))
+                                                ->thenInvalid('Nom d\'onglet sans lettre ni chiffre : %s.')
+                                            ->end()
+                                            ->validate()
+                                                ->ifTrue(static fn ($tab): bool => \in_array(Section::tabSlug((string) $tab), Section::RESERVED_TABS, true))
+                                                ->thenInvalid('Nom d\'onglet réservé (adresse de « Ma config ») : %s.')
+                                            ->end()
+                                        ->end()
                                         ->arrayNode('cards')
                                             ->arrayPrototype()
                                                 // Les clés non réservées sont les options du type de carte.

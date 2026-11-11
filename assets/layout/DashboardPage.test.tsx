@@ -189,3 +189,56 @@ describe('DashboardPage : connexion mauvaise ou coupée', () => {
     }
   })
 })
+
+describe('DashboardPage : onglets', () => {
+  const tabbed = () => ({
+    ...dashboard(['a', 'b']),
+    tabs: [
+      { slug: 'accueil', title: 'Accueil' },
+      { slug: 'admin', title: 'Admin' },
+    ],
+    sections: [
+      { title: 'Services', columns: 3, tab: 'accueil', cards: [card('a', 'A'), card('b', 'B')] },
+      { title: 'Machines', columns: 3, tab: 'admin', cards: [card('m', 'M')] },
+    ],
+  })
+
+  it('n’affiche que les sections de l’onglet ouvert, le premier par défaut', async () => {
+    serve(tabbed() as never)
+    const { rerender } = render(<DashboardPage slug="alice" onChangeProfile={() => {}} />)
+
+    await screen.findByRole('region', { name: 'Services' })
+    expect(screen.queryByRole('region', { name: 'Machines' })).toBeNull()
+    expect(screen.getByRole('link', { name: 'Accueil' }).getAttribute('aria-current')).toBe('page')
+
+    rerender(<DashboardPage slug="alice" tab="admin" onChangeProfile={() => {}} />)
+    screen.getByRole('region', { name: 'Machines' })
+    expect(screen.queryByRole('region', { name: 'Services' })).toBeNull()
+  })
+
+  it('un onglet inconnu ouvre le premier', async () => {
+    serve(tabbed() as never)
+    render(<DashboardPage slug="alice" tab="disparu" onChangeProfile={() => {}} />)
+
+    await screen.findByRole('region', { name: 'Services' })
+  })
+
+  it('pas de barre d’onglets pour un profil à un seul onglet', async () => {
+    serve({ ...dashboard(['a']), tabs: [{ slug: 'accueil', title: 'Accueil' }] } as never)
+    render(<DashboardPage slug="alice" onChangeProfile={() => {}} />)
+
+    await screen.findByRole('button', { name: 'Réorganiser' })
+    expect(screen.queryByRole('navigation', { name: 'Onglets' })).toBeNull()
+  })
+
+  it('réorganiser dans un onglet enregistre l’ordre de toutes les cartes', async () => {
+    const calls = serve(tabbed() as never)
+    render(<DashboardPage slug="alice" tab="admin" onChangeProfile={() => {}} />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Réorganiser' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
+
+    await waitFor(() => expect(calls.some((c) => c.init?.method === 'PUT')).toBe(true))
+    const put = calls.find((c) => c.init?.method === 'PUT')!
+    expect(JSON.parse(String(put.init!.body))).toEqual({ order: ['a', 'b', 'm'] })
+  })
+})

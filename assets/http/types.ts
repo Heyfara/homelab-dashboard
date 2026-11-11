@@ -27,14 +27,21 @@ export type CardView<P = Record<string, unknown>> = {
 export type SectionView = {
   title: string
   columns: number
+  /** Identifiant de l'onglet (TabView.slug). Absent d'une mise en page gardée avant les onglets. */
+  tab?: string
   cards: CardView[]
 }
+
+/** Un onglet du profil : `slug` dans l'adresse (/<profil>/<slug>), `title` affiché. */
+export type TabView = { slug: string; title: string }
 
 export type DashboardView = {
   profile: ProfileSummary
   /** L'ordre des cartes a été changé par la personne (mode « Réorganiser ») */
   customized: boolean
   settings: { columns: number; refresh: number }
+  /** Dans l'ordre ; absent d'une mise en page gardée avant les onglets */
+  tabs?: TabView[]
   sections: SectionView[]
 }
 

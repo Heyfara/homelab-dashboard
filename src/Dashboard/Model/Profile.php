@@ -19,6 +19,22 @@ final readonly class Profile
     }
 
     /**
+     * Onglets du profil, dans l'ordre de leur première section : identifiant → nom
+     * (le nom de la première section qui l'utilise).
+     *
+     * @return array<string, string>
+     */
+    public function tabs(): array
+    {
+        $tabs = [];
+        foreach ($this->sections as $section) {
+            $tabs[Section::tabSlug($section->tab)] ??= $section->tab;
+        }
+
+        return $tabs;
+    }
+
+    /**
      * @return iterable<CardInstance>
      */
     public function cards(): iterable
