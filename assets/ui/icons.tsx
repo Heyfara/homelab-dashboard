@@ -140,3 +140,13 @@ export const GridIcon = ({ className }: P) => (
     <rect x="13" y="13" width="7" height="7" rx="1.5" />
   </Icon>
 )
+export const ChevronsLeftIcon = ({ className }: P) => (
+  <Icon className={className}>
+    <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5" />
+  </Icon>
+)
+export const ChevronsRightIcon = ({ className }: P) => (
+  <Icon className={className}>
+    <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
+  </Icon>
+)
