@@ -48,9 +48,13 @@ describe('TabBar : mode compact', () => {
     const nav = screen.getByRole('navigation', { name: 'Onglets' })
     expect(nav.className).toContain('lg:w-56')
 
+    screen.getByText('Maison')
+    screen.getByRole('separator')
+
     fireEvent.click(screen.getByRole('button', { name: 'Réduire la barre' }))
 
     expect(nav.className).not.toContain('lg:w-56')
+    expect(screen.queryByText('Maison')).toBeNull()
     expect(screen.getByRole('button', { name: 'Déplier la barre' }).getAttribute('aria-expanded')).toBe('false')
     unmount()
 

@@ -60,16 +60,20 @@ export function TabBar({ profile, tabs, active, onChange }: { profile: string; t
       aria-label="Onglets"
       className={`fixed inset-x-0 bottom-0 z-20 flex justify-around border-t border-zinc-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:sticky sm:top-0 sm:h-screen sm:w-16 sm:shrink-0 sm:flex-col sm:justify-start sm:gap-1 sm:border-t-0 sm:border-r sm:bg-white sm:px-2 sm:py-6 sm:backdrop-blur-none ${compact ? '' : 'lg:w-56 lg:px-3'} dark:border-slate-800 dark:bg-slate-950/95 sm:dark:bg-slate-900`}
     >
-      <button
-        type="button"
-        onClick={toggle}
-        aria-expanded={!compact}
-        aria-label={compact ? 'Déplier la barre' : 'Réduire la barre'}
-        title={compact ? 'Déplier la barre' : 'Réduire la barre'}
-        className={`mb-4 hidden size-12 place-items-center rounded-xl text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-2 focus-visible:outline-indigo-500 lg:grid dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 ${compact ? '' : 'lg:ml-auto lg:size-10'}`}
-      >
-        {compact ? <ChevronsRightIcon className="size-5" /> : <ChevronsLeftIcon className="size-5" />}
-      </button>
+      <div className={`hidden items-center lg:flex ${compact ? 'justify-center' : 'justify-between pl-3'}`}>
+        {!compact && <span className="truncate text-lg font-semibold text-zinc-900 dark:text-slate-50">Maison</span>}
+        <button
+          type="button"
+          onClick={toggle}
+          aria-expanded={!compact}
+          aria-label={compact ? 'Déplier la barre' : 'Réduire la barre'}
+          title={compact ? 'Déplier la barre' : 'Réduire la barre'}
+          className={`grid shrink-0 place-items-center rounded-xl text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-2 focus-visible:outline-indigo-500 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 ${compact ? 'size-12' : 'size-10'}`}
+        >
+          {compact ? <ChevronsRightIcon className="size-5" /> : <ChevronsLeftIcon className="size-5" />}
+        </button>
+      </div>
+      <hr className="my-3 hidden border-zinc-200 lg:block dark:border-slate-800" />
       {tabs.map((tab, i) => {
         const current = tab.slug === active
         return (
