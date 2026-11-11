@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, type DragEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { fetchDashboard, resetLayout, saveLayout } from '../http/client'
+import { snapshots } from '../http/snapshots'
 import type { CardView, DashboardView } from '../http/types'
 import { useJson } from '../hooks/useJson'
 import { profileBadge } from '../ui/profileColors'
@@ -20,12 +21,18 @@ const SETTLE_MS = 120
 const button =
   'rounded-lg px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-200 focus-visible:outline-2 focus-visible:outline-indigo-500 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800'
 
+/** Après un échec du chargement de la page : nouvel essai (et tout de suite au retour du réseau). */
+const RETRY_MS = 5_000
+
 const cardName = (card: CardView) => card.title ?? [card.props.title, card.props.name].find((v): v is string => typeof v === 'string') ?? card.type
 
 export function DashboardPage({ slug, onChangeProfile, onOpenConfig }: { slug: string; onChangeProfile: () => void; onOpenConfig?: () => void }) {
-  const { data, error } = useJson((signal) => fetchDashboard(slug, signal), slug)
+  const [attempt, setAttempt] = useState(0)
+  const { data, error } = useJson((signal) => fetchDashboard(slug, signal), `${slug}#${attempt}`)
+  // Dernière mise en page gardée dans le navigateur : la page s'affiche sans attendre le serveur.
+  const kept = useMemo(() => snapshots.dashboard(slug), [slug])
   // Copie locale : remplacée après « Enregistrer » ou « Ordre par défaut », sans recharger les cartes.
-  const [dashboard, setDashboard] = useState<DashboardView | null>(null)
+  const [dashboard, setDashboard] = useState<DashboardView | null>(kept)
   const [draft, setDraft] = useState<Draft | null>(null)
   const [busy, setBusy] = useState(false)
   const [saveError, setSaveError] = useState<Error | null>(null)
@@ -33,9 +40,25 @@ export function DashboardPage({ slug, onChangeProfile, onOpenConfig }: { slug: s
   const [dragging, setDragging] = useState<string | null>(null)
 
   useEffect(() => {
-    setDashboard(data)
+    if (data) snapshots.prune(slug, data.sections.flatMap((section) => section.cards.map((card) => card.id)))
+    setDashboard(data ?? kept)
     setDraft(null)
-  }, [data])
+  }, [data, kept, slug])
+
+  useEffect(() => {
+    if (dashboard) snapshots.saveDashboard(slug, dashboard)
+  }, [dashboard, slug])
+
+  useEffect(() => {
+    if (!error) return
+    const retry = () => setAttempt((a) => a + 1)
+    const timer = setTimeout(retry, RETRY_MS)
+    window.addEventListener('online', retry)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('online', retry)
+    }
+  }, [error])
 
   useEffect(() => {
     document.title = dashboard ? `Maison · ${dashboard.profile.name}` : 'Maison'
@@ -176,7 +199,14 @@ export function DashboardPage({ slug, onChangeProfile, onOpenConfig }: { slug: s
         )}
       </header>
 
-      {error && <ErrorMessage error={error} />}
+      {error &&
+        (dashboard ? (
+          <p role="status" className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-amber-200 dark:bg-amber-950 dark:text-amber-200 dark:ring-amber-900">
+            Serveur injoignable ({error.message}) : affichage des dernières données gardées, nouvel essai dans quelques secondes.
+          </p>
+        ) : (
+          <ErrorMessage error={error} />
+        ))}
       {saveError && <ErrorMessage error={saveError} />}
 
       {sections.map((section, sectionIndex) => (

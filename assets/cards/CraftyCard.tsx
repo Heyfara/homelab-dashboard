@@ -84,7 +84,7 @@ export const CraftyCard: CardComponent<CraftyProps, CraftyData> = ({ card, resul
                   className={`flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-indigo-500 dark:hover:bg-slate-800 ${s.state === 'stopped' ? 'opacity-70' : ''}`}
                 >
                   {s.icon ? (
-                    <img src={s.icon} alt="" className="size-8 shrink-0 rounded [image-rendering:pixelated]" />
+                    <img loading="lazy" src={s.icon} alt="" className="size-8 shrink-0 rounded [image-rendering:pixelated]" />
                   ) : (
                     <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded bg-[linear-gradient(#5d9b3a_0_35%,#8a5a35_35%)] text-sm" />
                   )}

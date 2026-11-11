@@ -1,5 +1,6 @@
 import { act, createEvent, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { snapshots } from '../http/snapshots'
 import { DashboardPage } from './DashboardPage'
 
 // Type sans composant React : la carte s'affiche (cadre d'erreur) sans rien charger.
@@ -136,5 +137,55 @@ describe('DashboardPage : réorganiser les cartes', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
     await waitFor(() => expect(calls.some((c) => c.init?.method === 'PUT')).toBe(true))
     expect(JSON.parse(String(calls.find((c) => c.init?.method === 'PUT')?.init?.body))).toEqual({ order: ['c', 'a', 'b', 'z'] })
+  })
+})
+
+describe('DashboardPage : connexion mauvaise ou coupée', () => {
+  it('garde la mise en page reçue', async () => {
+    serve()
+    render(<DashboardPage slug="alice" onChangeProfile={() => {}} />)
+    await screen.findByRole('button', { name: 'Réorganiser' })
+
+    expect(snapshots.dashboard('alice')?.sections[0]?.cards.map((c) => c.id)).toEqual(['a', 'b', 'c'])
+  })
+
+  it('affiche la dernière mise en page gardée quand le serveur ne répond pas', async () => {
+    snapshots.saveDashboard('alice', dashboard(['c', 'b', 'a']) as never)
+    vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new TypeError('Failed to fetch'))))
+    render(<DashboardPage slug="alice" onChangeProfile={() => {}} />)
+
+    expect(titles()).toEqual(['C', 'B', 'A'])
+    await screen.findByText(/dernières données gardées/)
+  })
+
+  it('oublie les données des cartes retirées du profil', async () => {
+    snapshots.saveCard('alice-ancienne', { status: 'ok', data: {}, error: null, fetchedAt: '2026-10-18T10:00:00+00:00' })
+    serve()
+    render(<DashboardPage slug="alice" onChangeProfile={() => {}} />)
+    await screen.findByRole('button', { name: 'Réorganiser' })
+
+    expect(snapshots.card('alice-ancienne')).toBeNull()
+  })
+
+  it('réessaie de charger la page après un échec', async () => {
+    vi.useFakeTimers()
+    try {
+      let attempts = 0
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () => {
+          if (++attempts === 1) throw new TypeError('Failed to fetch')
+          return new Response(JSON.stringify(dashboard(['a'])), { status: 200 })
+        }),
+      )
+      render(<DashboardPage slug="alice" onChangeProfile={() => {}} />)
+      await act(async () => {})
+      screen.getByText(/Failed to fetch/)
+
+      await act(() => vi.advanceTimersByTimeAsync(5_000))
+      expect(titles()).toEqual(['A'])
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

@@ -93,7 +93,7 @@ function Idea({ recipe }: { recipe: MealieRecipeItem }) {
       className="group flex shrink-0 items-center gap-3 overflow-hidden rounded-xl bg-orange-500/8 p-2 ring-1 ring-orange-500/15 hover:bg-orange-500/12 focus-visible:outline-2 focus-visible:outline-indigo-500"
     >
       <span className="aspect-[4/3] h-20 shrink-0 overflow-hidden rounded-lg bg-zinc-200 dark:bg-slate-800">
-        {recipe.image && <img src={recipe.image} alt="" draggable={false} className="size-full object-cover transition duration-300 group-hover:scale-105 motion-reduce:transition-none" />}
+        {recipe.image && <img loading="lazy" src={recipe.image} alt="" draggable={false} className="size-full object-cover transition duration-300 group-hover:scale-105 motion-reduce:transition-none" />}
       </span>
       <span className="flex min-w-0 flex-col gap-1">
         <span className="text-[0.65rem] font-semibold tracking-wider text-orange-700 uppercase dark:text-orange-300">Idée recette du jour</span>

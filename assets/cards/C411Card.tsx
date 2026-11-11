@@ -80,7 +80,7 @@ export const C411Card: CardComponent<C411Props, C411Data> = ({ card, result }) =
         <h3 className="shrink-0 font-semibold text-zinc-900 dark:text-slate-50">
           {icon ? (
             // Logo en largeur (ex. https://c411.org/images/logo-md.png), affiché sans recadrage.
-            <img src={icon} alt={card.title ?? title} className="h-7 w-auto max-w-32 object-contain" />
+            <img loading="lazy" src={icon} alt={card.title ?? title} className="h-7 w-auto max-w-32 object-contain" />
           ) : (
             (card.title ?? title)
           )}
@@ -104,7 +104,7 @@ export const C411Card: CardComponent<C411Props, C411Data> = ({ card, result }) =
         <LevelBadge level={level.level} badge={level.badge} />
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-2">
-            {user.avatar && <img src={user.avatar} alt="" className="size-5 shrink-0 rounded-full object-cover" />}
+            {user.avatar && <img loading="lazy" src={user.avatar} alt="" className="size-5 shrink-0 rounded-full object-cover" />}
             <span className="truncate text-lg leading-6 font-bold text-zinc-900 dark:text-slate-50">{user.name}</span>
             {team && (
               <span title={team.name} className="shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 text-[0.65rem] font-semibold tracking-wide text-zinc-600 dark:bg-slate-800 dark:text-slate-300">
@@ -187,8 +187,8 @@ function Experience({ level }: { level: C411Data['level'] }) {
 function LevelBadge({ level, badge }: { level: number; badge: C411Data['level']['badge'] }) {
   return (
     <div role="img" aria-label={`Niveau ${level}`} title={`Niveau ${level}`} className="relative size-16 shrink-0">
-      <img src={badge.emblem} alt="" className="absolute inset-0 size-full object-contain" />
-      <img src={badge.dial} alt="" className="absolute inset-0 size-full object-contain" />
+      <img loading="lazy" src={badge.emblem} alt="" className="absolute inset-0 size-full object-contain" />
+      <img loading="lazy" src={badge.dial} alt="" className="absolute inset-0 size-full object-contain" />
       <span aria-hidden="true" className="absolute inset-0 grid place-items-center text-lg font-extrabold text-white [text-shadow:0_1px_2px_rgb(0_0_0/0.7)]">
         {level}
       </span>

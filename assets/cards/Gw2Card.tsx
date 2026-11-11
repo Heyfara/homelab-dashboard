@@ -29,7 +29,7 @@ export const Gw2Card: CardComponent<{ title: string }, Gw2Data> = ({ card, resul
   return (
     <div className="flex h-full flex-col gap-2.5">
       <header className="flex items-center gap-2">
-        {data?.icon && <img src={data.icon} alt="" className="size-7 shrink-0" />}
+        {data?.icon && <img loading="lazy" src={data.icon} alt="" className="size-7 shrink-0" />}
         <h3 className="min-w-0 truncate font-semibold text-zinc-900 dark:text-slate-50">{card.title ?? card.props.title}</h3>
         {data && (
           <span className="min-w-0 truncate text-xs text-zinc-500 dark:text-slate-400">
@@ -51,7 +51,7 @@ export const Gw2Card: CardComponent<{ title: string }, Gw2Data> = ({ card, resul
           <ul aria-label="Portefeuille" className="flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-zinc-800 tabular-nums dark:text-slate-100">
             {data.wallet.map((c) => (
               <li key={c.id} title={c.id === COIN ? `${c.name} : ${coinsText(c.value)}` : c.name} className="flex items-center gap-1">
-                {c.id === COIN ? <Coins value={c.value} icons={data.coinIcons} /> : <><img src={c.icon} alt="" className="size-5" />{formatNumber(c.value)}</>}
+                {c.id === COIN ? <Coins value={c.value} icons={data.coinIcons} /> : <><img loading="lazy" src={c.icon} alt="" className="size-5" />{formatNumber(c.value)}</>}
               </li>
             ))}
           </ul>
@@ -100,7 +100,7 @@ function Coins({ value, icons }: { value: number; icons: Gw2Data['coinIcons'] })
   const part = (n: number, icon: string | null) => (
     <span className="flex items-center gap-0.5">
       {n}
-      {icon && <img src={icon} alt="" className="size-3.5" />}
+      {icon && <img loading="lazy" src={icon} alt="" className="size-3.5" />}
     </span>
   )
 

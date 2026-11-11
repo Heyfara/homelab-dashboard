@@ -107,7 +107,7 @@ final class ImmichCardTest extends TestCase
             'year' => 2023,
             'yearsAgo' => 3,
             'count' => 2,
-            'cover' => $this->signer->url('i', self::P2.'/preview'),
+            'cover' => $this->signer->url('i', self::P2.'/thumbnail'),
             'link' => 'https://photos.example/memories/mem-2023',
         ], $memories[0]);
         self::assertSame(7, $memories[1]['yearsAgo']);

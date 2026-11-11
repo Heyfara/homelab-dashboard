@@ -35,8 +35,16 @@ Points clés :
 
 - **Config relue sans redémarrage** : `DashboardProvider` met le dashboard en
   cache sous une clé qui contient la date de modification du fichier.
-- **Cache des données** : `CardDataFetcher` garde chaque réponse `refresh`
-  secondes (clé = id de la carte + options).
+- **Cache des données, « périmé puis rafraîchi »** : `CardDataFetcher` garde
+  chaque réponse 2 jours (clé = id de la carte + options). Passé `refresh`
+  secondes, la valeur est encore servie tout de suite avec `stale: true`, et la
+  source est relue **après** l'envoi de la réponse (`DeferredRefresh`, sur
+  `kernel.terminate` : PHP-FPM a déjà rendu la réponse au client). Seule une
+  carte sans valeur en cache attend sa source. Le front redemande une carte
+  `stale` quelques secondes plus tard pour récupérer la valeur fraîche. Un échec
+  de la relecture est servi comme erreur jusqu'à la relecture suivante réussie.
+  PHP-FPM a 16 workers (`docker/php/fpm-pool.conf`) : une relecture garde le sien
+  pendant qu'elle attend la source.
 - **Flux** : un type de carte peut implémenter `CardFeedsInterface` pour avoir,
   en plus de ses données principales, des flux à leur propre rythme (lectures
   en cours Jellyfin toutes les 10 s, derniers ajouts toutes les 5 min). Chaque
@@ -164,8 +172,8 @@ relaie (`GET /api/cards/{id}/image?path=…&sig=…`, `CardImageController`).
 
 | Dossier | Rôle |
 |---|---|
-| `http/` | `client.ts` (appels, `ApiError`) et `types.ts` (forme des réponses, à garder alignée avec les contrôleurs) |
-| `hooks/` | `usePath` (routage minimal), `useJson` (requête unique), `useCardData` (rafraîchissement d'une carte) |
+| `http/` | `client.ts` (appels, `ApiError`), `types.ts` (forme des réponses, à garder alignée avec les contrôleurs), `snapshots.ts` (dernières données gardées dans le navigateur) |
+| `hooks/` | `usePath` (routage minimal), `useJson` (requête unique), `useCardData` (rafraîchissement d'une carte), `useInView` (carte à l'écran ou non) |
 | `layout/` | `ProfilePicker`, `DashboardPage`, `SectionGrid`, `CardSlot`, `CardFrame` |
 | `cards/` | `registry.ts` + un composant par type de carte |
 | `ui/` | petits composants partagés : `StatusPill`, `ServiceIcon`, `Sparkline` (courbe), `TimeSeries` (graphique temporel avec réticule et infobulle, souris et clavier), `RingGauge` (jauge en anneau), `icons.tsx` (icônes au trait, sans bibliothèque), `format.ts` (octets, débits, dates relatives en français), `history.ts`, `MediaSlider` et `MediaTile` (vignettes qui défilent : flèches, glisser, doigt), `ExternalLink` |
@@ -182,6 +190,27 @@ d'être utilisée.
 
 `CardSlot` choisit le composant par `card.type` dans `cardRegistry`, lui passe
 `card` (props fixes) et `result` (données vivantes, `null` avant la 1re réponse).
+
+### Connexion mobile médiocre
+
+Le dashboard sert surtout quand on en a besoin, souvent depuis un téléphone en
+VPN avec une connexion faible :
+
+- **Dernières données gardées** (`http/snapshots.ts`, `localStorage`) : la mise
+  en page du profil et le dernier résultat valide de chaque carte s'affichent
+  dès l'ouverture, puis sont remplacés. Une carte dont les données dépassent
+  deux tours de `refresh` (au moins 10 min) affiche leur âge (« Données d'il y
+  a 3 heures »). Serveur injoignable : bandeau ambre, la page reste utilisable,
+  nouvel essai toutes les 5 s et au retour du réseau. Les cartes retirées du
+  profil sont oubliées au chargement suivant.
+- **`useCardData`** : requête abandonnée au bout de 20 s ; après un échec,
+  nouvel essai à 5 s, 10 s, 20 s… (jamais plus que `refresh`) et tout de suite
+  à l'événement `online` ; valeur `stale` (relue par le serveur) redemandée
+  3 s plus tard.
+- **Cartes hors de l'écran** (`useInView`, marge d'un demi-écran) : pas
+  interrogées ; à leur retour, rechargées seulement si leur tour est passé.
+- **Images** : toujours `loading="lazy"` ; vignettes plutôt qu'aperçus.
+- La compression (zstd/gzip) est faite par Caddy, devant nginx.
 
 ## Choix et dépendances
 

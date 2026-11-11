@@ -89,7 +89,7 @@ function Reading({ book }: { book: JeluBook }) {
       className="flex items-center gap-2.5 rounded-lg bg-amber-500/8 px-2 py-1.5 ring-1 ring-amber-500/15 hover:bg-amber-500/12 focus-visible:outline-2 focus-visible:outline-indigo-500"
     >
       <span className="h-11 w-[1.85rem] shrink-0 overflow-hidden rounded bg-zinc-200 dark:bg-slate-800">
-        {book.cover && <img src={book.cover} alt="" draggable={false} className="size-full object-cover" />}
+        {book.cover && <img loading="lazy" src={book.cover} alt="" draggable={false} className="size-full object-cover" />}
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="flex min-w-0 items-baseline gap-1.5">

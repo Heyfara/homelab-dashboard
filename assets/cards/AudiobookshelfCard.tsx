@@ -81,7 +81,7 @@ function Listening({ item }: { item: ListeningItem }) {
       title={`${item.title}${item.author ? ` — ${item.author}` : ''}`}
       className="flex items-center gap-2.5 rounded-lg bg-teal-500/8 px-2 py-1.5 ring-1 ring-teal-500/15 hover:bg-teal-500/12 focus-visible:outline-2 focus-visible:outline-indigo-500"
     >
-      <img src={item.cover} alt="" draggable={false} className="size-11 shrink-0 rounded object-cover" />
+      <img loading="lazy" src={item.cover} alt="" draggable={false} className="size-11 shrink-0 rounded object-cover" />
       <span className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="flex min-w-0 items-baseline gap-1.5">
           <span className="truncate text-sm font-semibold text-zinc-900 dark:text-slate-50">{item.title}</span>
