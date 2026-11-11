@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { TabBar } from './TabBar'
+import { GridIcon, HomeIcon, Printer3dIcon, ShieldIcon } from '../ui/icons'
+import { TabBar, tabIcon } from './TabBar'
 
 const tabs = [
   { slug: 'accueil', title: 'Accueil' },
@@ -66,5 +67,14 @@ describe('TabBar : mode compact', () => {
     render(<TabBar profile="tom" tabs={tabs} active="accueil" onChange={() => {}} />)
     expect(screen.getByRole('navigation', { name: 'Onglets' }).className).not.toContain('lg:w-56')
     screen.getByRole('button', { name: 'Déplier la barre' })
+  })
+})
+
+describe('tabIcon', () => {
+  it('maison pour le premier onglet, icône connue pour les noms courants, grille sinon', () => {
+    expect(tabIcon('accueil', true)).toBe(HomeIcon)
+    expect(tabIcon('admin', false)).toBe(ShieldIcon)
+    expect(tabIcon('atelier', false)).toBe(Printer3dIcon)
+    expect(tabIcon('divers', false)).toBe(GridIcon)
   })
 })

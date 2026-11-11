@@ -23,6 +23,7 @@ import { MusicAssistantCard } from './MusicAssistantCard'
 import { WeatherCard } from './WeatherCard'
 import { RommCard } from './RommCard'
 import { ServiceCard } from './ServiceCard'
+import { ServicesCard } from './ServicesCard'
 import { StorageCard } from './StorageCard'
 import { UltraccCard } from './UltraccCard'
 
@@ -43,6 +44,7 @@ export type CardComponent<P = any, D = any> = (props: {
  */
 export const cardRegistry: Record<string, CardComponent> = {
   service: ServiceCard,
+  services: ServicesCard,
   'jellyfin-latest': JellyfinLatestCard,
   qbittorrent: QbittorrentCard,
   c411: C411Card,

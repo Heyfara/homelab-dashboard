@@ -150,3 +150,14 @@ export const ChevronsRightIcon = ({ className }: P) => (
     <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
   </Icon>
 )
+/** Imprimante 3D : cadre, chariot et buse, plateau et pièce en cours. */
+export const Printer3dIcon = ({ className }: P) => (
+  <Icon className={className}>
+    <path d="M4 21V3h16v18" />
+    <path d="M4 7h16" />
+    <rect x="10" y="7" width="4" height="3" rx="0.5" />
+    <path d="M11 10l1 2 1-2" />
+    <path d="M7 18h10" />
+    <path d="M9.5 18v-3h5v3" />
+  </Icon>
+)
