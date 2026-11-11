@@ -94,7 +94,7 @@ function Playing({ speaker }: { speaker: SpeakerItem }) {
       className="flex items-center gap-2.5 rounded-lg bg-[color-mix(in_srgb,var(--accent)_10%,transparent)] px-2 py-1.5 ring-1 ring-[color-mix(in_srgb,var(--accent)_25%,transparent)]"
     >
       <span className="relative size-11 shrink-0 overflow-hidden rounded bg-zinc-200 dark:bg-slate-800">
-        {speaker.image && <img src={speaker.image} alt="" className="size-full object-cover" />}
+        {speaker.image && <img loading="lazy" src={speaker.image} alt="" className="size-full object-cover" />}
         {paused && (
           <span aria-label="En pause" className="absolute inset-0 grid place-items-center bg-black/45 text-white">
             <PauseIcon className="size-3.5" />

@@ -59,7 +59,7 @@ export const MinecraftCard: CardComponent<MinecraftProps, MinecraftData> = ({ ca
           aria-label={`Voir le rendu de ${card.title ?? title} en grand`}
           className="relative min-h-0 flex-1 overflow-hidden rounded-lg bg-gradient-to-b from-sky-200/70 to-sky-50/40 focus-visible:outline-2 focus-visible:outline-indigo-500 dark:from-sky-950/60 dark:to-slate-900/40"
         >
-          <img src={data.image.url} alt="" className="size-full object-contain p-1" />
+          <img loading="lazy" src={data.image.url} alt="" className="size-full object-contain p-1" />
           {data.image.renderedAt && (
             <span className="absolute right-1.5 bottom-1.5 rounded bg-black/45 px-1.5 py-0.5 text-[0.65rem] text-white backdrop-blur-sm">
               Rendu du {day.format(new Date(data.image.renderedAt))}

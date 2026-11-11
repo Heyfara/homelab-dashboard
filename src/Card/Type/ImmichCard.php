@@ -76,7 +76,8 @@ final readonly class ImmichCard implements CardTypeInterface, ImageSourceInterfa
                 'year' => $m->year,
                 'yearsAgo' => (int) $today->format('Y') - $m->year,
                 'count' => \count($m->assets),
-                'cover' => $image($m->assets[0]->id, 'preview'),
+                // Vignette (~250 px, webp ~20 Ko) : la tuile fait 80 px de haut ; « preview » pesait jusqu'à 700 Ko.
+                'cover' => $image($m->assets[0]->id, 'thumbnail'),
                 'link' => \sprintf('%s/memories/%s', $public, rawurlencode($m->id)),
             ], $memories),
             'recent' => array_map(static fn (ImmichAsset $a): array => [
