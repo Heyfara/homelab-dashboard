@@ -27,8 +27,8 @@ const compactPref = {
 export const tabPath = (profile: string, tabs: TabView[], slug: string) =>
   slug === tabs[0]?.slug ? `/${profile}` : `/${profile}/${slug}`
 
-function TabIcon({ slug, first, compact }: { slug: string; first: boolean; compact: boolean }) {
-  const className = `size-6 shrink-0 ${compact ? '' : 'lg:size-5'}`
+function TabIcon({ slug, first, compact, current }: { slug: string; first: boolean; compact: boolean; current: boolean }) {
+  const className = `size-6 shrink-0 ${compact ? '' : 'lg:size-5'} ${current ? 'text-indigo-600 dark:text-indigo-400' : ''}`
   if (first) return <HomeIcon className={className} />
   if (slug === 'admin') return <ShieldIcon className={className} />
   return <GridIcon className={className} />
@@ -83,13 +83,14 @@ export function TabBar({ profile, tabs, active, onChange }: { profile: string; t
             onClick={go(tab.slug)}
             aria-current={current ? 'page' : undefined}
             title={tab.title}
-            className={`flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-xs focus-visible:outline-2 focus-visible:outline-indigo-500 sm:size-12 sm:min-h-0 sm:flex-none sm:rounded-xl ${compact ? '' : 'lg:h-10 lg:w-full lg:flex-row lg:justify-start lg:gap-3 lg:px-3 lg:text-sm'} ${
+            className={`flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-xs focus-visible:outline-2 focus-visible:outline-indigo-500 sm:size-12 sm:min-h-0 sm:flex-none sm:rounded-xl sm:border-l-[3px] ${compact ? '' : 'lg:h-10 lg:w-full lg:flex-row lg:justify-start lg:gap-3 lg:px-3 lg:text-sm'} ${
               current
-                ? 'font-semibold text-indigo-600 sm:bg-indigo-50 sm:text-indigo-700 dark:text-indigo-400 sm:dark:bg-indigo-950 sm:dark:text-indigo-300'
-                : 'text-zinc-600 hover:text-zinc-900 sm:hover:bg-zinc-100 dark:text-slate-400 dark:hover:text-slate-100 sm:dark:hover:bg-slate-800'
+                ? // Bordure gauche d'accent, courbée par l'arrondi de l'onglet (barre latérale seulement) ; sur téléphone, icône et nom en couleur d'accent.
+                  'font-semibold text-indigo-600 sm:border-indigo-500 sm:bg-zinc-100 sm:text-zinc-900 dark:text-indigo-400 sm:dark:border-indigo-400 sm:dark:bg-slate-800 sm:dark:text-slate-50'
+                : 'text-zinc-600 hover:text-zinc-900 sm:border-transparent sm:hover:bg-zinc-100 dark:text-slate-400 dark:hover:text-slate-100 sm:dark:hover:bg-slate-800'
             }`}
           >
-            <TabIcon slug={tab.slug} first={i === 0} compact={compact} />
+            <TabIcon slug={tab.slug} first={i === 0} compact={compact} current={current} />
             <span className={`sm:sr-only ${compact ? '' : 'lg:not-sr-only'}`}>{tab.title}</span>
           </a>
         )

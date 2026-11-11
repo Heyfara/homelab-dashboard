@@ -16,6 +16,11 @@ describe('TabBar', () => {
     expect(screen.getByRole('link', { name: 'Admin' }).getAttribute('href')).toBe('/tom/admin')
     expect(screen.getByRole('link', { name: 'Admin' }).getAttribute('aria-current')).toBe('page')
     expect(screen.getByRole('link', { name: 'Accueil' }).getAttribute('aria-current')).toBeNull()
+    // Onglet actif : bordure gauche (courbée par l'arrondi) et icône dans la couleur d'accent ; les autres, bordure transparente
+    expect(screen.getByRole('link', { name: 'Admin' }).className).toContain('sm:border-indigo-500')
+    expect(screen.getByRole('link', { name: 'Accueil' }).className).toContain('sm:border-transparent')
+    expect(screen.getByRole('link', { name: 'Admin' }).querySelector('svg')!.getAttribute('class')).toContain('text-indigo-600')
+    expect(screen.getByRole('link', { name: 'Accueil' }).querySelector('svg')!.getAttribute('class')).not.toContain('text-indigo-600')
     expect(nav.className).toContain('fixed') // barre en bas sur téléphone
     expect(nav.className).toContain('sm:sticky') // barre latérale sur ordinateur
     expect(screen.getByRole('link', { name: 'Admin' }).getAttribute('title')).toBe('Admin') // nom au survol en mode icônes
