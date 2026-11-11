@@ -78,4 +78,10 @@ describe('ServicesCard', () => {
     render(<ServicesCard card={{ ...card, id: 'x', rows: 1 }} result={null} />) // rows: 1 → une seule ligne de 4
     expect(screen.getAllByRole('list')[1]!.style.getPropertyValue('--cols')).toBe('4')
   })
+
+  it('accorde le compteur au singulier', () => {
+    render(<ServicesCard card={{ ...card, props: { services: card.props.services.slice(0, 1) } }} result={null} />)
+
+    screen.getByText('1 service')
+  })
 })

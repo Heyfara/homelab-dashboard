@@ -32,7 +32,7 @@ export const ServicesCard: CardComponent<ServicesProps, ServicesData> = ({ card,
       <header className="flex items-center gap-2">
         <h3 className="truncate font-semibold text-zinc-900 dark:text-slate-50">{card.title ?? 'Services'}</h3>
         <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 tabular-nums dark:bg-slate-800 dark:text-slate-200">
-          {items.length} services
+          {items.length} {items.length > 1 ? 'services' : 'service'}
         </span>
         {data &&
           (problems > 0 ? (
