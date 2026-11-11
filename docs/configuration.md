@@ -110,7 +110,8 @@ les sections sont dans le même onglet n'affiche pas de barre d'onglets.
   avec le nom en minuscules sans accents (« Médias et jeux » → `/tom/medias-et-jeux`).
 - `config` et `cles` sont réservés (adresses de « Ma config »).
 - Seules les cartes de l'onglet ouvert sont chargées.
-- Sur ordinateur, les onglets sont dans une barre latérale toujours visible (icônes seules en dessous de 1024 px de large ; au-delà, bouton en haut de la barre pour passer en icônes seules, retenu par l.appareil) ; sur téléphone, en barre fixe en bas.
+- Icône de l'onglet : maison pour le premier, bouclier pour `Admin`, imprimante 3D pour `Atelier`, grille pour les autres.
+- Sur ordinateur, les onglets sont dans une barre latérale toujours visible (icônes seules en dessous de 1024 px de large ; au-delà, bouton en haut de la barre pour passer en icônes seules, retenu par l'appareil) ; sur téléphone, en barre fixe en bas.
 - « Réorganiser » déplace les cartes dans leur section, comme avant : changer une
   section d'onglet garde l'ordre choisi.
 
