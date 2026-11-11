@@ -121,3 +121,22 @@ export const SpeakerIcon = ({ className }: P) => (
     <path d="M12 7h.01" />
   </Icon>
 )
+export const HomeIcon = ({ className }: P) => (
+  <Icon className={className}>
+    <path d="M3 11l9-7 9 7" />
+    <path d="M5 10v10h5v-6h4v6h5V10" />
+  </Icon>
+)
+export const ShieldIcon = ({ className }: P) => (
+  <Icon className={className}>
+    <path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z" />
+  </Icon>
+)
+export const GridIcon = ({ className }: P) => (
+  <Icon className={className}>
+    <rect x="4" y="4" width="7" height="7" rx="1.5" />
+    <rect x="13" y="4" width="7" height="7" rx="1.5" />
+    <rect x="4" y="13" width="7" height="7" rx="1.5" />
+    <rect x="13" y="13" width="7" height="7" rx="1.5" />
+  </Icon>
+)

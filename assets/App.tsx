@@ -25,7 +25,7 @@ const remembered = {
   },
 }
 
-/** Trois écrans : / (choix du profil), /:profil (son dashboard), /:profil/config (« Ma config » : réglages de ses cartes). */
+/** Écrans : / (choix du profil), /:profil et /:profil/:onglet (son dashboard), /:profil/config (« Ma config » : réglages de ses cartes). */
 export function App() {
   const [path, navigate] = usePath()
   const [slug = null, page = null] = path.split('/').filter(Boolean)
@@ -55,6 +55,11 @@ export function App() {
   return (
     <DashboardPage
       slug={slug}
+      tab={page}
+      onChangeTab={(path) => {
+        navigate(path)
+        window.scrollTo(0, 0)
+      }}
       onChangeProfile={() => {
         remembered.set(null)
         navigate('/')

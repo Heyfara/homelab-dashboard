@@ -174,7 +174,7 @@ relaie (`GET /api/cards/{id}/image?path=…&sig=…`, `CardImageController`).
 |---|---|
 | `http/` | `client.ts` (appels, `ApiError`), `types.ts` (forme des réponses, à garder alignée avec les contrôleurs), `snapshots.ts` (dernières données gardées dans le navigateur) |
 | `hooks/` | `usePath` (routage minimal), `useJson` (requête unique), `useCardData` (rafraîchissement d'une carte), `useInView` (carte à l'écran ou non) |
-| `layout/` | `ProfilePicker`, `DashboardPage`, `SectionGrid`, `CardSlot`, `CardFrame` |
+| `layout/` | `ProfilePicker`, `DashboardPage`, `TabBar` (onglets : en haut sur ordinateur, barre fixe en bas sur téléphone), `SectionGrid`, `CardSlot`, `CardFrame` |
 | `cards/` | `registry.ts` + un composant par type de carte |
 | `ui/` | petits composants partagés : `StatusPill`, `ServiceIcon`, `Sparkline` (courbe), `TimeSeries` (graphique temporel avec réticule et infobulle, souris et clavier), `RingGauge` (jauge en anneau), `icons.tsx` (icônes au trait, sans bibliothèque), `format.ts` (octets, débits, dates relatives en français), `history.ts`, `MediaSlider` et `MediaTile` (vignettes qui défilent : flèches, glisser, doigt), `ExternalLink` |
 | `public/` | fichiers copiés tels quels par Vite (favicon), servis sous `/build/` en prod |

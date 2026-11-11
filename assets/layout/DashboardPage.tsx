@@ -8,6 +8,7 @@ import { CardSlot } from './CardSlot'
 import { ErrorMessage } from './ErrorMessage'
 import { moveBy, placeNextTo } from './reorder'
 import { SectionGrid } from './SectionGrid'
+import { TabBar, tabPath } from './TabBar'
 
 /** Ordre en cours de modification : identifiants des cartes, section par section. */
 type Draft = string[][]
@@ -26,7 +27,21 @@ const RETRY_MS = 5_000
 
 const cardName = (card: CardView) => card.title ?? [card.props.title, card.props.name].find((v): v is string => typeof v === 'string') ?? card.type
 
-export function DashboardPage({ slug, onChangeProfile, onOpenConfig }: { slug: string; onChangeProfile: () => void; onOpenConfig?: () => void }) {
+export function DashboardPage({
+  slug,
+  tab = null,
+  onChangeTab,
+  onChangeProfile,
+  onOpenConfig,
+}: {
+  slug: string
+  /** Onglet de l'adresse ; null, absent ou inconnu = le premier */
+  tab?: string | null
+  /** Reçoit l'adresse de l'onglet choisi */
+  onChangeTab?: (path: string) => void
+  onChangeProfile: () => void
+  onOpenConfig?: () => void
+}) {
   const [attempt, setAttempt] = useState(0)
   const { data, error } = useJson((signal) => fetchDashboard(slug, signal), `${slug}#${attempt}`)
   // Dernière mise en page gardée dans le navigateur : la page s'affiche sans attendre le serveur.
@@ -148,9 +163,13 @@ export function DashboardPage({ slug, onChangeProfile, onOpenConfig }: { slug: s
   }
 
   const sections = dashboard ? (draft ? arrange(dashboard, draft, dashboard.customized).sections : dashboard.sections) : []
+  // Une mise en page gardée avant les onglets n'en a pas : tout est dans le premier.
+  const tabs = dashboard?.tabs ?? []
+  const activeTab = tabs.find((t) => t.slug === tab)?.slug ?? tabs[0]?.slug
+  const inActiveTab = (section: (typeof sections)[number]) => tabs.length < 2 || (section.tab ?? tabs[0]!.slug) === activeTab
 
   return (
-    <main className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-6 sm:px-6">
+    <main className={`mx-auto flex max-w-7xl flex-col gap-8 px-4 py-6 sm:px-6 ${tabs.length > 1 ? 'pb-24 sm:pb-6' : ''}`}>
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           {dashboard && (
@@ -199,6 +218,8 @@ export function DashboardPage({ slug, onChangeProfile, onOpenConfig }: { slug: s
         )}
       </header>
 
+      {tabs.length > 1 && activeTab && <TabBar profile={slug} tabs={tabs} active={activeTab} onChange={(t) => onChangeTab?.(tabPath(slug, tabs, t))} />}
+
       {error &&
         (dashboard ? (
           <p role="status" className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-amber-200 dark:bg-amber-950 dark:text-amber-200 dark:ring-amber-900">
@@ -209,7 +230,7 @@ export function DashboardPage({ slug, onChangeProfile, onOpenConfig }: { slug: s
         ))}
       {saveError && <ErrorMessage error={saveError} />}
 
-      {sections.map((section, sectionIndex) => (
+      {sections.map((section, sectionIndex) => inActiveTab(section) && (
         <section key={section.title} aria-labelledby={`section-${sectionIndex}`} className="flex flex-col gap-3">
           <h2 id={`section-${sectionIndex}`} className="text-sm font-semibold tracking-wide text-zinc-500 uppercase dark:text-slate-400">
             {section.title}
