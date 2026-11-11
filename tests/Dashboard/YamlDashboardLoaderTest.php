@@ -87,6 +87,39 @@ final class YamlDashboardLoaderTest extends TestCase
         self::assertSame([], $sections[1]->cards);
     }
 
+    public function testSectionTabDefaultsToAccueil(): void
+    {
+        $profile = (new YamlDashboardLoader())->load(self::FIXTURE)->profiles['alice'];
+
+        self::assertSame('Accueil', $profile->sections[0]->tab);
+        self::assertSame('Admin', $profile->sections[1]->tab);
+        self::assertSame(['accueil' => 'Accueil', 'admin' => 'Admin'], $profile->tabs(), 'onglets dans l’ordre d’apparition, par identifiant');
+        self::assertSame(['accueil' => 'Accueil'], (new YamlDashboardLoader())->load(self::FIXTURE)->profiles['bob']->tabs());
+    }
+
+    public function testTabSlugIgnoresCaseAndAccents(): void
+    {
+        $profile = $this->load("profiles:\n  alice:\n    name: Alice\n    sections:\n      - { title: A, tab: Médias et jeux }\n      - { title: B, tab: médias  ET jeux }\n")->profiles['alice'];
+
+        self::assertSame(['medias-et-jeux' => 'Médias et jeux'], $profile->tabs());
+    }
+
+    public function testReservedTabIsRejected(): void
+    {
+        $this->expectException(InvalidDashboardException::class);
+        $this->expectExceptionMessageMatches('/Config/');
+
+        $this->load("profiles:\n  alice:\n    name: Alice\n    sections:\n      - { title: A, tab: Config }\n");
+    }
+
+    public function testTabWithoutLetterOrDigitIsRejected(): void
+    {
+        $this->expectException(InvalidDashboardException::class);
+        $this->expectExceptionMessageMatches('/onglet/');
+
+        $this->load("profiles:\n  alice:\n    name: Alice\n    sections:\n      - { title: A, tab: '!!!' }\n");
+    }
+
     public function testCardReservedKeysAndOptions(): void
     {
         $cards = (new YamlDashboardLoader())->load(self::FIXTURE)->profiles['alice']->sections[0]->cards;

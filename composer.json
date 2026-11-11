@@ -16,6 +16,7 @@
         "symfony/http-client": "8.1.*",
         "symfony/options-resolver": "8.1.*",
         "symfony/runtime": "8.1.*",
+        "symfony/string": "8.1.*",
         "symfony/yaml": "8.1.*"
     },
     "config": {

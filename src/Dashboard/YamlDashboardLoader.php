@@ -77,7 +77,7 @@ final class YamlDashboardLoader
                         profile: $slug,
                     );
                 }
-                $sections[] = new Section($s['title'], $s['columns'] ?? $settings->columns, $cards);
+                $sections[] = new Section($s['title'], $s['columns'] ?? $settings->columns, $cards, $s['tab']);
             }
             $profiles[$slug] = new Profile($slug, $p['name'], $p['color'], $sections);
         }

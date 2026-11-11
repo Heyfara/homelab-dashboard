@@ -94,7 +94,25 @@ profiles:
         cards:
           - type: service                # type de carte
             service: immich              # options du type (voir plus bas)
+      - title: Machines
+        tab: Admin                       # onglet de la section, défaut « Accueil »
+        cards:
+          - { type: machine, host: alpha }
 ```
+
+### Onglets (`tab`)
+
+Chaque section s'affiche dans un onglet : `tab: <nom>`, « Accueil » par défaut.
+Les onglets suivent l'ordre de leur première section. Un profil dont toutes
+les sections sont dans le même onglet n'affiche pas de barre d'onglets.
+
+- Adresse : le premier onglet est `/<profil>`, les autres `/<profil>/<onglet>`,
+  avec le nom en minuscules sans accents (« Médias et jeux » → `/tom/medias-et-jeux`).
+- `config` et `cles` sont réservés (adresses de « Ma config »).
+- Seules les cartes de l'onglet ouvert sont chargées.
+- Sur ordinateur, les onglets sont sous l'en-tête ; sur téléphone, en barre fixe en bas.
+- « Réorganiser » déplace les cartes dans leur section, comme avant : changer une
+  section d'onglet garde l'ordre choisi.
 
 ## Icônes
 

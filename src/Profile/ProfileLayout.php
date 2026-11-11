@@ -57,7 +57,7 @@ final readonly class ProfileLayout
             // Cartes classées d'abord, dans l'ordre choisi ; les autres ensuite, dans l'ordre du YAML.
             usort($cards, static fn (CardInstance $a, CardInstance $b): int => [$rank[$a->id] ?? \PHP_INT_MAX, $yaml[$a->id]] <=> [$rank[$b->id] ?? \PHP_INT_MAX, $yaml[$b->id]]);
 
-            return new Section($section->title, $section->columns, $cards);
+            return $section->withCards($cards);
         }, $profile->sections));
     }
 }

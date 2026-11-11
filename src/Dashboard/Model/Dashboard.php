@@ -54,7 +54,7 @@ final readonly class Dashboard
         foreach ($this->profiles as $slug => $profile) {
             $sections = [];
             foreach ($profile->sections as $section) {
-                $sections[] = new Section($section->title, $section->columns, array_map($map, $section->cards));
+                $sections[] = $section->withCards(array_map($map, $section->cards));
             }
             $profiles[$slug] = new Profile($profile->slug, $profile->name, $profile->color, $sections);
         }
