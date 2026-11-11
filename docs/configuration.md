@@ -184,9 +184,11 @@ en tête avec un nom en rouge ; *Démarre*, *Redémarre* ou *En pause* juste
 après ; l'en-tête compte les problèmes. L'état exact s'affiche au survol. Un
 service sans `url` est affiché sans lien.
 
-Taille : environ 6 icônes par rangée pour `span: 2` sur grand écran ; les
-icônes qui ne tiennent pas dans la hauteur (`rows`) sont coupées, d'où l'ordre
-« problèmes d'abord ».
+Taille : les icônes sont réparties sur autant de lignes que la carte a de
+rangées (`rows: 2` et 6 services → 2 lignes de 3), espacées pour remplir la
+carte. Chaque icône garde au moins 4,5rem de large : sur écran étroit, la grille
+repasse à la ligne, et les icônes qui ne tiennent plus dans la hauteur sont
+coupées, d'où l'ordre « problèmes d'abord ».
 
 ### `jellyfin-latest`
 

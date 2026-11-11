@@ -70,4 +70,12 @@ describe('ServicesCard', () => {
     screen.getByRole('heading', { name: 'Outils' })
     screen.getByRole('link', { name: 'Recettes : vérification…' })
   })
+
+  it('répartit les icônes sur autant de lignes que la carte a de rangées', () => {
+    render(<ServicesCard card={card} result={null} />) // 4 services, rows: 2 → 2 colonnes
+    expect(screen.getByRole('list').style.getPropertyValue('--cols')).toBe('2')
+
+    render(<ServicesCard card={{ ...card, id: 'x', rows: 1 }} result={null} />) // rows: 1 → une seule ligne de 4
+    expect(screen.getAllByRole('list')[1]!.style.getPropertyValue('--cols')).toBe('4')
+  })
 })

@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import type { CardComponent } from './registry'
 import { ExternalLink } from '../ui/ExternalLink'
 import { ServiceIcon } from '../ui/ServiceIcon'
@@ -21,6 +22,10 @@ export const ServicesCard: CardComponent<ServicesProps, ServicesData> = ({ card,
   const items = card.props.services.map((service, index) => ({ ...service, index, state: serviceStatus(data ? (data.status[service.id] ?? null) : null) }))
   const shown = data ? [...items].sort((a, b) => rank[a.state.tone] - rank[b.state.tone] || a.index - b.index) : items
   const problems = items.filter((i) => i.state.tone === 'down' || i.state.tone === 'warn').length
+  // Autant de lignes d'icônes que la carte a de rangées : sur grand écran, les icônes
+  // remplissent la carte au lieu de tenir sur une ligne. Chaque colonne garde au moins
+  // 4,5rem : sur écran étroit, la grille repasse à la ligne (voir la classe de la liste).
+  const cols = Math.max(1, Math.ceil(items.length / Math.max(1, card.rows)))
 
   return (
     <div className="flex h-full flex-col gap-3">
@@ -39,12 +44,15 @@ export const ServicesCard: CardComponent<ServicesProps, ServicesData> = ({ card,
           ))}
       </header>
 
-      <ul className="grid min-h-0 flex-1 auto-rows-min grid-cols-[repeat(auto-fill,minmax(4.5rem,1fr))] gap-x-2 gap-y-2 overflow-hidden">
+      <ul
+        style={{ '--cols': String(cols) } as CSSProperties}
+        className="grid min-h-0 flex-1 auto-rows-min grid-cols-[repeat(auto-fill,minmax(max(4.5rem,calc((100%-(var(--cols)-1)*0.5rem)/var(--cols))),1fr))] content-evenly gap-x-2 gap-y-2 overflow-hidden"
+      >
         {shown.map((service) => {
           const label = `${service.name} : ${service.state.label.toLowerCase()}`
           const body = (
             <>
-              <span className="relative">
+              <span className="relative [&>img]:size-12 [&>span:first-child]:size-12">
                 <ServiceIcon icon={service.icon} name={service.name} />
                 <span className={`absolute -top-1 -right-1 size-3 rounded-full ring-2 ring-white dark:ring-slate-900 ${toneDot[service.state.tone]}`} aria-hidden="true" />
               </span>
