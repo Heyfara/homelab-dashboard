@@ -17,6 +17,8 @@ describe('TabBar', () => {
     expect(screen.getByRole('link', { name: 'Admin' }).getAttribute('aria-current')).toBe('page')
     expect(screen.getByRole('link', { name: 'Accueil' }).getAttribute('aria-current')).toBeNull()
     expect(nav.className).toContain('fixed') // barre en bas sur téléphone
+    expect(nav.className).toContain('sm:sticky') // barre latérale sur ordinateur
+    expect(screen.getByRole('link', { name: 'Admin' }).getAttribute('title')).toBe('Admin') // nom au survol en mode icônes
   })
 
   it('change d’onglet sans recharger la page', () => {
