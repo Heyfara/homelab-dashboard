@@ -10,6 +10,7 @@ RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
 
 COPY --from=composer:2.10.3 /usr/bin/composer /usr/bin/composer
 COPY docker/php/app.ini $PHP_INI_DIR/conf.d/zz-app.ini
+COPY docker/php/fpm-pool.conf /usr/local/etc/php-fpm.d/zz-pool.conf
 
 WORKDIR /app
 

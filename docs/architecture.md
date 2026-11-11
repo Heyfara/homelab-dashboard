@@ -35,8 +35,16 @@ Points clés :
 
 - **Config relue sans redémarrage** : `DashboardProvider` met le dashboard en
   cache sous une clé qui contient la date de modification du fichier.
-- **Cache des données** : `CardDataFetcher` garde chaque réponse `refresh`
-  secondes (clé = id de la carte + options).
+- **Cache des données, « périmé puis rafraîchi »** : `CardDataFetcher` garde
+  chaque réponse 2 jours (clé = id de la carte + options). Passé `refresh`
+  secondes, la valeur est encore servie tout de suite avec `stale: true`, et la
+  source est relue **après** l'envoi de la réponse (`DeferredRefresh`, sur
+  `kernel.terminate` : PHP-FPM a déjà rendu la réponse au client). Seule une
+  carte sans valeur en cache attend sa source. Le front redemande une carte
+  `stale` quelques secondes plus tard pour récupérer la valeur fraîche. Un échec
+  de la relecture est servi comme erreur jusqu'à la relecture suivante réussie.
+  PHP-FPM a 16 workers (`docker/php/fpm-pool.conf`) : une relecture garde le sien
+  pendant qu'elle attend la source.
 - **Flux** : un type de carte peut implémenter `CardFeedsInterface` pour avoir,
   en plus de ses données principales, des flux à leur propre rythme (lectures
   en cours Jellyfin toutes les 10 s, derniers ajouts toutes les 5 min). Chaque
