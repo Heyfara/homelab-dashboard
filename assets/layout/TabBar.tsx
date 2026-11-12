@@ -1,6 +1,6 @@
 import { useState, type MouseEvent } from 'react'
 import type { TabView } from '../http/types'
-import { ChevronsLeftIcon, ChevronsRightIcon, GridIcon, HomeBoltIcon, HomeIcon, Printer3dIcon, ShieldIcon } from '../ui/icons'
+import { ChevronsLeftIcon, ChevronsRightIcon, GridIcon, HomeIcon, LightbulbIcon, Printer3dIcon, ShieldIcon } from '../ui/icons'
 
 const COMPACT_KEY = 'dashboard.sidebar.compact'
 
@@ -31,7 +31,7 @@ export const tabPath = (profile: string, tabs: TabView[], slug: string) =>
 const knownTabIcons: Record<string, typeof GridIcon> = {
   admin: ShieldIcon,
   atelier: Printer3dIcon,
-  maison: HomeBoltIcon,
+  maison: LightbulbIcon,
 }
 
 /** Icône d'un onglet : maison pour le premier, sinon selon son identifiant. */

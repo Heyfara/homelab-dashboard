@@ -127,12 +127,11 @@ export const HomeIcon = ({ className }: P) => (
     <path d="M5 10v10h5v-6h4v6h5V10" />
   </Icon>
 )
-/** Maison et éclair : onglet « Maison » (Home Assistant). */
-export const HomeBoltIcon = ({ className }: P) => (
+/** Ampoule : onglet « Maison » (Home Assistant), distinct de la maison de l'accueil. */
+export const LightbulbIcon = ({ className }: P) => (
   <Icon className={className}>
-    <path d="M3 11l9-7 9 7" />
-    <path d="M5 10v10h14V10" />
-    <path d="M13 11l-3 4h4l-3 4" />
+    <path d="M9 18h6M10 22h4" />
+    <path d="M15 14c.2-1 .7-1.7 1.5-2.5A6 6 0 1 0 7.5 11.5c.8.8 1.3 1.5 1.5 2.5z" />
   </Icon>
 )
 export const SunIcon = ({ className }: P) => (
