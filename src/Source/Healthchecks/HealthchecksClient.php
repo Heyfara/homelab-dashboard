@@ -28,6 +28,21 @@ final readonly class HealthchecksClient
     }
 
     /**
+     * Fiche du check : état, dernier ping, passage en cours.
+     */
+    public function check(string $baseUrl, string $slug): HealthchecksCheck
+    {
+        $check = $this->get(rtrim($baseUrl, '/').'/api/v3/checks/', ['slug' => $slug])['checks'][0]
+            ?? throw new SourceUnavailableException(\sprintf('Check « %s » absent de Healthchecks', $slug));
+
+        return new HealthchecksCheck(
+            (string) ($check['status'] ?? 'new'),
+            isset($check['last_ping']) ? new \DateTimeImmutable($check['last_ping']) : null,
+            (bool) ($check['started'] ?? false),
+        );
+    }
+
+    /**
      * Rapports des derniers passages terminés (succès ou échec) du check.
      *
      * @return list<string> le plus récent d'abord ; vide si le check n'a pas encore de rapport

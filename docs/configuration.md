@@ -323,12 +323,13 @@ ligne garde ses dernières valeurs connues.
 
 Remplissage d'un volume suivi par Beszel (un des `EXTRA_FILESYSTEMS` de
 l'agent) : jauge (mêmes couleurs que `machine`), utilisé / total, place libre,
-courbe de la place utilisée sur la période, rythme de croissance (« +150
-Go/mois ») et délai estimé avant qu'il soit plein. Le rythme est la pente de la
+rythme de croissance (« +150 Go/mois ») et délai estimé avant qu'il soit
+plein. En option : état du pool, une ligne par disque et le dernier scrub.
+Le rythme est la pente de la
 droite des moindres carrés sur les mesures de la période ; il n'apparaît
 qu'après 2 jours de mesures, et le délai seulement si le volume grossit.
-Les valeurs actuelles viennent de la dernière minute ; la courbe et le rythme
-ignorent les tranches dont le total s'écarte de plus de 1 % du total actuel
+Les valeurs actuelles viennent de la dernière minute ; le rythme
+ignore les tranches dont le total s'écarte de plus de 1 % du total actuel
 (tranche partielle, voir `depannage.md`, ou disque ajouté : la tendance
 repart alors de zéro).
 
@@ -338,10 +339,30 @@ repart alors de zéro).
 | `filesystem` | obligatoire | nom du volume dans Beszel |
 | `period` | `30d` | `7d` ou `30d` (résolutions 120 et 480 min de Beszel) |
 | `pool` | aucun | étiquette d'un pool btrfs ou ZFS : pastille *Sain* (ONLINE), *Dégradé* (DEGRADED, un disque manque) ou *État inconnu* (pool non vu par Beszel) |
+| `disks` | `[]` | numéros de série des disques à lister, dans l'ordre (SMART suivi par Beszel, `SMART_DEVICES` de l'agent) |
+| `healthchecks` | aucun | service Healthchecks du catalogue, avec `scrub_check` |
+| `scrub_check` | aucun | slug du check qui reçoit les pings du scrub |
 
 ```yaml
-- { type: storage, host: beta, filesystem: NAS, pool: tank, title: NAS, span: 2 }
+- type: storage
+  host: beta
+  filesystem: NAS
+  pool: tank
+  title: NAS
+  span: 2
+  disks: [SN-0001, SN-0002]
+  healthchecks: healthchecks
+  scrub_check: nas-scrub
 ```
+
+Chaque disque : capacité, modèle, température, âge (heures de
+fonctionnement ; masqué sur carte étroite), détail SMART au survol. Pastille
+orange si un compteur réalloués / en attente / illisibles / erreurs CRC n'est
+pas nul ou au-delà de 50 °C ; rouge si SMART en échec ou disque absent de
+Beszel (débranché, ou numéro de série mal recopié). Quatre disques tiennent sur
+une rangée. Le scrub (« Scrub 12 nov. · OK ») vient de l'état du check :
+OK, en retard, échec, en cours ; Healthchecks injoignable n'empêche pas
+l'affichage du reste (« Scrub : ? »).
 
 Le nom est celui que montre Beszel : par défaut le périphérique
 (`sdb1`, `ata-…`), qui change avec le disque. Pour un nom stable, le donner
