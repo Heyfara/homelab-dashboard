@@ -136,8 +136,9 @@ function Chart({ data, range, onRange }: { data: EnergyData; range: Range; onRan
   ]
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-1.5">
-      <div className="flex items-center gap-3 text-xs text-zinc-500 dark:text-slate-400">
+    // Panneau plus sombre que la carte, comme les graphiques des machines ; la courbe va jusqu'à ses bords.
+    <div className="flex min-h-0 flex-1 flex-col gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 dark:border-slate-800 dark:bg-slate-950/70">
+      <div className="flex items-center gap-3 px-2.5 pt-1.5 text-xs text-zinc-500 dark:text-slate-400">
         {series.map((s) => (
           <span key={s.label} className="flex items-center gap-1.5">
             <span className={`size-2 rounded-sm bg-current ${s.className}`} aria-hidden="true" />
@@ -145,7 +146,7 @@ function Chart({ data, range, onRange }: { data: EnergyData; range: Range; onRan
           </span>
         ))}
         <span className="flex-1" />
-        <div className="flex rounded-md bg-zinc-100 p-0.5 dark:bg-slate-800">
+        <div className="flex rounded-md bg-zinc-200/70 p-0.5 dark:bg-slate-800">
           {(['day', 'month'] as const).map((r) => (
             <button
               key={r}
@@ -159,7 +160,7 @@ function Chart({ data, range, onRange }: { data: EnergyData; range: Range; onRan
           ))}
         </div>
       </div>
-      <div className="relative min-h-6 flex-1">
+      <div className={`relative min-h-6 flex-1 ${range === 'month' ? 'px-2.5' : ''}`}>
         {range === 'day' ? (
           <TimeSeries label="Puissance moyenne, 24 dernières heures" at={pair.at} series={series} clipClassName="rounded-b-lg" />
         ) : (
