@@ -95,6 +95,31 @@ final readonly class BeszelClient
         });
     }
 
+    /**
+     * Disques surveillés en SMART par l'agent (SMART_DEVICES), par numéro de série.
+     *
+     * @return array<string, BeszelSmartDevice>
+     */
+    public function smartDevices(string $systemName): array
+    {
+        $system = $this->system($systemName);
+
+        return $this->cache->get($this->key('smart.'.$system->id), function (ItemInterface $item) use ($system): array {
+            $item->expiresAfter(self::LIST_TTL);
+            $devices = [];
+            $records = $this->list('smart_devices', [
+                'fields' => 'serial,model,capacity,state,temp,hours,attributes',
+                'filter' => \sprintf("system='%s'", $system->id),
+            ]);
+            foreach ($records as $record) {
+                $device = BeszelSmartDevice::fromRecord($record);
+                $devices[$device->serial] = $device;
+            }
+
+            return $devices;
+        });
+    }
+
     public function system(string $systemName): BeszelSystem
     {
         return $this->systems()[$systemName] ?? throw new SourceUnavailableException(\sprintf(

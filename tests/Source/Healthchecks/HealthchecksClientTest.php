@@ -2,6 +2,7 @@
 
 namespace App\Tests\Source\Healthchecks;
 
+use App\Source\Healthchecks\HealthchecksCheck;
 use App\Source\Healthchecks\HealthchecksClient;
 use App\Source\SourceUnavailableException;
 use PHPUnit\Framework\TestCase;
@@ -119,6 +120,31 @@ final class HealthchecksClientTest extends TestCase
             : new JsonMockResponse(['pings' => []]));
 
         self::assertSame([], $client->reports(self::URL, 'neuf', 1));
+    }
+
+    public function testCheckStatus(): void
+    {
+        $client = $this->client(static fn (string $path, array $query): MockResponse => new JsonMockResponse(['checks' => [
+            ['slug' => $query['slug'], 'status' => 'up', 'started' => false, 'last_ping' => '2026-11-01T17:01:08+01:00'],
+        ]]));
+
+        self::assertEquals(new HealthchecksCheck('up', new \DateTimeImmutable('2026-11-01T17:01:08+01:00'), false), $client->check(self::URL, 'scrub'));
+        self::assertSame(self::URL.'/api/v3/checks/?slug=scrub', $this->requests[0][0]);
+    }
+
+    public function testCheckNeverPingedHasNoDate(): void
+    {
+        $client = $this->client(static fn (): MockResponse => new JsonMockResponse(['checks' => [['slug' => 'neuf', 'status' => 'new', 'started' => false, 'last_ping' => null]]]));
+
+        self::assertEquals(new HealthchecksCheck('new', null, false), $client->check(self::URL, 'neuf'));
+    }
+
+    public function testStatusOfUnknownCheck(): void
+    {
+        $this->expectException(SourceUnavailableException::class);
+        $this->expectExceptionMessage('Check « inconnu » absent de Healthchecks');
+
+        $this->client()->check(self::URL, 'inconnu');
     }
 
     public function testUnknownCheck(): void

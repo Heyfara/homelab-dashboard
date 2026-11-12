@@ -4,6 +4,7 @@ namespace App\Tests\Source\Beszel;
 
 use App\Source\Beszel\BeszelClient;
 use App\Source\Beszel\BeszelContainer;
+use App\Source\Beszel\BeszelSmartDevice;
 use App\Source\Beszel\BeszelSystem;
 use App\Source\SourceUnavailableException;
 use PHPUnit\Framework\TestCase;
@@ -132,6 +133,32 @@ final class BeszelClientTest extends TestCase
 
         self::assertEquals(new BeszelContainer('c1', 'mealie', 'Up 7 days', 2, 0.4, 312.5, 1792400000), $containers['mealie']);
         self::assertArrayHasKey('actual_server', $containers);
+
+        [, $url] = end($this->requests);
+        parse_str((string) parse_url($url, \PHP_URL_QUERY), $query);
+        self::assertSame("system='sys-beta'", $query['filter']);
+    }
+
+    public function testSmartDevicesOfASystem(): void
+    {
+        $client = $this->client([
+            '/api/collections/users/auth-with-password' => self::auth(),
+            '/api/collections/systems/records' => self::systems(),
+            '/api/collections/smart_devices/records' => static fn () => new JsonMockResponse(['items' => [
+                ['serial' => 'SN-A', 'model' => 'ST4000VN006-3CW104', 'capacity' => 4000787030016, 'state' => 'PASSED', 'temp' => 21, 'hours' => 192, 'attributes' => [
+                    ['id' => 1, 'n' => 'Raw_Read_Error_Rate', 'rv' => 173239856],
+                    ['id' => 5, 'n' => 'Reallocated_Sector_Ct', 'rv' => 0],
+                    ['id' => 197, 'n' => 'Current_Pending_Sector', 'rv' => 2],
+                    ['id' => 199, 'n' => 'UDMA_CRC_Error_Count', 'rv' => 0],
+                ]],
+                ['serial' => 'SN-B', 'model' => 'Disque NVMe', 'capacity' => 500107862016, 'state' => 'PASSED'],
+            ]]),
+        ]);
+
+        $devices = $client->smartDevices('Beta');
+
+        self::assertEquals(new BeszelSmartDevice('SN-A', 'ST4000VN006-3CW104', 4000787030016, 'PASSED', 21, 192, ['reallocated' => 0, 'pending' => 2, 'crc' => 0]), $devices['SN-A']);
+        self::assertEquals(new BeszelSmartDevice('SN-B', 'Disque NVMe', 500107862016, 'PASSED', null, null), $devices['SN-B'], 'sans température ni attributs ATA');
 
         [, $url] = end($this->requests);
         parse_str((string) parse_url($url, \PHP_URL_QUERY), $query);

@@ -7,21 +7,30 @@ use App\Card\CardTypeInterface;
 use App\Dashboard\Model\CardInstance;
 use App\Dashboard\Model\Dashboard;
 use App\Dashboard\Model\Host;
+use App\Dashboard\Model\ServiceDefinition;
 use App\Source\Beszel\BeszelClient;
+use App\Source\Beszel\BeszelSmartDevice;
 use App\Source\Beszel\BeszelStat;
+use App\Source\Healthchecks\HealthchecksClient;
 use App\Source\SourceUnavailableException;
+use Symfony\Component\OptionsResolver\Exception\InvalidOptionsException;
+use Symfony\Component\OptionsResolver\Options;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
  * Remplissage d'un volume de stockage suivi par Beszel (un des EXTRA_FILESYSTEMS
- * de l'agent) : place utilisée et libre, évolution, rythme de croissance et
- * date estimée où il sera plein.
+ * de l'agent) : place utilisée et libre, rythme de croissance et date estimée
+ * où il sera plein. En option : état du pool, disques (SMART de Beszel) et
+ * dernier scrub (check Healthchecks).
  *
  *     - type: storage
  *       host: beta
  *       filesystem: NAS     # nom donné par Beszel (EXTRA_FILESYSTEMS=/mnt/raid__NAS)
  *       period: 30d
  *       pool: nas           # facultatif : état du pool btrfs/ZFS (étiquette du pool)
+ *       disks: [WW6B…, WD-…]  # facultatif : numéros de série des disques du pool
+ *       healthchecks: healthchecks  # facultatif, avec scrub_check
+ *       scrub_check: nas-scrub
  *       span: 2
  */
 #[AsCard('storage')]
@@ -38,6 +47,7 @@ final readonly class StorageCard implements CardTypeInterface
 
     public function __construct(
         private BeszelClient $beszel,
+        private HealthchecksClient $healthchecks,
     ) {
     }
 
@@ -55,7 +65,24 @@ final readonly class StorageCard implements CardTypeInterface
             ->setAllowedValues('period', array_keys(self::PERIODS))
             ->setDefault('pool', null)
             ->setAllowedTypes('pool', ['null', 'string'])
-            ->setInfo('pool', 'étiquette du pool btrfs ou ZFS dont afficher l\'état (ONLINE, DEGRADED…)');
+            ->setInfo('pool', 'étiquette du pool btrfs ou ZFS dont afficher l\'état (ONLINE, DEGRADED…)')
+            ->setDefault('disks', [])
+            ->setAllowedTypes('disks', 'string[]')
+            ->setInfo('disks', 'numéros de série des disques à afficher (SMART suivi par Beszel), dans l\'ordre')
+            ->setDefault('healthchecks', null)
+            ->setAllowedTypes('healthchecks', ['null', 'string'])
+            ->setAllowedValues('healthchecks', static fn (?string $s): bool => null === $s || null !== ($dashboard->services[$s] ?? null)?->url)
+            ->setInfo('healthchecks', 'service Healthchecks du catalogue, qui reçoit les pings du scrub')
+            ->setDefault('scrub_check', null)
+            ->setAllowedTypes('scrub_check', ['null', 'string'])
+            ->setInfo('scrub_check', 'slug du check du scrub dans Healthchecks (avec healthchecks)')
+            ->setNormalizer('scrub_check', static function (Options $options, ?string $check): ?string {
+                if (null !== $check && null === $options['healthchecks']) {
+                    throw new InvalidOptionsException('scrub_check demande l\'option healthchecks');
+                }
+
+                return $check;
+            });
     }
 
     public function describe(CardInstance $card, Dashboard $dashboard): array
@@ -93,11 +120,51 @@ final readonly class StorageCard implements CardTypeInterface
             'free' => $free,
             'health' => null === $card->options['pool'] ? null : self::health($lastMinute['z'] ?? [], $card->options['pool']),
             'growth' => self::growth($stats, $used, $free),
-            'series' => [
-                'at' => array_map(static fn (BeszelStat $s): string => $s->at->format(\DATE_ATOM), $stats),
-                'used' => $used,
-            ],
+            'disks' => [] === $card->options['disks'] ? [] : self::disks($this->beszel->smartDevices($systemName), $card->options['disks']),
+            'scrub' => null === $card->options['scrub_check'] ? null : $this->scrub($dashboard->services[$card->options['healthchecks']], $card->options['scrub_check']),
         ];
+    }
+
+    /**
+     * Disques demandés, dans l'ordre de la configuration ; absent de Beszel = MISSING.
+     *
+     * @param array<string, BeszelSmartDevice> $devices
+     * @param list<string>                     $serials
+     *
+     * @return list<array<string, mixed>>
+     */
+    private static function disks(array $devices, array $serials): array
+    {
+        return array_map(static function (string $serial) use ($devices): array {
+            $d = $devices[$serial] ?? null;
+
+            return [
+                'serial' => $serial,
+                'model' => $d?->model,
+                'capacity' => $d?->capacity,
+                'state' => $d?->state ?? 'MISSING',
+                'temperature' => $d?->temperature,
+                'hours' => $d?->powerOnHours,
+                'counters' => $d->counters ?? [],
+            ];
+        }, $serials);
+    }
+
+    /**
+     * Dernier passage du scrub. Healthchecks injoignable : « unavailable »,
+     * sans masquer le reste de la carte.
+     *
+     * @return array{status: string, at: ?string, running: bool}
+     */
+    private function scrub(ServiceDefinition $healthchecks, string $slug): array
+    {
+        try {
+            $check = $this->healthchecks->check($healthchecks->check ?? (string) $healthchecks->url, $slug);
+        } catch (SourceUnavailableException) {
+            return ['status' => 'unavailable', 'at' => null, 'running' => false];
+        }
+
+        return ['status' => $check->status, 'at' => $check->lastPing?->format(\DATE_ATOM), 'running' => $check->started];
     }
 
     /**

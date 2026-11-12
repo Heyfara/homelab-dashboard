@@ -6,8 +6,10 @@ use App\Card\Type\StorageCard;
 use App\Dashboard\Model\CardInstance;
 use App\Dashboard\Model\Dashboard;
 use App\Dashboard\Model\Host;
+use App\Dashboard\Model\ServiceDefinition;
 use App\Dashboard\Model\Settings;
 use App\Source\Beszel\BeszelClient;
+use App\Source\Healthchecks\HealthchecksClient;
 use App\Source\SourceUnavailableException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -27,6 +29,9 @@ final class StorageCardTest extends TestCase
     /** @var list<string> */
     private array $statsTypes = [];
 
+    /** @var list<string> */
+    private array $healthchecksUrls = [];
+
     /** Mesures renvoyées par Beszel pour sys-alpha : [date, Go utilisés, Go au total] */
     private array $points = [];
 
@@ -36,12 +41,29 @@ final class StorageCardTest extends TestCase
     /** Pools btrfs/ZFS de la dernière minute (champ z de Beszel) */
     private array $pools = ['b:1234-abcd' => ['n' => 'tank', 'h' => 'ONLINE', 'hu' => true, 'd' => 1832.6, 'du' => 1055.1]];
 
+    /** Disques suivis en SMART par Beszel (collection smart_devices) */
+    private array $smart = [
+        ['serial' => 'SN-A', 'model' => 'ST4000VN006-3CW104', 'capacity' => 4000787030016, 'state' => 'PASSED', 'temp' => 21, 'hours' => 192, 'attributes' => [
+            ['id' => 5, 'rv' => 0], ['id' => 197, 'rv' => 0], ['id' => 198, 'rv' => 0], ['id' => 199, 'rv' => 0],
+        ]],
+        ['serial' => 'SN-B', 'model' => 'WDC WD20SPZX-08UA7', 'capacity' => 2000398934016, 'state' => 'PASSED', 'temp' => 19, 'hours' => 40215, 'attributes' => [
+            ['id' => 5, 'rv' => 8], ['id' => 199, 'rv' => 0],
+        ]],
+        ['serial' => 'SN-SYS', 'model' => 'SSD système', 'capacity' => 500107862016, 'state' => 'PASSED', 'temp' => 23, 'hours' => 22340],
+    ];
+
+    /** Fiche du check de scrub dans Healthchecks ; null = check absent */
+    private ?array $scrubCheck = ['status' => 'up', 'started' => false, 'last_ping' => '2026-11-01T17:01:08+01:00'];
+
     protected function setUp(): void
     {
         $this->dashboard = new Dashboard(new Settings(4, 30), [
             'alpha' => new Host('alpha', 'Alpha'),
             'gamma' => new Host('gamma'),
-        ], [], []);
+        ], [
+            'healthchecks' => new ServiceDefinition('healthchecks', 'Healthchecks', url: 'https://healthchecks.example', check: 'http://10.0.0.2:8000'),
+            'sans-url' => new ServiceDefinition('sans-url', 'Sans adresse'),
+        ], []);
         // 10 jours, +5 Go par jour, 1832,68 Go au total.
         for ($day = 0; $day <= 10; ++$day) {
             $this->points[] = [\sprintf('2026-10-%02d 08:00:00.000Z', 9 + $day), 1005.15 + 5 * $day, 1832.68];
@@ -53,6 +75,9 @@ final class StorageCardTest extends TestCase
         $http = new MockHttpClient(function (string $method, string $url) {
             if (str_contains($url, 'auth-with-password')) {
                 return new JsonMockResponse(['token' => 't']);
+            }
+            if (str_contains($url, '/smart_devices/')) {
+                return new JsonMockResponse(['items' => $this->smart]);
             }
             if (str_contains($url, '/systems/')) {
                 return new MockResponse((string) file_get_contents(self::FIXTURES.'/systems.json'));
@@ -73,7 +98,13 @@ final class StorageCardTest extends TestCase
             return new JsonMockResponse(['items' => $items]);
         });
 
-        return new StorageCard(new BeszelClient($http, new ArrayAdapter(), 'http://beszel', 'u', 'p'));
+        $healthchecks = new MockHttpClient(function (string $method, string $url) {
+            $this->healthchecksUrls[] = $url;
+
+            return new JsonMockResponse(['checks' => null === $this->scrubCheck ? [] : [['slug' => 'nas-scrub', ...$this->scrubCheck]]]);
+        });
+
+        return new StorageCard(new BeszelClient($http, new ArrayAdapter(), 'http://beszel', 'u', 'p'), new HealthchecksClient($healthchecks, 'cle'));
     }
 
     /**
@@ -99,7 +130,7 @@ final class StorageCardTest extends TestCase
 
     public function testOptionsDefaults(): void
     {
-        self::assertEquals(['host' => 'alpha', 'filesystem' => 'media', 'period' => '30d', 'pool' => null], $this->instance($this->card())->options);
+        self::assertEquals(['host' => 'alpha', 'filesystem' => 'media', 'period' => '30d', 'pool' => null, 'disks' => [], 'healthchecks' => null, 'scrub_check' => null], $this->instance($this->card())->options);
     }
 
     /**
@@ -110,6 +141,9 @@ final class StorageCardTest extends TestCase
         yield 'machine sans Beszel' => [['host' => 'gamma']];
         yield 'machine inconnue' => [['host' => 'delta']];
         yield 'période trop courte pour une tendance' => [['period' => '24h']];
+        yield 'scrub sans Healthchecks' => [['scrub_check' => 'nas-scrub']];
+        yield 'Healthchecks sans adresse' => [['healthchecks' => 'sans-url', 'scrub_check' => 'nas-scrub']];
+        yield 'Healthchecks inconnu' => [['healthchecks' => 'autre', 'scrub_check' => 'nas-scrub']];
     }
 
     #[DataProvider('invalidOptions')]
@@ -154,15 +188,6 @@ final class StorageCardTest extends TestCase
         self::assertSame([$type, '1m'], $this->statsTypes);
     }
 
-    public function testSeriesOfUsedSpace(): void
-    {
-        $series = $this->fetch()['series'];
-
-        self::assertCount(11, $series['at']);
-        self::assertSame('2026-10-09T08:00:00+00:00', $series['at'][0]);
-        self::assertSame([1005.15, 1010.15], \array_slice($series['used'], 0, 2));
-    }
-
     public function testGrowthAndProjection(): void
     {
         $growth = $this->fetch()['growth'];
@@ -195,7 +220,6 @@ final class StorageCardTest extends TestCase
 
         $data = $this->fetch();
 
-        self::assertNull($data['series']['used'][0]);
         self::assertSame(9, $data['growth']['days'], 'la tendance part de la 1re mesure connue');
     }
 
@@ -216,8 +240,7 @@ final class StorageCardTest extends TestCase
 
         $data = $this->fetch();
 
-        self::assertNull($data['series']['used'][0], 'pas de faux creux sur la courbe');
-        self::assertSame(9, $data['growth']['days']);
+        self::assertSame(9, $data['growth']['days'], 'tranche partielle ignorée');
         self::assertEqualsWithDelta(5.0, $data['growth']['perDay'], 0.001);
     }
 
@@ -255,5 +278,56 @@ final class StorageCardTest extends TestCase
         $this->expectExceptionMessage('Beszel ne suit pas « nas » sur Alpha (suivis : media)');
 
         $this->fetch(['filesystem' => 'nas']);
+    }
+
+    public function testNoDisksNorScrubUnlessAsked(): void
+    {
+        $data = $this->fetch();
+
+        self::assertSame([], $data['disks']);
+        self::assertNull($data['scrub']);
+        self::assertSame([], $this->healthchecksUrls);
+    }
+
+    public function testDisksInConfiguredOrder(): void
+    {
+        $disks = $this->fetch(['disks' => ['SN-B', 'SN-A']])['disks'];
+
+        self::assertSame([
+            ['serial' => 'SN-B', 'model' => 'WDC WD20SPZX-08UA7', 'capacity' => 2000398934016, 'state' => 'PASSED', 'temperature' => 19, 'hours' => 40215, 'counters' => ['reallocated' => 8, 'crc' => 0]],
+            ['serial' => 'SN-A', 'model' => 'ST4000VN006-3CW104', 'capacity' => 4000787030016, 'state' => 'PASSED', 'temperature' => 21, 'hours' => 192, 'counters' => ['reallocated' => 0, 'pending' => 0, 'uncorrectable' => 0, 'crc' => 0]],
+        ], $disks, 'le SSD système, non listé, est ignoré');
+    }
+
+    public function testDiskUnknownToBeszelIsMissing(): void
+    {
+        $disks = $this->fetch(['disks' => ['SN-A', 'SN-X']])['disks'];
+
+        self::assertSame(['serial' => 'SN-X', 'model' => null, 'capacity' => null, 'state' => 'MISSING', 'temperature' => null, 'hours' => null, 'counters' => []], $disks[1]);
+    }
+
+    public function testLastScrubFromHealthchecks(): void
+    {
+        $scrub = $this->fetch(['healthchecks' => 'healthchecks', 'scrub_check' => 'nas-scrub'])['scrub'];
+
+        self::assertSame(['status' => 'up', 'at' => '2026-11-01T17:01:08+01:00', 'running' => false], $scrub);
+        self::assertStringStartsWith('http://10.0.0.2:8000/api/v3/checks/', $this->healthchecksUrls[0], 'adresse interne du service');
+    }
+
+    public function testScrubRunning(): void
+    {
+        $this->scrubCheck = ['status' => 'up', 'started' => true, 'last_ping' => '2026-12-01T10:00:02+01:00'];
+
+        self::assertTrue($this->fetch(['healthchecks' => 'healthchecks', 'scrub_check' => 'nas-scrub'])['scrub']['running']);
+    }
+
+    public function testScrubUnavailableDoesNotHideTheCard(): void
+    {
+        $this->scrubCheck = null;
+
+        $data = $this->fetch(['healthchecks' => 'healthchecks', 'scrub_check' => 'nas-scrub']);
+
+        self::assertSame(['status' => 'unavailable', 'at' => null, 'running' => false], $data['scrub']);
+        self::assertSame(57.57, $data['percent']);
     }
 }

@@ -1,10 +1,9 @@
 import type { CardComponent } from './registry'
 import { diskTone, formatGiB, formatUsage } from './MachineCard'
-import { formatNumber } from '../ui/format'
+import { formatBytes, formatNumber } from '../ui/format'
 import { DatabaseIcon } from '../ui/icons'
 import { RingGauge } from '../ui/RingGauge'
-import { StatusPill, type Tone } from '../ui/StatusPill'
-import { TimeSeries } from '../ui/TimeSeries'
+import { StatusPill, toneDot, type Tone } from '../ui/StatusPill'
 
 /** Props de StorageCard::describe() côté PHP. */
 export type StorageProps = { title: string; system: string }
@@ -19,8 +18,43 @@ export type StorageData = {
   health: 'ONLINE' | 'DEGRADED' | 'UNKNOWN' | string | null
   /** Droite des moindres carrés sur la période ; null tant que le recul manque. */
   growth: { perDay: number; fullInDays: number | null; days: number } | null
-  series: { at: string[]; used: (number | null)[] }
+  /** Disques de l'option disks, dans l'ordre (SMART de Beszel) */
+  disks: StorageDisk[]
+  /** Dernier scrub (check Healthchecks), null si non configuré */
+  scrub: StorageScrub | null
 }
+
+export type StorageDisk = {
+  serial: string
+  model: string | null
+  /** Octets */
+  capacity: number | null
+  /** Verdict SMART (PASSED, FAILED…) ; MISSING = absent de Beszel */
+  state: string
+  temperature: number | null
+  hours: number | null
+  /** Attributs SMART bruts présents : reallocated, pending, uncorrectable, crc */
+  counters: Partial<Record<Counter, number>>
+}
+
+export type StorageScrub = {
+  /** État du check : new, up, grace, down, paused ; unavailable = Healthchecks injoignable */
+  status: string
+  at: string | null
+  running: boolean
+}
+
+type Counter = 'reallocated' | 'pending' | 'uncorrectable' | 'crc'
+
+const COUNTERS: Record<Counter, string> = {
+  reallocated: 'réalloués',
+  pending: 'en attente',
+  uncorrectable: 'illisibles',
+  crc: 'erreurs CRC',
+}
+
+/** Au-delà, un disque mécanique chauffe trop. */
+const HOT = 50
 
 const RING: Record<Tone, string> = {
   ok: 'text-emerald-600 dark:text-emerald-400',
@@ -51,6 +85,39 @@ export function formatFullIn(days: number): string {
   return 'dans plus de 10 ans'
 }
 
+/** « 8 j », « 3 mois », « 4,6 ans » : âge d'un disque d'après ses heures de fonctionnement. */
+export function formatAge(hours: number): string {
+  const days = hours / 24
+  if (days < 2) return `${hours} h`
+  if (days < 60) return `${Math.floor(days)} j`
+  if (days < 730) return `${Math.floor(days / 30.44)} mois`
+  return `${formatNumber(Math.round((days / 365.25) * 10) / 10)} ans`
+}
+
+/** Référence du modèle sans le fabricant ni la révision : « WDC WD20SPZX-08UA7 » → « WD20SPZX ». */
+export function shortModel(model: string): string {
+  return model.replace(/^WDC /, '').replace(/^(\S+)-\S+$/, '$1')
+}
+
+const nonZero = (disk: StorageDisk) => (Object.entries(disk.counters) as [Counter, number][]).filter(([, v]) => v > 0)
+
+export function smartTone(disk: StorageDisk): Tone {
+  if (disk.state === 'MISSING' || disk.state === 'FAILED') return 'down'
+  if (disk.state !== 'PASSED') return 'unknown'
+  if (nonZero(disk).length > 0 || (disk.temperature ?? 0) >= HOT) return 'warn'
+  return 'ok'
+}
+
+const shortDay = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' })
+
+/** État du check → pastille, mot court affiché, phrase du survol. */
+const SCRUB: Record<string, { tone: Tone; short: string; long: string }> = {
+  up: { tone: 'ok', short: 'OK', long: 'sans erreur' },
+  grace: { tone: 'warn', short: 'en retard', long: 'en retard' },
+  down: { tone: 'down', short: 'échec', long: 'en échec' },
+  paused: { tone: 'unknown', short: 'en pause', long: 'en pause' },
+}
+
 export const StorageCard: CardComponent<StorageProps, StorageData> = ({ card, result }) => {
   const data = result?.status === 'ok' ? result.data : null
   const title = card.title ?? card.props.title
@@ -69,7 +136,7 @@ export const StorageCard: CardComponent<StorageProps, StorageData> = ({ card, re
   const { growth } = data
 
   return (
-    <div className="flex h-full flex-col gap-2 tabular-nums">
+    <div className="@container flex h-full flex-col gap-2 tabular-nums">
       <header className="flex items-center gap-2">
         <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
           <DatabaseIcon className="size-4" />
@@ -98,18 +165,18 @@ export const StorageCard: CardComponent<StorageProps, StorageData> = ({ card, re
             <div className="flex flex-col text-xs">
               <span className="font-semibold text-zinc-900 dark:text-slate-50">{formatUsage(data.used, data.total)}</span>
               <span className="text-zinc-500 dark:text-slate-400">{size(data.free)} libres</span>
+              {data.scrub !== null && <ScrubLine scrub={data.scrub} />}
             </div>
           )}
         </div>
-        {/* Échelle = capacité totale : la courbe se lit comme un niveau de remplissage. */}
-        <div className="relative min-h-6 rounded-lg border border-zinc-200 bg-zinc-50 dark:border-slate-800 dark:bg-slate-950/70">
-          <TimeSeries
-            label="Utilisé"
-            at={data.series.at}
-            series={[{ label: 'Utilisé', values: data.series.used, className: 'text-indigo-600 dark:text-indigo-400', format: size }]}
-            max={data.total ?? undefined}
-            clipClassName="rounded-lg"
-          />
+        <div className="flex min-w-0 flex-col justify-center gap-2">
+          {data.disks.length > 0 && (
+            <ul className="flex flex-col gap-1 text-xs">
+              {data.disks.map((disk) => (
+                <DiskRow key={disk.serial} disk={disk} />
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </div>
@@ -119,4 +186,73 @@ export const StorageCard: CardComponent<StorageProps, StorageData> = ({ card, re
 function PoolHealth({ health }: { health: string }) {
   const { tone, label } = HEALTH[health] ?? { tone: 'unknown' as Tone, label: 'État inconnu' }
   return <StatusPill tone={tone} label={label} />
+}
+
+function Dot({ tone }: { tone: Tone }) {
+  return <span className={`size-2 shrink-0 rounded-full ${toneDot[tone]}`} aria-hidden="true" />
+}
+
+function DiskRow({ disk }: { disk: StorageDisk }) {
+  const tone = smartTone(disk)
+  const issues = nonZero(disk)
+  const details = [disk.model, disk.serial, `SMART ${disk.state}`, ...(Object.keys(disk.counters) as Counter[]).map((c) => `${COUNTERS[c]} : ${disk.counters[c]}`)]
+
+  if (disk.state === 'MISSING') {
+    return (
+      <li className="flex items-center gap-2 text-rose-700 dark:text-rose-300" title={`${disk.serial} : absent des disques suivis par Beszel`}>
+        <Dot tone={tone} />
+        <span className="truncate">Disque {disk.serial} absent</span>
+      </li>
+    )
+  }
+
+  return (
+    <li className="flex items-center gap-2" title={details.filter(Boolean).join(' · ')}>
+      <Dot tone={tone} />
+      <span className="w-10 shrink-0 font-semibold text-zinc-900 dark:text-slate-50">{disk.capacity !== null ? formatBytes(disk.capacity) : '?'}</span>
+      <span className="min-w-0 flex-1 truncate text-zinc-600 dark:text-slate-300">
+        {disk.model !== null ? shortModel(disk.model) : disk.serial}
+        {disk.state === 'FAILED' && <span className="ml-1.5 font-semibold text-rose-700 dark:text-rose-300">SMART en échec</span>}
+        {issues.map(([c, v]) => (
+          <span key={c} className="ml-1.5 font-semibold text-amber-700 dark:text-amber-300">
+            {v} {COUNTERS[c]}
+          </span>
+        ))}
+      </span>
+      {disk.temperature !== null && (
+        <span className={`shrink-0 ${disk.temperature >= HOT ? 'font-semibold text-amber-700 dark:text-amber-300' : 'text-zinc-500 dark:text-slate-400'}`}>
+          {disk.temperature} °C
+        </span>
+      )}
+      {disk.hours !== null && (
+        <span className="hidden w-12 shrink-0 text-right text-zinc-500 @md:inline dark:text-slate-400" title={`${formatNumber(disk.hours)} h de fonctionnement`}>
+          {formatAge(disk.hours)}
+        </span>
+      )}
+    </li>
+  )
+}
+
+function ScrubLine({ scrub }: { scrub: StorageScrub }) {
+  const day = scrub.at !== null ? shortDay.format(new Date(scrub.at)) : null
+  let tone: Tone
+  let label: string
+  let long: string
+  if (scrub.status === 'unavailable') {
+    ;[tone, label, long] = ['unknown', 'Scrub : ?', 'Scrub : état indisponible (Healthchecks injoignable)']
+  } else if (scrub.running) {
+    ;[tone, label, long] = ['ok', 'Scrub en cours', `Scrub en cours depuis le ${day}`]
+  } else if (scrub.status === 'new' || day === null) {
+    ;[tone, label, long] = ['unknown', 'Scrub : jamais', 'Scrub jamais lancé']
+  } else {
+    const state = SCRUB[scrub.status] ?? { tone: 'unknown' as Tone, short: scrub.status, long: scrub.status }
+    ;[tone, label, long] = [state.tone, `Scrub ${day} · ${state.short}`, `Dernier scrub : ${day} · ${state.long}`]
+  }
+
+  return (
+    <span className="mt-1 flex items-center gap-1.5 whitespace-nowrap text-zinc-500 dark:text-slate-400" title={`${long}. Relecture complète du pool et vérification des sommes de contrôle.`}>
+      <Dot tone={tone} />
+      {label}
+    </span>
+  )
 }
