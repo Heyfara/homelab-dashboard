@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { GridIcon, HomeIcon, Printer3dIcon, ShieldIcon } from '../ui/icons'
+import { GridIcon, HomeBoltIcon, HomeIcon, Printer3dIcon, ShieldIcon } from '../ui/icons'
 import { TabBar, tabIcon } from './TabBar'
 
 const tabs = [
@@ -75,6 +75,7 @@ describe('tabIcon', () => {
     expect(tabIcon('accueil', true)).toBe(HomeIcon)
     expect(tabIcon('admin', false)).toBe(ShieldIcon)
     expect(tabIcon('atelier', false)).toBe(Printer3dIcon)
+    expect(tabIcon('maison', false)).toBe(HomeBoltIcon)
     expect(tabIcon('divers', false)).toBe(GridIcon)
   })
 })

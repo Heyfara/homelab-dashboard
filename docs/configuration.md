@@ -972,4 +972,37 @@ navigateur les lit directement, sans relais.
 - Liens : `{url}/rom/{id}` et `{url}/platform/{id}`, qui demandent d'être
   connecté à RomM.
 
+### `energy`
+
+Énergie de la maison, lue dans Home Assistant : puissance **du moment**
+(solaire, réseau, et maison ≈ leur somme), énergie et coût **du jour**, puis
+un graphique au choix : puissance moyenne heure par heure sur 24 h, ou barres
+empilées (réseau + solaire) des 30 derniers jours.
+
+Compteurs d'énergie et prix du kWh viennent du **tableau Énergie** de Home
+Assistant (`energy/get_prefs`) : le configurer dans HA (*Paramètres → Tableaux
+de bord → Énergie*). Les statistiques long terme de HA (`recorder`) donnent
+les courbes. Seuls les capteurs de puissance instantanée sont à donner ici.
+
+| Option | Défaut | Rôle |
+|---|---|---|
+| `service` | obligatoire | service Home Assistant du catalogue, avec une `url` (`check` sert d'adresse d'API s'il est donné : `http://…:8123`) |
+| `solar_power` | `null` | capteur de puissance solaire instantanée (W) : `sensor.…` |
+| `grid_power` | `null` | capteur de puissance tirée du réseau (W, ou VA pour un compteur Linky) : `sensor.…` |
+
+```yaml
+- { type: energy, service: homeassistant, solar_power: sensor.panneaux_puissance, grid_power: sensor.compteur_puissance, span: 2, rows: 2, refresh: 60 }
+```
+
+- **Jeton** (`HOME_ASSISTANT_TOKEN`) : un utilisateur HA dédié, **non
+  administrateur**, puis *Profil → Sécurité → Jetons d'accès longue durée*.
+- Sans injection mesurée (kit solaire branché sur une prise), la part du
+  solaire renvoyée au réseau est inconnue : « Maison » surestime la
+  consommation quand le solaire dépasse le besoin, et l'économie affichée est
+  un plafond (« ≤ »).
+- Courbe à l'heure, pas aux 5 min : un compteur Linky avance par pas de
+  0,1 kWh, trop grossier pour des tranches courtes. L'heure en cours est dans
+  les tuiles.
+- Lien « Ouvrir » : `{url}/energy`.
+
 <!-- Ajouter ici chaque nouveau type de carte (voir docs/ajouter-une-carte.md). -->
