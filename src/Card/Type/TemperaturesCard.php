@@ -18,7 +18,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  *
  *     - type: temperatures
  *       service: homeassistant
- *       outdoor: jardin                  # pièce HA montrée à part, « Dehors »
+ *       outdoor: jardin                  # pièce HA montrée à part, « Extérieur »
  *       areas: [salon, chambre_parents]  # ordre et choix ; vide = toutes
  *       span: 2
  *       rows: 2

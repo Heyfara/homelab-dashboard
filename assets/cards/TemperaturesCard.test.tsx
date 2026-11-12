@@ -60,7 +60,7 @@ describe('TemperaturesCard', () => {
   it('l’extérieur dans l’en-tête', () => {
     render(<TemperaturesCard card={card} result={result(data)} />)
 
-    expect(text(screen.getByRole('group', { name: 'Dehors' }))).toContain('9,1 °C')
+    expect(text(screen.getByRole('group', { name: 'Extérieur' }))).toContain('9,1 °C')
   })
 
   it('courbe 24 h quand il y a au moins deux mesures', () => {

@@ -1032,7 +1032,7 @@ Température de chaque pièce, lue dans Home Assistant : valeur du moment,
 humidité, courbe des 24 dernières heures (moyenne de chaque heure), et la
 consigne du chauffage s'il y a un thermostat (`climate.…`) dans la pièce,
 avec « chauffe » quand il chauffe. La sonde extérieure s'affiche à part, dans
-l'en-tête (« Dehors »).
+l'en-tête (« Extérieur »).
 
 Les capteurs sont trouvés **par pièce** dans les registres de Home Assistant
 (pièce de l'entité, sinon celle de son appareil) : rien à lister. Dans une

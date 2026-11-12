@@ -44,10 +44,10 @@ export function TemperaturesCard({ card, result }: { card: CardView<Temperatures
         <h3 className="min-w-0 truncate font-semibold text-zinc-900 dark:text-slate-50">{card.title ?? title}</h3>
         <span className="flex-1" />
         {data?.outdoor && (
-          <p role="group" aria-label="Dehors" className="shrink-0 text-sm text-zinc-500 tabular-nums dark:text-slate-400">
-            Dehors{' '}
+          <p role="group" aria-label="Extérieur" className="flex shrink-0 items-baseline gap-2 text-sm text-zinc-500 tabular-nums dark:text-slate-400">
+            Extérieur
             <strong className="font-semibold text-zinc-900 dark:text-slate-50">{data.outdoor.temperature !== null ? formatTemperature(data.outdoor.temperature) : '—'}</strong>
-            {data.outdoor.humidity !== null && ` · ${formatNumber(Math.round(data.outdoor.humidity))} %`}
+            {data.outdoor.humidity !== null && <span>{formatNumber(Math.round(data.outdoor.humidity))} %</span>}
           </p>
         )}
         <ExternalLink href={url} className="shrink-0 rounded-md px-2 py-0.5 text-sm text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 focus-visible:outline-2 focus-visible:outline-indigo-500 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100">
