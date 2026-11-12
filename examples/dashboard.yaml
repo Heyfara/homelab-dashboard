@@ -35,6 +35,12 @@ services:
     url: https://dns.example/admin
     icon: sh-pi-hole
     host: box
+  maison:
+    name: Maison connectée
+    url: https://maison.example
+    check: http://192.0.2.10:8123
+    icon: sh-home-assistant
+    host: serveur
 
 profiles:
   admin:
@@ -46,6 +52,10 @@ profiles:
           - { type: service, service: photos }
           - { type: service, service: recettes }
           - { type: service, service: dns }
+      - title: Énergie
+        tab: Maison
+        cards:
+          - { type: energy, service: maison, solar_power: sensor.panneaux_puissance, grid_power: sensor.compteur_puissance, span: 2, rows: 2, refresh: 60 }
   famille:
     name: Famille
     color: rose
