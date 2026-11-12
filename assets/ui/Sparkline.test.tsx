@@ -23,6 +23,18 @@ describe('Sparkline', () => {
     expect(container.querySelector('polyline')?.getAttribute('points')).toBe('0,32 100,32')
   })
 
+  it('avec minSpan, échelle du minimum au maximum (températures)', () => {
+    const { container } = render(<Sparkline values={[16, 18, 17]} minSpan={1} label="température" className="" />)
+
+    expect(container.querySelector('polyline')?.getAttribute('points')).toBe('0,32 50,4 100,18')
+  })
+
+  it('avec minSpan, une courbe presque plate reste au milieu', () => {
+    const { container } = render(<Sparkline values={[17, 17]} minSpan={2} label="température" className="" />)
+
+    expect(container.querySelector('polyline')?.getAttribute('points')).toBe('0,18 100,18')
+  })
+
   it('marque la dernière valeur', () => {
     const { container } = render(<Sparkline values={[0, 50, 100]} label="débit" className="" />)
 

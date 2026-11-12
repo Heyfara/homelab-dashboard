@@ -5,8 +5,10 @@ const TOP = 4
 /**
  * Petite courbe d'évolution, base à zéro, dans la couleur du texte courant
  * (`className` : text-down, text-up…). Le dernier point est marqué.
+ * `minSpan` : échelle du minimum au maximum plutôt qu'à partir de zéro, sur un
+ * écart d'au moins `minSpan` (températures : 1 °C), centrée si la courbe est plate.
  */
-export function Sparkline({ values, label, className }: { values: number[]; label: string; className: string }) {
+export function Sparkline({ values, label, className, minSpan }: { values: number[]; label: string; className: string; minSpan?: number }) {
   if (values.length < 2) {
     // Pas encore assez de mesures : la ligne de base annonce la courbe à venir.
     return (
@@ -18,8 +20,15 @@ export function Sparkline({ values, label, className }: { values: number[]; labe
     )
   }
 
-  const max = Math.max(...values)
-  const y = (v: number) => (max === 0 ? H : H - (v / max) * (H - TOP))
+  let low = 0
+  let max = Math.max(...values)
+  if (minSpan !== undefined) {
+    const min = Math.min(...values)
+    const pad = Math.max(0, minSpan - (max - min)) / 2
+    low = min - pad
+    max = max + pad
+  }
+  const y = (v: number) => (max === low ? H : H - ((v - low) / (max - low)) * (H - TOP))
   const points = values.map((v, i) => `${round((i / (values.length - 1)) * W)},${round(y(v))}`)
   const last = y(values.at(-1)!)
 
