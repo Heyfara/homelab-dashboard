@@ -23,7 +23,7 @@ navigateur ─▶ Caddy (TLS, dashboard.example) ─▶ nginx partagé ─┬─
 | `Dashboard/Model/` | objets immuables : `Dashboard`, `Profile`, `Section`, `CardInstance`, `ServiceDefinition`, `Host`, `Settings` |
 | `Card/` | contrat d'un type de carte (`CardTypeInterface`, `#[AsCard]`), registre, `CardDataFetcher` (cache + capture d'erreurs), `CardResult` |
 | `Card/Type/` | un fichier par type de carte |
-| `Source/` | clients des sources : `Beszel/` (API du hub), `Container/` (état des containers), `Http/` (sonde), API des services ; `Credentials` (clés par variable d'environnement) |
+| `Source/` | clients des sources : `Beszel/` (API du hub), `Container/` (état des containers), `Http/` (sonde), `WebSocket/` (client WebSocket minimal, RFC 6455), `HomeAssistant/` (API WebSocket de HA en question-réponse, partagée par les cartes HA), API des services ; `Credentials` (clés par variable d'environnement) |
 | `Profile/` | « Ma config » : coffre chiffré par profil (`ProfileCredentials`), réglages non secrets (`ProfileSettings`, dont le lieu de la météo `WeatherLocation`), ordre des cartes (`ProfileLayout`), fichiers privés par profil (`ProfileFiles`), services dont on peut saisir sa clé (`CredentialKindInterface`), choix de la clé d'une carte (`CardCredentials`) |
 | `History/` | relevés quotidiens que les sources ne gardent pas (`DailyHistory` : taille des buckets B2) |
 | `Storage/` | fichiers JSON privés écrits sous verrou (`JsonFiles`), base de `ProfileFiles` et `DailyHistory` |

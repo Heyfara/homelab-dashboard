@@ -16,6 +16,7 @@ Variables d'environnement liées :
 | `GITHUB_TOKEN` | jeton GitHub en lecture seule (cartes `github-prs`) ; vide = dépôts publics seulement |
 | `B2_KEY_ID`, `B2_APPLICATION_KEY` | clé d'application Backblaze B2 en lecture seule (cartes `backblaze`) |
 | `MEALIE_API_TOKEN` | jeton d'API Mealie (cartes `mealie`) |
+| `HOME_ASSISTANT_TOKEN` | jeton longue durée d'un utilisateur Home Assistant dédié, **non administrateur** (cartes de Home Assistant, API WebSocket) |
 | `AUDIOBOOKSHELF_API_KEY` | clé d'API Audiobookshelf (cartes `audiobookshelf`) ; clé d'un admin pour suivre un autre utilisateur |
 | `CWA_USERNAME`, `CWA_PASSWORD` | compte Calibre-Web sans droits d'écriture (cartes `calibre-web`, flux OPDS) |
 | `IMMICH_API_KEY` | clé d'API Immich (cartes `immich`) : permissions `asset.read`, `asset.view`, `asset.statistics`, `memory.read` |
