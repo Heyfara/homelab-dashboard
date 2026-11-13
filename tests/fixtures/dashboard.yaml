@@ -69,10 +69,20 @@ services:
     url: https://recettes.example
     host: beta
 
+# Messages ntfy (cloche) : alice suit deux sujets, bob aucun.
+notifications:
+  url: http://ntfy.test
+  link: https://ntfy.example
+  topics:
+    urgent: Urgent
+    maison: Maison
+    travaux: ~
+
 profiles:
   alice:
     name: Alice
     color: indigo
+    notifications: [urgent, maison]
     sections:
       - title: Services
         cards:

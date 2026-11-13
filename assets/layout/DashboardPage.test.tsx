@@ -243,3 +243,30 @@ describe('DashboardPage : onglets', () => {
     expect(JSON.parse(String(put.init!.body))).toEqual({ order: ['a', 'b', 'm'] })
   })
 })
+
+describe('DashboardPage : cloche', () => {
+  it('n’apparaît que si le profil suit des sujets ntfy', async () => {
+    serve()
+    const { unmount } = render(<DashboardPage slug="alice" onChangeProfile={() => {}} />)
+    await screen.findByRole('button', { name: 'Réorganiser' })
+    expect(screen.queryByRole('button', { name: /^Notifications/ })).toBeNull()
+    unmount()
+
+    const calls: string[] = []
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        calls.push(url)
+        const body =
+          url === '/api/profiles/alice/notifications'
+            ? { topics: [], link: null, unread: 1, messages: [{ id: 'm1', time: '2026-11-13T17:50:00+01:00', topic: 'maison', title: 'Pile faible', message: 'Salon', priority: 3, tags: [], click: null, read: false }] }
+            : { ...dashboard(['a']), profile: { slug: 'alice', name: 'Alice', color: 'indigo', notifications: true } }
+        return new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } })
+      }),
+    )
+    render(<DashboardPage slug="alice" onChangeProfile={() => {}} />)
+
+    expect(await screen.findByRole('button', { name: 'Notifications : 1 non lue' })).toBeTruthy()
+    expect(calls).toContain('/api/profiles/alice/notifications')
+  })
+})

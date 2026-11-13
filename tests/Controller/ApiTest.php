@@ -43,7 +43,7 @@ final class ApiTest extends WebTestCase
     {
         $json = $this->getJson('/api/dashboards/alice');
 
-        self::assertSame(['slug' => 'alice', 'name' => 'Alice', 'color' => 'indigo'], $json['profile']);
+        self::assertSame(['slug' => 'alice', 'name' => 'Alice', 'color' => 'indigo', 'notifications' => true], $json['profile']);
         self::assertSame(['columns' => 3, 'refresh' => 20], $json['settings']);
         self::assertCount(2, $json['sections']);
         self::assertSame('Services', $json['sections'][0]['title']);

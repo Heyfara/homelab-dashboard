@@ -5,6 +5,7 @@ namespace App\Dashboard;
 use App\Dashboard\Model\CardInstance;
 use App\Dashboard\Model\Dashboard;
 use App\Dashboard\Model\Host;
+use App\Dashboard\Model\Notifications;
 use App\Dashboard\Model\Profile;
 use App\Dashboard\Model\Section;
 use App\Dashboard\Model\ServiceDefinition;
@@ -79,10 +80,20 @@ final class YamlDashboardLoader
                 }
                 $sections[] = new Section($s['title'], $s['columns'] ?? $settings->columns, $cards, $s['tab']);
             }
-            $profiles[$slug] = new Profile($slug, $p['name'], $p['color'], $sections);
+            $profiles[$slug] = new Profile($slug, $p['name'], $p['color'], $sections, array_values(array_unique(array_map('strval', $p['notifications']))));
         }
 
-        return new Dashboard($settings, $hosts, $services, $profiles);
+        $notifications = null;
+        if (isset($config['notifications'])) {
+            $n = $config['notifications'];
+            $topics = [];
+            foreach ($n['topics'] as $id => $topic) {
+                $topics[(string) $id] = $topic['name'] ?? (string) $id;
+            }
+            $notifications = new Notifications($n['url'], $n['link'], $topics);
+        }
+
+        return new Dashboard($settings, $hosts, $services, $profiles, $notifications);
     }
 
     /**

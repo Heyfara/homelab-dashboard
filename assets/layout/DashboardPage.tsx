@@ -6,6 +6,7 @@ import { useJson } from '../hooks/useJson'
 import { profileBadge } from '../ui/profileColors'
 import { CardSlot } from './CardSlot'
 import { ErrorMessage } from './ErrorMessage'
+import { NotificationBell, UrgentBanner, useNotifications } from './Notifications'
 import { moveBy, placeNextTo } from './reorder'
 import { SectionGrid } from './SectionGrid'
 import { TabBar, tabPath } from './TabBar'
@@ -51,6 +52,7 @@ export function DashboardPage({
   const [draft, setDraft] = useState<Draft | null>(null)
   const [busy, setBusy] = useState(false)
   const [saveError, setSaveError] = useState<Error | null>(null)
+  const notifications = useNotifications(slug, dashboard?.profile.notifications === true)
   const drag = useRef<Drag | null>(null)
   const [dragging, setDragging] = useState<string | null>(null)
 
@@ -201,6 +203,7 @@ export function DashboardPage({
           </div>
         ) : (
           <div className="flex items-center gap-1">
+            {dashboard?.profile.notifications && <NotificationBell notifications={notifications} />}
             {dashboard && (
               <button type="button" onClick={startEditing} className={button}>
                 Réorganiser
@@ -227,6 +230,7 @@ export function DashboardPage({
           <ErrorMessage error={error} />
         ))}
       {saveError && <ErrorMessage error={saveError} />}
+      {dashboard?.profile.notifications && <UrgentBanner notifications={notifications} />}
 
       {sections.map((section, sectionIndex) => inActiveTab(section) && (
         <section key={section.title} aria-labelledby={`section-${sectionIndex}`} className="flex flex-col gap-3">

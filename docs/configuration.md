@@ -25,6 +25,7 @@ Variables d'environnement liées :
 | `CRAFTY_API_TOKEN` | clé d'API Crafty Controller, sans accès complet (cartes `crafty`) |
 | `HEALTHCHECKS_API_KEY` | clé API (lecture-écriture) du projet Healthchecks (cartes `backups` et `doc-fetcher`) : la clé en lecture seule ne donne pas les rapports des pings. Le dashboard ne fait que lire |
 | `GW2_API_KEY` | clé d'API Guild Wars 2 du compte (cartes `gw2`) : droits `account`, `wallet`, `progression`, `tradingpost` |
+| `NTFY_TOKEN` | jeton ntfy d'un compte qui ne peut que lire (cloche, section `notifications`) |
 | `PROFILE_DATA_DIR` | dossier des données saisies par chaque profil : clés et réglages de « Ma config » (clés chiffrées) et ordre des cartes ; vide = `var/profiles`. En prod : un volume privé, sauvegardé |
 | `TLS_CA_FILE` | CA à approuver pour Beszel et les sondes HTTPS (CA mkcert), vide = CA du système |
 
@@ -85,10 +86,18 @@ services:           # catalogue partagé par tous les profils
     host: alpha                          # doit exister dans hosts
     container: immich_server             # nom du container (tel que Beszel le liste)
 
+notifications:      # facultatif : serveur ntfy, voir « Notifications (cloche) »
+  url: http://10.0.0.2:2586              # API ntfy, vue du serveur du dashboard
+  link: https://ntfy.example             # interface web de ntfy (facultatif)
+  topics:                                # sujet ntfy → nom affiché
+    urgent: Urgent
+    maison: Maison
+
 profiles:
   tom:                                # identifiant = URL /tom (minuscules, chiffres, tirets)
     name: Tom
     color: indigo                        # slate, indigo, sky, emerald, amber, rose, violet, teal
+    notifications: [urgent, maison]      # sujets suivis (cloche) ; absent = pas de cloche
     sections:
       - title: Services
         columns: 3                       # optionnel, sinon settings.columns
@@ -115,6 +124,30 @@ les sections sont dans le même onglet n'affiche pas de barre d'onglets.
 - Sur ordinateur, les onglets sont dans une barre latérale toujours visible (icônes seules en dessous de 1024 px de large ; au-delà, bouton en haut de la barre pour passer en icônes seules, retenu par l'appareil) ; sur téléphone, en barre fixe en bas.
 - « Réorganiser » déplace les cartes dans leur section, comme avant : changer une
   section d'onglet garde l'ordre choisi.
+
+### Notifications (cloche)
+
+Les applications et les scripts publient leurs événements dans
+[ntfy](https://ntfy.sh) ; le dashboard affiche ceux des sujets que suit le
+profil (`notifications: [<sujet>, …]`, sujets déclarés dans la section
+`notifications`).
+
+- **Cloche** dans l'en-tête, avec le nombre de messages non lus. Elle ouvre
+  l'historique (panneau à droite, plein écran sur téléphone), groupé par jour,
+  le plus récent d'abord : tout ce que ntfy garde (`cache-duration`, 14 jours
+  dans le homelab).
+- Toucher un message (ou son lien « Ouvrir ») le marque lu ; « Tout marquer
+  comme lu » vide le compteur. Le « lu » est propre à chaque profil, gardé par
+  le serveur (`<profil>.notifications.json` dans `PROFILE_DATA_DIR`).
+- **Priorité 5** (urgent) non lue : bandeau rouge en haut de la page, jusqu'à « Vu ».
+- Titre : celui du message, sinon le nom du sujet ; précédé de l'émoji de la
+  première étiquette ntfy connue (`rotating_light` 🚨, `warning` ⚠️,
+  `battery` 🔋, `wrench` 🔧, `red_circle` 🔴, `green_circle` 🟢…). Les autres
+  étiquettes servent de mots-clés et ne s'affichent pas.
+- Relu toutes les 30 s par la page ouverte, au plus toutes les 15 s auprès de
+  ntfy (cache partagé).
+- **Jeton** (`NTFY_TOKEN`) : celui d'un compte ntfy en lecture seule. Il reste
+  sur le serveur, jamais envoyé au navigateur.
 
 ## Icônes
 

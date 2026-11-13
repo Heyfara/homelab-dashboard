@@ -51,7 +51,7 @@ final readonly class ProfileLayout
             return $profile;
         }
 
-        return new Profile($profile->slug, $profile->name, $profile->color, array_map(static function (Section $section) use ($rank): Section {
+        return $profile->withSections(array_map(static function (Section $section) use ($rank): Section {
             $cards = $section->cards;
             $yaml = array_flip(array_map(static fn (CardInstance $c): string => $c->id, $cards));
             // Cartes classées d'abord, dans l'ordre choisi ; les autres ensuite, dans l'ordre du YAML.
