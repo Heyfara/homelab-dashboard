@@ -30,13 +30,13 @@ final class NtfyClientTest extends TestCase
         ]))."\n";
     }
 
-    private function client(?MockResponse $response = null, string $token = 'jeton-lecture'): NtfyClient
+    private function client(?MockResponse $response = null, string $token = 'jeton-lecture', ?string $caFile = null): NtfyClient
     {
         return new NtfyClient(new MockHttpClient(function (string $method, string $url, array $options) use ($response): MockResponse {
             $this->requests[] = [$url, $options];
 
             return $response ?? new MockResponse(self::stream());
-        }), $token);
+        }), $token, $caFile);
     }
 
     public function testReadsTheMessagesOfTheTopicsNewestFirst(): void
@@ -56,6 +56,15 @@ final class NtfyClientTest extends TestCase
         [$url, $options] = $this->requests[0];
         self::assertSame(self::URL.'/maison,urgent/json?poll=1&since=all', $url);
         self::assertContains('Authorization: Bearer jeton-lecture', $options['headers']);
+    }
+
+    public function testTrustsTheGivenCertificateAuthority(): void
+    {
+        $this->client(caFile: '/certs/ca.pem')->messages('https://ntfy.test', ['maison']);
+        $this->client(caFile: '')->messages('https://ntfy.test', ['maison']);
+
+        self::assertSame('/certs/ca.pem', $this->requests[0][1]['cafile']);
+        self::assertNull($this->requests[1][1]['cafile'] ?? null);
     }
 
     public function testNoTopicMeansNoRequest(): void

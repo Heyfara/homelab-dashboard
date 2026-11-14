@@ -19,6 +19,9 @@ final readonly class NtfyClient
         #[Autowire('%env(NTFY_TOKEN)%')]
         #[\SensitiveParameter]
         private string $token,
+        /** Autorité de certification à approuver (mkcert), sinon celles du système */
+        #[Autowire('%env(TLS_CA_FILE)%')]
+        private ?string $caFile = null,
     ) {
     }
 
@@ -38,7 +41,11 @@ final readonly class NtfyClient
 
         $url = \sprintf('%s/%s/json?poll=1&since=all', rtrim($baseUrl, '/'), implode(',', array_map('rawurlencode', $topics)));
         try {
-            $response = $this->httpClient->request('GET', $url, ['headers' => ['Authorization' => 'Bearer '.$this->token], 'timeout' => 5]);
+            $options = ['headers' => ['Authorization' => 'Bearer '.$this->token], 'timeout' => 5];
+            if (null !== $this->caFile && '' !== $this->caFile) {
+                $options['cafile'] = $this->caFile;
+            }
+            $response = $this->httpClient->request('GET', $url, $options);
             $status = $response->getStatusCode();
             if (401 === $status || 403 === $status) {
                 throw new SourceUnavailableException(\sprintf('Jeton ntfy refusé (%d), vérifier NTFY_TOKEN', $status));
