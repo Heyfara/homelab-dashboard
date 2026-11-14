@@ -134,6 +134,11 @@ export const LightbulbIcon = ({ className }: P) => (
     <path d="M15 14c.2-1 .7-1.7 1.5-2.5A6 6 0 1 0 7.5 11.5c.8.8 1.3 1.5 1.5 2.5z" />
   </Icon>
 )
+export const FlameIcon = ({ className }: P) => (
+  <Icon className={className}>
+    <path d="M12 22a7 7 0 0 0 7-7c0-3-2-5.5-3.5-7-.5 2-1.5 3-3 3.5C13 8 12 5 9.5 2 9.5 6 5 9 5 15a7 7 0 0 0 7 7z" />
+  </Icon>
+)
 export const SunIcon = ({ className }: P) => (
   <Icon className={className}>
     <circle cx="12" cy="12" r="4" />

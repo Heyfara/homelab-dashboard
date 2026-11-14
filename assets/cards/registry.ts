@@ -26,6 +26,7 @@ import { RommCard } from './RommCard'
 import { ServiceCard } from './ServiceCard'
 import { ServicesCard } from './ServicesCard'
 import { StorageCard } from './StorageCard'
+import { TemperaturesCard } from './TemperaturesCard'
 import { UltraccCard } from './UltraccCard'
 
 /**
@@ -63,6 +64,7 @@ export const cardRegistry: Record<string, CardComponent> = {
   'doc-fetcher': DocFetcherCard,
   dagu: DaguCard,
   energy: EnergyCard,
+  temperatures: TemperaturesCard,
   bricktracker: BrickTrackerCard,
   weather: WeatherCard,
   'music-assistant': MusicAssistantCard,

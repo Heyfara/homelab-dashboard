@@ -1026,4 +1026,32 @@ les courbes. Seuls les capteurs de puissance instantanée sont à donner ici.
   les tuiles.
 - Lien « Ouvrir » : `{url}/energy`.
 
+### `temperatures`
+
+Température de chaque pièce, lue dans Home Assistant : valeur du moment,
+humidité, courbe des 24 dernières heures (moyenne de chaque heure), et la
+consigne du chauffage s'il y a un thermostat (`climate.…`) dans la pièce,
+avec « chauffe » quand il chauffe. La sonde extérieure s'affiche à part, dans
+l'en-tête (« Extérieur »).
+
+Les capteurs sont trouvés **par pièce** dans les registres de Home Assistant
+(pièce de l'entité, sinon celle de son appareil) : rien à lister. Dans une
+pièce, un thermomètre passe avant la sonde intégrée à un thermostat ; les
+sondes de diagnostic (processeur…) sont ignorées. Une pièce sans sonde de
+température n'apparaît pas.
+
+| Option | Défaut | Rôle |
+|---|---|---|
+| `service` | obligatoire | service Home Assistant du catalogue, avec une `url` |
+| `areas` | `[]` | identifiants des pièces HA à montrer, dans cet ordre ; vide = toutes, dans l'ordre de HA |
+| `outdoor` | `null` | pièce HA de la sonde extérieure (ex. `jardin`), montrée dans l'en-tête |
+
+```yaml
+- { type: temperatures, service: homeassistant, outdoor: jardin, span: 2, rows: 2, refresh: 300 }
+```
+
+- Même jeton que `energy` (`HOME_ASSISTANT_TOKEN`, utilisateur non admin).
+- Identifiant d'une pièce : *Paramètres → Pièces et zones*, dans l'adresse
+  de la pièce (`/config/areas/area/<id>`).
+
 <!-- Ajouter ici chaque nouveau type de carte (voir docs/ajouter-une-carte.md). -->
