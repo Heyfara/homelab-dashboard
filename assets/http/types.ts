@@ -7,6 +7,8 @@ export type ProfileSummary = {
   slug: string
   name: string
   color: ProfileColor
+  /** Le profil suit des sujets ntfy (cloche) ; seulement dans DashboardView */
+  notifications?: boolean
 }
 
 /** Une carte telle que la décrit GET /api/dashboards/{profile}. P = props fixes du type. */
@@ -89,4 +91,30 @@ export type CredentialView = {
   /** Compte trouvé à la vérification : Zoe.1234 */
   account: string | null
   updatedAt: string | null
+}
+
+/** Un message ntfy, tel que le renvoie GET /api/profiles/{slug}/notifications. */
+export type NotificationView = {
+  id: string
+  /** ISO 8601, heure de Paris */
+  time: string
+  topic: string
+  title: string | null
+  message: string
+  /** 1 (min) à 5 (urgent) */
+  priority: number
+  /** Émojis ntfy (warning, battery…) et mots-clés */
+  tags: string[]
+  /** Adresse à ouvrir depuis le message */
+  click: string | null
+  read: boolean
+}
+
+/** GET /api/profiles/{slug}/notifications : messages des sujets suivis, le plus récent d'abord. */
+export type NotificationsView = {
+  topics: { id: string; name: string }[]
+  /** Interface web de ntfy */
+  link: string | null
+  unread: number
+  messages: NotificationView[]
 }

@@ -252,6 +252,47 @@ final class YamlDashboardLoaderTest extends TestCase
             YAML);
     }
 
+    public function testLoadsNotificationsAndTheTopicsOfEachProfile(): void
+    {
+        $dashboard = $this->load(<<<'YAML'
+            notifications:
+              url: http://ntfy.test:2586
+              link: https://ntfy.test
+              topics:
+                urgent: Urgent
+                maison: { name: Maison }
+            profiles:
+              alice: { name: Alice, notifications: [urgent, maison] }
+              bob: { name: Bob }
+            YAML);
+
+        self::assertNotNull($dashboard->notifications);
+        self::assertSame('http://ntfy.test:2586', $dashboard->notifications->url);
+        self::assertSame('https://ntfy.test', $dashboard->notifications->link);
+        self::assertSame(['urgent' => 'Urgent', 'maison' => 'Maison'], $dashboard->notifications->topics);
+        self::assertSame(['urgent', 'maison'], $dashboard->profiles['alice']->notifications);
+        self::assertSame([], $dashboard->profiles['bob']->notifications);
+    }
+
+    public function testTopicIdsKeepTheirDashes(): void
+    {
+        $dashboard = $this->load("notifications: { url: http://ntfy.test, topics: { maison-critique: Urgent } }\nprofiles: {}\n");
+
+        self::assertSame(['maison-critique' => 'Urgent'], $dashboard->notifications?->topics);
+    }
+
+    public function testNotificationsAreOptional(): void
+    {
+        self::assertNull($this->load("profiles: {}\n")->notifications);
+    }
+
+    public function testTopicNameDefaultsToItsId(): void
+    {
+        $dashboard = $this->load("notifications: { url: http://ntfy.test, topics: { homelab: ~ } }\nprofiles: {}\n");
+
+        self::assertSame(['homelab' => 'homelab'], $dashboard->notifications?->topics);
+    }
+
     public function testMissingFileIsReported(): void
     {
         $this->expectException(InvalidDashboardException::class);

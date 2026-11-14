@@ -23,7 +23,7 @@ final class DashboardController extends AbstractController
         $found = $layout->arrange($found);
 
         return $this->json([
-            'profile' => ['slug' => $found->slug, 'name' => $found->name, 'color' => $found->color],
+            'profile' => ['slug' => $found->slug, 'name' => $found->name, 'color' => $found->color, 'notifications' => [] !== $found->notifications],
             'customized' => $customized,
             'settings' => ['columns' => $dashboard->settings->columns, 'refresh' => $dashboard->settings->refresh],
             'tabs' => array_map(static fn (string $slug, string $title): array => ['slug' => $slug, 'title' => $title], array_keys($found->tabs()), $found->tabs()),

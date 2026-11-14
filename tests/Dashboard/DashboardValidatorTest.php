@@ -118,4 +118,24 @@ final class DashboardValidatorTest extends TestCase
 
         self::assertSame(['Identifiant de carte « meteo » utilisé plusieurs fois.'], $errors);
     }
+
+    public function testProfileTopicMustBeDeclared(): void
+    {
+        self::assertSame(
+            ['Profil alice : sujet de notifications inconnu « travaux » (sujets déclarés : urgent).'],
+            $this->validate(<<<'YAML'
+                notifications: { url: http://ntfy.test, topics: { urgent: Urgent } }
+                profiles:
+                  alice: { name: Alice, notifications: [urgent, travaux] }
+                YAML),
+        );
+    }
+
+    public function testProfileTopicsNeedTheNotificationsSection(): void
+    {
+        self::assertSame(
+            ['Profil alice : sujet de notifications inconnu « urgent » (sujets déclarés : aucun, section notifications absente).'],
+            $this->validate("profiles:\n  alice: { name: Alice, notifications: [urgent] }\n"),
+        );
+    }
 }

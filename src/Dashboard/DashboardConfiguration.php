@@ -52,6 +52,31 @@ final class DashboardConfiguration implements ConfigurationInterface
                         ->end()
                     ->end()
                 ->end()
+                ->arrayNode('notifications')
+                    ->info('serveur ntfy : messages des applications et des scripts (cloche)')
+                    ->children()
+                        ->scalarNode('url')->isRequired()->cannotBeEmpty()->info('API ntfy, vue du serveur du dashboard')->end()
+                        ->scalarNode('link')->defaultNull()->info('interface web de ntfy, pour le navigateur')->end()
+                        ->arrayNode('topics')
+                            ->info('sujet ntfy → nom affiché')
+                            ->useAttributeAsKey('id')
+                            ->normalizeKeys(false) // garder les tirets (maison-critique)
+                            ->validate()
+                                ->ifTrue(static fn (array $t): bool => [] !== self::invalidTopics(array_keys($t)))
+                                ->then(static fn (array $t) => throw new \InvalidArgumentException(\sprintf('Sujet ntfy invalide : « %s » (lettres, chiffres, - et _).', implode('», «', self::invalidTopics(array_keys($t))))))
+                            ->end()
+                            ->arrayPrototype()
+                                ->beforeNormalization()
+                                    ->ifTrue(static fn ($v): bool => null === $v || \is_string($v))
+                                    ->then(static fn (?string $v): array => ['name' => $v])
+                                ->end()
+                                ->children()
+                                    ->scalarNode('name')->defaultNull()->end()
+                                ->end()
+                            ->end()
+                        ->end()
+                    ->end()
+                ->end()
                 ->arrayNode('profiles')
                     ->useAttributeAsKey('slug')
                     ->validate()
@@ -62,6 +87,10 @@ final class DashboardConfiguration implements ConfigurationInterface
                         ->children()
                             ->scalarNode('name')->isRequired()->cannotBeEmpty()->end()
                             ->enumNode('color')->values(Profile::COLORS)->defaultValue('slate')->end()
+                            ->arrayNode('notifications')
+                                ->info('sujets ntfy suivis par le profil (cloche) ; vide = pas de cloche')
+                                ->scalarPrototype()->end()
+                            ->end()
                             ->arrayNode('sections')
                                 ->arrayPrototype()
                                     ->children()
@@ -108,6 +137,16 @@ final class DashboardConfiguration implements ConfigurationInterface
             ->end();
 
         return $tree;
+    }
+
+    /**
+     * @param list<int|string> $topics
+     *
+     * @return list<string>
+     */
+    private static function invalidTopics(array $topics): array
+    {
+        return array_values(array_filter(array_map('strval', $topics), static fn (string $t): bool => !preg_match('/^[-_A-Za-z0-9]{1,64}$/', $t)));
     }
 
     /**

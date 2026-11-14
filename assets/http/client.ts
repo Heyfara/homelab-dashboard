@@ -1,4 +1,4 @@
-import type { CardResult, CredentialView, DashboardView, PlaceView, ProfileConfigView, ProfileSummary, WeatherLocationView } from './types'
+import type { CardResult, CredentialView, DashboardView, NotificationsView, PlaceView, ProfileConfigView, ProfileSummary, WeatherLocationView } from './types'
 
 /** Erreur renvoyée par l'API ({ error, details? }) ou réponse inattendue. */
 export class ApiError extends Error {
@@ -69,3 +69,12 @@ export const saveLayout = (profile: string, order: string[]) =>
 
 /** Oublie l'ordre choisi : retour à celui du YAML. */
 export const resetLayout = (profile: string) => getJson<void>(layoutUrl(profile), undefined, { method: 'DELETE' })
+
+const notificationsUrl = (profile: string) => `/api/profiles/${encodeURIComponent(profile)}/notifications`
+
+/** Messages ntfy des sujets suivis par le profil, avec ce qu'il a lu. */
+export const fetchNotifications = (profile: string, signal?: AbortSignal) => getJson<NotificationsView>(notificationsUrl(profile), signal)
+
+/** Marque ces messages comme lus pour le profil. */
+export const markNotificationsRead = (profile: string, ids: string[]) =>
+  getJson<void>(`${notificationsUrl(profile)}/read`, undefined, sendJson('POST', { ids }))

@@ -8,6 +8,7 @@ use App\Tests\Source\Crafty\CraftyClientTest;
 use App\Tests\Source\Gw2\Gw2ClientTest;
 use App\Tests\Source\Healthchecks\HealthchecksClientTest;
 use App\Tests\Source\Jelu\JeluClientTest;
+use App\Tests\Source\Ntfy\NtfyClientTest;
 use App\Tests\Source\MusicAssistant\MusicAssistantClientTest;
 use App\Tests\Source\OpenMeteo\OpenMeteoClientTest;
 use App\Tests\Source\CalibreWeb\CalibreWebClientTest;
@@ -31,6 +32,10 @@ final class FakeHomelab
     public function __invoke(string $method, string $url, array $options = []): ResponseInterface
     {
         $path = parse_url($url, \PHP_URL_PATH);
+
+        if (str_starts_with($url, 'http://ntfy.test/')) {
+            return new MockResponse(NtfyClientTest::stream());
+        }
 
         if (str_starts_with($url, self::BESZEL)) {
             return match ($path) {

@@ -9,12 +9,14 @@ final readonly class Profile
 
     /**
      * @param list<Section> $sections
+     * @param list<string>  $notifications sujets ntfy suivis (cloche)
      */
     public function __construct(
         public string $slug,
         public string $name,
         public string $color,
         public array $sections,
+        public array $notifications = [],
     ) {
     }
 
@@ -32,6 +34,16 @@ final readonly class Profile
         }
 
         return $tabs;
+    }
+
+    /**
+     * Le même profil avec d'autres sections (ordre choisi, cartes complétées…).
+     *
+     * @param list<Section> $sections
+     */
+    public function withSections(array $sections): self
+    {
+        return new self($this->slug, $this->name, $this->color, $sections, $this->notifications);
     }
 
     /**

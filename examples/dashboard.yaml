@@ -42,10 +42,18 @@ services:
     icon: sh-home-assistant
     host: serveur
 
+notifications:
+  url: http://10.0.0.2:2586
+  link: https://ntfy.example
+  topics:
+    urgent: Urgent
+    maison: Maison
+
 profiles:
   admin:
     name: Admin
     color: indigo
+    notifications: [urgent, maison]
     sections:
       - title: Services
         cards:

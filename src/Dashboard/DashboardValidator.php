@@ -36,6 +36,18 @@ final readonly class DashboardValidator
             }
         }
 
+        $topics = array_keys($dashboard->notifications?->topics ?? []);
+        foreach ($dashboard->profiles as $profile) {
+            foreach (array_diff($profile->notifications, $topics) as $topic) {
+                $errors[] = \sprintf(
+                    'Profil %s : sujet de notifications inconnu « %s » (sujets déclarés : %s).',
+                    $profile->slug,
+                    $topic,
+                    null === $dashboard->notifications ? 'aucun, section notifications absente' : (implode(', ', $topics) ?: 'aucun'),
+                );
+            }
+        }
+
         $seen = [];
         foreach ($dashboard->profiles as $profile) {
             foreach ($profile->sections as $section) {
