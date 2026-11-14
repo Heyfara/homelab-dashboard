@@ -14,6 +14,7 @@ final readonly class Dashboard
         public array $hosts,
         public array $services,
         public array $profiles,
+        public ?Notifications $notifications = null,
     ) {
     }
 
@@ -56,9 +57,9 @@ final readonly class Dashboard
             foreach ($profile->sections as $section) {
                 $sections[] = $section->withCards(array_map($map, $section->cards));
             }
-            $profiles[$slug] = new Profile($profile->slug, $profile->name, $profile->color, $sections);
+            $profiles[$slug] = $profile->withSections($sections);
         }
 
-        return new self($this->settings, $this->hosts, $this->services, $profiles);
+        return new self($this->settings, $this->hosts, $this->services, $profiles, $this->notifications);
     }
 }

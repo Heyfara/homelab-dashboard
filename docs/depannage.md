@@ -28,6 +28,8 @@ Le texte en bas de la carte vient de l'une de deux sources :
 | « La réponse de /opds/new n'est pas un flux OPDS » | catalogue OPDS désactivé, ou page de connexion renvoyée | activer OPDS dans la configuration de Calibre-Web |
 | Quelques couvertures grises, puis présentes au rechargement | Calibre-Web a mis plus de 15 s à servir la couverture (« Idle timeout » en 502 sur `/api/cards/{id}/image`) | rien à faire : l'erreur n'est pas gardée en cache, la couverture arrive au prochain affichage |
 | « Clé API Healthchecks refusée (401/403) » | clé en lecture seule, ou clé révoquée | `HEALTHCHECKS_API_KEY` = clé API **complète** du projet (Settings → API Access) : la clé en lecture seule ne donne pas les rapports |
+| Cloche avec un point orange, « Jeton ntfy refusé (401/403) » | `NTFY_TOKEN` vide, faux ou révoqué, ou compte sans droit de lecture sur un des sujets | recréer le jeton du compte en lecture seule ; vérifier ses droits (`ro` sur les sujets du profil) |
+| Cloche : « ntfy injoignable » | serveur ntfy arrêté, ou `notifications.url` fausse | `curl <url>/v1/health` depuis le container du dashboard |
 | « Check « … » absent de Healthchecks » | slug faux (`check`), ou clé d'un autre projet | comparer avec le slug affiché dans Healthchecks |
 | « Aucun rapport de la sentinelle » / « Aucun passage enregistré » | le check n'a encore reçu aucun ping de fin avec rapport | attendre le prochain passage, ou relancer la tâche à la main |
 | « … n'est pas un statut de sentinelle » | rapport du dernier ping tronqué ou d'une autre tâche | ouvrir le dernier ping du check dans Healthchecks : il faut un JSON avec `generated_at` et `services` ; un rapport tronqué = `PING_BODY_LIMIT` trop bas |

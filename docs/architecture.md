@@ -23,8 +23,9 @@ navigateur ─▶ Caddy (TLS, dashboard.example) ─▶ nginx partagé ─┬─
 | `Dashboard/Model/` | objets immuables : `Dashboard`, `Profile`, `Section`, `CardInstance`, `ServiceDefinition`, `Host`, `Settings` |
 | `Card/` | contrat d'un type de carte (`CardTypeInterface`, `#[AsCard]`), registre, `CardDataFetcher` (cache + capture d'erreurs), `CardResult` |
 | `Card/Type/` | un fichier par type de carte |
-| `Source/` | clients des sources : `Beszel/` (API du hub), `Container/` (état des containers), `Http/` (sonde), `WebSocket/` (client WebSocket minimal, RFC 6455), `HomeAssistant/` (API WebSocket de HA en question-réponse, partagée par les cartes HA), API des services ; `Credentials` (clés par variable d'environnement) |
+| `Source/` | clients des sources : `Beszel/` (API du hub), `Container/` (état des containers), `Http/` (sonde), `WebSocket/` (client WebSocket minimal, RFC 6455), `HomeAssistant/` (API WebSocket de HA en question-réponse, partagée par les cartes HA), `Ntfy/` (messages gardés par ntfy, cloche), API des services ; `Credentials` (clés par variable d'environnement) |
 | `Profile/` | « Ma config » : coffre chiffré par profil (`ProfileCredentials`), réglages non secrets (`ProfileSettings`, dont le lieu de la météo `WeatherLocation`), ordre des cartes (`ProfileLayout`), fichiers privés par profil (`ProfileFiles`), services dont on peut saisir sa clé (`CredentialKindInterface`), choix de la clé d'une carte (`CardCredentials`) |
+| `Notifications/` | cloche : messages ntfy des sujets suivis par un profil, et ce qu'il a lu (`ProfileNotifications`) |
 | `History/` | relevés quotidiens que les sources ne gardent pas (`DailyHistory` : taille des buckets B2) |
 | `Storage/` | fichiers JSON privés écrits sous verrou (`JsonFiles`), base de `ProfileFiles` et `DailyHistory` |
 | `Controller/` | routes de lecture, « Ma config » et ordre des cartes (seules écritures), sans logique |
@@ -69,10 +70,11 @@ par chaque personne depuis son dashboard :
 - « Ma config » (`/<profil>/config`, ancienne adresse `/<profil>/cles`) : une
   section par carte du profil réglable par la personne — clés d'API
   (`credentials: profile`), lieu de la météo (`location: profile`) ;
-- l'ordre de ses cartes (bouton « Réorganiser »).
+- l'ordre de ses cartes (bouton « Réorganiser ») ;
+- les messages de la cloche qu'il a lus (`POST /api/profiles/{profil}/notifications/read`).
 
 `ProfileFiles` les range dans `PROFILE_DATA_DIR` (vide = `var/profiles`) :
-`<profil>.credentials.json`, `<profil>.settings.json` et `<profil>.layout.json`, hors de `public/`,
+`<profil>.credentials.json`, `<profil>.settings.json`, `<profil>.layout.json` et `<profil>.notifications.json` (identifiant du message → date de lecture, oublié après 15 jours), hors de `public/`,
 droits `0600` et dossier `0700`, écriture atomique sous verrou (`JsonFiles`).
 
 Seule autre écriture, faite par le serveur lui-même : les **relevés

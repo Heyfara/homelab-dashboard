@@ -184,3 +184,14 @@ export const Printer3dIcon = ({ className }: P) => (
     <path d="M9.5 18v-3h5v3" />
   </Icon>
 )
+export const BellIcon = ({ className }: P) => (
+  <Icon className={className}>
+    <path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15L6 16Z" />
+    <path d="M10 21h4" />
+  </Icon>
+)
+export const CloseIcon = ({ className }: P) => (
+  <Icon className={className}>
+    <path d="M6 6l12 12M18 6 6 18" />
+  </Icon>
+)
