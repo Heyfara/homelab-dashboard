@@ -7,10 +7,10 @@ use App\Profile\InvalidCredentialException;
 use App\Source\Gw2\Gw2Client;
 use App\Source\SourceUnavailableException;
 
-/** Clé d'API Guild Wars 2 d'une personne, pour la carte `gw2`. */
+/** Clé d'API Guild Wars 2 d'une personne, pour les cartes `gw2` et `gw2-bosses`. */
 final readonly class Gw2CredentialKind implements CredentialKindInterface
 {
-    /** Droits dont la carte gw2 a besoin */
+    /** Droits dont les cartes gw2 ont besoin (gw2-bosses : progression seulement) */
     private const PERMISSIONS = ['account', 'wallet', 'progression', 'tradingpost'];
 
     public function __construct(
@@ -24,9 +24,9 @@ final readonly class Gw2CredentialKind implements CredentialKindInterface
         return 'gw2';
     }
 
-    public function cardType(): string
+    public function cardTypes(): array
     {
-        return 'gw2';
+        return ['gw2', 'gw2-bosses'];
     }
 
     public function label(): string

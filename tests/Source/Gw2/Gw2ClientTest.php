@@ -40,6 +40,7 @@ final class Gw2ClientTest extends TestCase
             '/v2/account/dailycrafting' => 'account-dailycrafting',
             '/v2/dailycrafting' => 'dailycrafting',
             '/v2/files' => 'files',
+            '/v2/account/worldbosses' => 'account-worldbosses',
             default => throw new \LogicException('Requête non prévue : '.$path),
         };
 
@@ -102,6 +103,12 @@ final class Gw2ClientTest extends TestCase
         self::assertSame('https://render.example/gold.png', $this->client()->fileIcons(self::API, ['ui_coin_gold', 'map_waypoint'])['ui_coin_gold']);
         parse_str((string) parse_url($this->requests[0][0], \PHP_URL_QUERY), $query);
         self::assertSame('ui_coin_gold,map_waypoint', $query['ids'], 'seulement les icônes utiles');
+    }
+
+    public function testWorldBossesDoneToday(): void
+    {
+        self::assertSame(['admiral_taidha_covington', 'svanir_shaman_chief', 'tequatl_the_sunless', 'drakkar'], $this->client()->accountWorldBosses(self::API, 'cle'));
+        self::assertSame('https://gw2.test/v2/account/worldbosses', $this->requests[0][0]);
     }
 
     public function testRefusedKeyNamesTheMissingPermission(): void

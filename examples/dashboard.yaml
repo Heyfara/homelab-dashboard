@@ -65,6 +65,11 @@ profiles:
         cards:
           - { type: energy, service: maison, solar_power: sensor.panneaux_puissance, grid_power: sensor.compteur_puissance, span: 2, rows: 2, refresh: 60 }
           - { type: temperatures, service: maison, outdoor: jardin, span: 2, rows: 2, refresh: 300 }
+      - title: Jeux
+        tab: Jeux
+        cards:
+          # Horaire des boss du monde ; les coches viennent de la clé saisie dans « Ma config »
+          - { type: gw2-bosses, credentials: profile, count: 4, span: 2, refresh: 300 }
   famille:
     name: Famille
     color: rose

@@ -24,7 +24,7 @@ Variables d'environnement liées :
 | `JELU_API_TOKEN` | jeton d'API Jelu avec le scope `reading:read` (cartes `jelu`) |
 | `CRAFTY_API_TOKEN` | clé d'API Crafty Controller, sans accès complet (cartes `crafty`) |
 | `HEALTHCHECKS_API_KEY` | clé API (lecture-écriture) du projet Healthchecks (cartes `backups` et `doc-fetcher`) : la clé en lecture seule ne donne pas les rapports des pings. Le dashboard ne fait que lire |
-| `GW2_API_KEY` | clé d'API Guild Wars 2 du compte (cartes `gw2`) : droits `account`, `wallet`, `progression`, `tradingpost` |
+| `GW2_API_KEY` | clé d'API Guild Wars 2 du compte (cartes `gw2` et `gw2-bosses`) : droits `account`, `wallet`, `progression`, `tradingpost` |
 | `NTFY_TOKEN` | jeton ntfy d'un compte qui ne peut que lire (cloche, section `notifications`) |
 | `PROFILE_DATA_DIR` | dossier des données saisies par chaque profil : clés et réglages de « Ma config » (clés chiffrées) et ordre des cartes ; vide = `var/profiles`. En prod : un volume privé, sauvegardé |
 | `TLS_CA_FILE` | CA à approuver pour Beszel et les sondes HTTPS (CA mkcert), vide = CA du système |
@@ -51,7 +51,7 @@ Wars 2. L'option `credentials` dit quelle clé prendre :
 - Le nom n'accepte que lettres, chiffres et `_`, et il est toujours accolé au
   nom de base de la source : une carte ne peut pas lire une autre variable.
 - Chaque variante a son propre cache.
-- Cartes qui l'acceptent : `gw2`. Pour l'ajouter à une autre carte, voir
+- Cartes qui l'acceptent : `gw2`, `gw2-bosses` (même clé). Pour l'ajouter à une autre carte, voir
   `docs/ajouter-une-carte.md`.
 
 Vérifier un fichier avant de le déployer :
@@ -996,8 +996,40 @@ français quand la route le permet :
   seule par nature ; cocher au moins `account`, `wallet`, `progression` et
   `tradingpost`.
 - Environ 9 requêtes par rafraîchissement, loin de la limite de l'API.
-- Les horaires des boss du monde ne sont pas dans l'API (seulement ceux déjà
-  faits) : pas encore affichés.
+- Les boss du monde ont leur propre carte : `gw2-bosses`.
+
+### `gw2-bosses`
+
+Boss du monde de Guild Wars 2 (hors boss difficiles : Tequatl, Triple Trouble,
+Reine Karka) :
+- **en-tête** : titre en lien vers les [horaires des événements du
+  wiki](https://wiki.guildwars2.com/wiki/Event_timers), boss faits aujourd'hui
+  (`4/10`) et temps avant la réinitialisation (0 h UTC) ;
+- **prochain boss pas encore fait**, avec son compte à rebours (« dans 13 min »,
+  puis « en cours » pendant 15 min) et son heure ;
+- **passages suivants** dans l'ordre, ceux déjà faits grisés et cochés.
+
+| Option | Défaut | Rôle |
+|---|---|---|
+| `count` | `4` | passages listés sous le prochain boss (1 à 20) ; 4 tiennent sur une rangée en `span: 2` |
+| `credentials` | `null` | comme `gw2` : `profile` = clé de « Ma config » (la même que la carte `gw2`) |
+| `api` | `https://api.guildwars2.com` | adresse de l'API (tests) |
+
+```yaml
+- { type: gw2-bosses, credentials: profile, span: 2, refresh: 300 }
+```
+
+- **Horaire** : l'API ne le donne pas. Il est écrit dans
+  `src/Source/Gw2/WorldBossSchedule.php`, recopié du tableau « Full schedule »
+  de https://wiki.guildwars2.com/wiki/World_boss (un boss par quart d'heure,
+  chacun toutes les 2 ou 3 h, en UTC). Si ArenaNet le change, mettre ce
+  fichier et son test à jour d'après le wiki.
+- **Boss faits** : `/v2/account/worldbosses` (droit `progression`). Sans clé,
+  ou si l'API ne répond pas, l'horaire reste affiché sans les coches, et un ⚠
+  donne la raison au survol.
+- La carte reçoit les passages des 24 h suivantes et décompte seule chaque
+  seconde : `refresh` ne sert qu'à mettre à jour les boss faits (l'API a
+  elle-même quelques minutes de retard).
 
 ### `romm`
 

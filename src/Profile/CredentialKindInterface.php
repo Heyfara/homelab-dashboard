@@ -16,8 +16,12 @@ interface CredentialKindInterface
     /** Identifiant, aussi utilisé dans le fichier du profil : gw2 */
     public function id(): string;
 
-    /** Type de la carte qui utilise cette clé : la section n'apparaît que si le profil en a une, en credentials: profile */
-    public function cardType(): string;
+    /**
+     * Types des cartes qui utilisent cette clé : la section n'apparaît que si le profil en a une, en credentials: profile.
+     *
+     * @return list<string>
+     */
+    public function cardTypes(): array;
 
     /** Nom affiché : Guild Wars 2 */
     public function label(): string;
