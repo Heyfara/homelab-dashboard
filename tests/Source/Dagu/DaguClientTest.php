@@ -68,6 +68,12 @@ final class DaguClientTest extends TestCase
                 $run('succeeded', '2026-11-05T15:00:00.000+01:00', '2026-11-05T15:00:20.000+01:00', 'manual'),
             ]]),
             '/api/v1/dags/neuve/dag-runs' => new JsonMockResponse(['dagRuns' => []]),
+            // Tâche à paramètres lancée depuis le dashboard (carte urssaf)
+            '/api/v1/dags/declaration/dag-runs' => new JsonMockResponse(['dagRuns' => [
+                ['dagRunId' => 'run-2', 'params' => '{"MONTANT":"120","TEST":"false","VNC_PASSWORD":"ab12cd34"}'] + $run('running', '2026-11-16T18:00:00.000+01:00', '', 'manual'),
+                ['dagRunId' => 'run-1', 'params' => 'MONTANT="0" TEST="true" VNC_PASSWORD="00000000"'] + $run('failed', '2026-11-10T10:00:00.000+01:00', '2026-11-10T10:15:00.000+01:00', 'manual'),
+            ]]),
+            '/api/v1/dag-runs/declaration/run-2/steps/declaration/log' => new JsonMockResponse(['content' => "18:00:01 montant=120 €\nSTATUS connexion Connexion au compte…\n18:00:05 bruit\nSTATUS rempli Montant 120 € saisi.\n18:00:09 fin\n", 'lineCount' => 5]),
             default => throw new \LogicException(\sprintf('Requête Dagu non prévue : %s %s', $method, $url)),
         };
     }
@@ -102,6 +108,37 @@ final class DaguClientTest extends TestCase
         self::assertSame('https://taches.test/api/v1/dags?labels=dashboard&perPage=100', $this->requests[0][0]);
         self::assertContains('Authorization: Bearer cle-dagu', $this->requests[0][1]['headers']);
         self::assertSame('https://taches.test/api/v1/dags/nuit/dag-runs?limit=7', $this->requests[1][0]);
+    }
+
+    public function testLatestRunWithItsParams(): void
+    {
+        $run = $this->client()->latestRun(self::URL, 'declaration');
+
+        self::assertNotNull($run);
+        self::assertSame('run-2', $run->id);
+        self::assertSame('running', $run->state);
+        self::assertNull($run->finishedAt);
+        self::assertSame(['MONTANT' => '120', 'TEST' => 'false', 'VNC_PASSWORD' => 'ab12cd34'], $run->params);
+        self::assertSame('https://taches.test/api/v1/dags/declaration/dag-runs?limit=1', $this->requests[0][0]);
+    }
+
+    public function testParamsInKeyValueForm(): void
+    {
+        self::assertSame(['MONTANT' => '0', 'TEST' => 'true', 'VNC_PASSWORD' => '00000000', 'VIDE' => ''], DaguClient::params('MONTANT="0" TEST="true" VNC_PASSWORD="00000000" VIDE=""'));
+        self::assertSame([], DaguClient::params(''));
+    }
+
+    public function testNoRunYet(): void
+    {
+        self::assertNull($this->client()->latestRun(self::URL, 'neuve'));
+    }
+
+    public function testStepLogLastLines(): void
+    {
+        $log = $this->client()->stepLog(self::URL, 'declaration', 'run-2', 'declaration', 50);
+
+        self::assertStringContainsString('STATUS rempli Montant 120 € saisi.', $log);
+        self::assertSame('https://taches.test/api/v1/dag-runs/declaration/run-2/steps/declaration/log?tail=50', $this->requests[0][0]);
     }
 
     public function testNoTaskWithTheLabel(): void

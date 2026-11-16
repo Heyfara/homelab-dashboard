@@ -28,7 +28,7 @@ navigateur ─▶ Caddy (TLS, dashboard.example) ─▶ nginx partagé ─┬─
 | `Notifications/` | cloche : messages ntfy des sujets suivis par un profil, et ce qu'il a lu (`ProfileNotifications`) |
 | `History/` | relevés quotidiens que les sources ne gardent pas (`DailyHistory` : taille des buckets B2) |
 | `Storage/` | fichiers JSON privés écrits sous verrou (`JsonFiles`), base de `ProfileFiles` et `DailyHistory` |
-| `Controller/` | routes de lecture, « Ma config » et ordre des cartes (seules écritures), sans logique |
+| `Controller/` | routes de lecture, « Ma config », ordre des cartes et actions des cartes (seules écritures), sans logique |
 | `Command/` | `dashboard:lint`, `dashboard:card-types` |
 | `EventListener/` | toute erreur sous `/api` répond en JSON |
 
@@ -157,6 +157,27 @@ réseau HTTP/TCP/ping/DNS avec expiration du certificat (réglées dans l'UI de
 Beszel). Si ses limites gênent un jour, la piste notée est un petit collecteur
 maison par machine qui *pousse* une photo filtrée (`docker ps -a`) vers le
 dashboard : une nouvelle implémentation de `ContainerStatusSource`.
+
+## Actions des cartes
+
+Une carte peut déclencher une action (carte `urssaf` : lancer ou arrêter une
+tâche Dagu). Son type implémente `CardActionsInterface` (liste des actions,
+`runAction`), appelée par `POST /api/cards/{id}/actions/{action}`
+(`CardActionController`), corps JSON propre à l'action.
+
+- **Protection** : celle des autres écritures (`SameSiteWrites` : même site,
+  corps JSON), sans mot de passe. N'exposer que des actions qu'on accepte de
+  voir lancées par n'importe qui sur le réseau de la maison.
+- **Réponses** : 200 avec le résultat ; 409 avec la raison
+  (`CardActionRefusedException`, montrée telle quelle) ; 502 source injoignable ;
+  404 carte ou action inconnue.
+- **Nouvel état** : `CardDataFetcher::forget()` oublie les données en cache de la
+  carte, et le composant appelle `reload()` (fourni par `CardSlot`,
+  `useCardData`) pour les relire aussitôt.
+- **Dagu** : les lancements passent par `DaguRunner`, avec sa propre clé
+  (`DAGU_OPERATOR_API_KEY`, rôle operator) ; `DaguClient` garde la clé en
+  lecture seule. Une clé operator peut lancer n'importe quelle tâche : le
+  dashboard ne lance que celle nommée dans le YAML de la carte.
 
 ## Relais d'images
 

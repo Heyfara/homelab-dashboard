@@ -40,6 +40,24 @@ describe('useCardData', () => {
     expect(result.current.result).toEqual(ok(2))
   })
 
+  it('recharge tout de suite à la demande (après une action), puis reprend son rythme', async () => {
+    let n = 0
+    const fetcher = vi.fn(async () => ok(++n))
+    const { result } = renderHook(() => useCardData('c1', 30, fetcher))
+    await flush()
+
+    await act(() => vi.advanceTimersByTimeAsync(10_000))
+    act(() => result.current.reload())
+    await flush()
+    expect(fetcher).toHaveBeenCalledTimes(2)
+    expect(result.current.result).toEqual(ok(2))
+
+    await act(() => vi.advanceTimersByTimeAsync(29_000))
+    expect(fetcher).toHaveBeenCalledTimes(2)
+    await act(() => vi.advanceTimersByTimeAsync(1_000))
+    expect(fetcher).toHaveBeenCalledTimes(3)
+  })
+
   it('garde les dernières données quand une requête échoue', async () => {
     const fetcher = vi.fn<(id: string, signal: AbortSignal) => Promise<CardResult>>()
       .mockResolvedValueOnce(ok(1))

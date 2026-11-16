@@ -60,6 +60,18 @@ final class CardTypeRegistry
     }
 
     /**
+     * Actions que la carte accepte (voir CardActionsInterface).
+     *
+     * @return list<string>
+     */
+    public function actions(CardInstance $card): array
+    {
+        $type = $this->get($card->type);
+
+        return $type instanceof CardActionsInterface ? $type->actions($card) : [];
+    }
+
+    /**
      * Options de la carte après validation et valeurs par défaut de son type.
      *
      * @return array<string, mixed>

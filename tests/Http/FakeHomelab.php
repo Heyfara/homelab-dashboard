@@ -11,6 +11,7 @@ use App\Tests\Source\Jelu\JeluClientTest;
 use App\Tests\Source\Ntfy\NtfyClientTest;
 use App\Tests\Source\MusicAssistant\MusicAssistantClientTest;
 use App\Tests\Source\OpenMeteo\OpenMeteoClientTest;
+use App\Tests\Source\Dagu\DaguClientTest;
 use App\Tests\Source\CalibreWeb\CalibreWebClientTest;
 use App\Tests\Source\Immich\ImmichClientTest;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -145,6 +146,15 @@ final class FakeHomelab
 
         if ('http://10.0.0.11:8095/api' === $url) {
             return MusicAssistantClientTest::homelab(json_decode((string) ($options['body'] ?? '{}'), true));
+        }
+
+        // Dagu (carte urssaf) : lectures comme DaguClientTest, lancement et arrêt acceptés.
+        if (str_starts_with($url, 'http://10.0.0.14:8090/')) {
+            return match (true) {
+                'POST' === $method && '/api/v1/dags/declaration/start' === $path => new JsonMockResponse(['dagRunId' => 'run-3']),
+                'POST' === $method && str_ends_with((string) $path, '/stop') => new MockResponse('', ['http_code' => 200]),
+                default => DaguClientTest::homelab($method, $url),
+            };
         }
 
         if (str_starts_with($url, 'https://api.github.test/search/issues')) {

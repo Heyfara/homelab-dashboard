@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { fetchCard } from '../http/client'
 import { snapshots } from '../http/snapshots'
 import type { CardResult } from '../http/types'
@@ -10,6 +10,8 @@ export type CardDataState = {
   loading: boolean
   /** Échec de la dernière requête (réseau, API), distinct d'un CardResult en erreur. */
   error: string | null
+  /** Recharge tout de suite (après une action de la carte), puis reprend le rythme `refresh`. */
+  reload: () => void
 }
 
 type Fetcher = (id: string, signal: AbortSignal) => Promise<CardResult>
@@ -39,12 +41,14 @@ const TIMEOUT_MS = 20_000
  * rechargée seulement si son tour est passé. Annulée au démontage.
  */
 export function useCardData(id: string, refreshSeconds: number, fetcher: Fetcher = fetchCard, { active = true, snapshotKey = id }: Options = {}): CardDataState {
-  const [state, setState] = useState<CardDataState>(() => {
+  const [state, setState] = useState<Omit<CardDataState, 'reload'>>(() => {
     const kept = snapshots.card(snapshotKey)
     return { result: kept, loading: kept === null, error: null }
   })
   const activeRef = useRef(active)
   const wakeRef = useRef<() => void>(() => {})
+  const reloadRef = useRef<() => void>(() => {})
+  const reload = useCallback(() => reloadRef.current(), [])
 
   useEffect(() => {
     activeRef.current = active
@@ -59,6 +63,7 @@ export function useCardData(id: string, refreshSeconds: number, fetcher: Fetcher
     let nextAt = 0
     let failures = 0
     let staleRetries = 0
+    let reloadPending = false
 
     const paused = () => document.hidden || !activeRef.current
 
@@ -101,7 +106,12 @@ export function useCardData(id: string, refreshSeconds: number, fetcher: Fetcher
         controller.signal.removeEventListener('abort', abort)
         running = false
       }
-      if (!controller.signal.aborted) schedule(delay)
+      if (controller.signal.aborted) return
+      if (reloadPending) {
+        reloadPending = false
+        delay = 0
+      }
+      schedule(delay)
     }
 
     /** Reprise (onglet visible, carte à l'écran) ou pause : recharge si son tour est passé. */
@@ -119,6 +129,13 @@ export function useCardData(id: string, refreshSeconds: number, fetcher: Fetcher
     }
 
     wakeRef.current = wake
+    reloadRef.current = () => {
+      if (running) {
+        reloadPending = true   // relue dès la fin de la requête en cours
+        return
+      }
+      void load()
+    }
     document.addEventListener('visibilitychange', wake)
     window.addEventListener('online', onOnline)
     void load()
@@ -127,10 +144,11 @@ export function useCardData(id: string, refreshSeconds: number, fetcher: Fetcher
       controller.abort()
       clearTimeout(timer)
       wakeRef.current = () => {}
+      reloadRef.current = () => {}
       document.removeEventListener('visibilitychange', wake)
       window.removeEventListener('online', onOnline)
     }
   }, [id, refreshSeconds, fetcher, snapshotKey])
 
-  return state
+  return { ...state, reload }
 }

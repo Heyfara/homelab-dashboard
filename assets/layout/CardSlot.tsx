@@ -30,7 +30,7 @@ const oldAfterSeconds = (refresh: number) => Math.max(2 * refresh, 600)
 
 function LiveCard({ card, Component, fetcher }: { card: CardView; Component: CardComponent; fetcher: Fetcher }) {
   const [ref, inView] = useInView<HTMLElement>()
-  const { result, error } = useCardData(card.id, card.refresh, fetcher, { active: inView })
+  const { result, error, reload } = useCardData(card.id, card.refresh, fetcher, { active: inView })
   const [feeds, setFeeds] = useState<Record<string, CardResult | null>>({})
   const onFeed = useCallback((feed: string, value: CardResult | null) => setFeeds((f) => (f[feed] === value ? f : { ...f, [feed]: value })), [])
   const message = result?.status === 'error' ? result.error : error ? `Pas de réponse du serveur (${error})` : null
@@ -42,7 +42,7 @@ function LiveCard({ card, Component, fetcher }: { card: CardView; Component: Car
       {Object.entries(card.feeds ?? {}).map(([feed, refresh]) => (
         <FeedPoller key={feed} id={card.id} feed={feed} refresh={refresh} active={inView} fetcher={fetcher} onResult={onFeed} />
       ))}
-      <Component card={card} result={result} feeds={feeds} />
+      <Component card={card} result={result} feeds={feeds} reload={reload} />
     </CardFrame>
   )
 }

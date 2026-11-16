@@ -760,6 +760,52 @@ s'affichent ; côté Ansible, c'est le label `dashboard` de `dagu_jobs`.
   refresh: 60
 ```
 
+### `urssaf`
+
+Déclaration de chiffre d'affaires auto-entrepreneur sur le site de l'Urssaf,
+préparée par un navigateur sur le serveur et **validée par la personne**. Le
+bouton lance une tâche Dagu (rôle Ansible `urssaf-declaration`) qui ouvre
+Chrome, se connecte, ouvre « Déclarer et payer » et remplit le montant ; la
+carte affiche l'écran de ce navigateur (noVNC), où l'on vérifie puis clique
+soi-même sur « Valider ». Le dashboard ne valide jamais rien.
+
+- **Sans session** : prochaine échéance (`deadlines`), champ du montant
+  prérempli à 0 (euros entiers), bouton « Préparer la déclaration », résultat
+  de la dernière session. Une carte 2×2 suffit.
+- **Écran en grand** : le bouton ouvre une fenêtre par-dessus le dashboard
+  avec l'étape (préparation, à vérifier et valider, formulaire indisponible
+  hors période, déclaration envoyée), l'écran du navigateur et « Fermer la
+  session ». La croix ou Échap ne ferment que la fenêtre : la session
+  continue, et « Afficher l'écran » sur la carte la rouvre. La session se
+  ferme seule 2 min après l'envoi, ou au bout de 15 min.
+- **Lancement** : `POST /api/cards/{id}/actions/start` avec `{amount}`, qui
+  appelle Dagu avec la clé `DAGU_OPERATOR_API_KEY` (rôle operator) ; paramètres
+  de la tâche `MONTANT`, `TEST` et `VNC_PASSWORD` (tiré à chaque lancement).
+  Refusé si une session tourne déjà. Comme « Ma config », sans mot de passe :
+  n'importe qui sur le réseau de la maison peut lancer une session, mais
+  personne ne peut valider à la place de la personne devant l'écran.
+- **Étape en cours** : dernière ligne `STATUS <étape> <message>` du journal du
+  passage (clé `DAGU_API_KEY`, lecture seule). `refresh: 5` pour la suivre.
+
+| Option | Défaut | Rôle |
+|---|---|---|
+| `service` | obligatoire | service Dagu du catalogue (`check` sert d'adresse pour l'API s'il est donné) |
+| `screen` | obligatoire | adresse de l'écran noVNC de la session |
+| `task` | `urssaf-declaration` | tâche Dagu lancée par le bouton |
+| `test` | `false` | mode test : la tâche bloque l'envoi de la déclaration et le paiement |
+| `deadlines` | `[]` | calendrier : liste de `{period, opens, due}` (dates `AAAA-MM-JJ`), à recopier de la page « Calendrier des échéances » de l'Urssaf |
+
+```yaml
+- type: urssaf
+  service: dagu
+  screen: https://urssaf.example
+  deadlines:
+    - { period: 4e trimestre 2026, opens: 2027-01-01, due: 2027-01-31 }
+  refresh: 5
+  span: 2
+  rows: 2
+```
+
 ### `bricktracker`
 
 Collection Lego de BrickTracker : nombre de sets, de pièces et de minifigs,

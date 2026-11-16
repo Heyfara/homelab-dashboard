@@ -28,6 +28,7 @@ import { ServicesCard } from './ServicesCard'
 import { StorageCard } from './StorageCard'
 import { TemperaturesCard } from './TemperaturesCard'
 import { UltraccCard } from './UltraccCard'
+import { UrssafCard } from './UrssafCard'
 
 /**
  * Composant d'un type de carte. P = props fixes (describe() côté PHP),
@@ -38,6 +39,8 @@ export type CardComponent<P = any, D = any> = (props: {
   result: CardResult<D> | null
   /** Résultat de chaque flux de la carte (card.feeds), null avant sa 1re réponse */
   feeds?: Record<string, CardResult | null>
+  /** Recharge les données tout de suite (après une action de la carte) */
+  reload?: () => void
 }) => ReactNode
 
 /**
@@ -73,4 +76,5 @@ export const cardRegistry: Record<string, CardComponent> = {
   minecraft: MinecraftCard,
   gw2: Gw2Card,
   romm: RommCard,
+  urssaf: UrssafCard,
 }

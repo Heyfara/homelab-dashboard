@@ -43,11 +43,7 @@ final readonly class CardDataFetcher
      */
     public function fetch(CardInstance $card, Dashboard $dashboard, ?string $feed = null): CardResult
     {
-        // Les options font partie de la clé : une carte modifiée dans le YAML
-        // n'attend pas l'expiration de l'ancienne version.
-        // Les clés et réglages du profil aussi : ce qui est saisi dans « Ma config » sert tout de suite.
-        $revision = null === $card->profile ? '' : $this->profileCredentials?->revision($card->profile).'|'.$this->profileSettings?->revision($card->profile);
-        $key = 'card.'.hash('xxh128', $card->id.'|'.$feed.'|'.serialize($card->options).'|'.$revision);
+        $key = $this->key($card, $feed);
 
         try {
             $refresh = $card->refresh;
@@ -85,6 +81,29 @@ final readonly class CardDataFetcher
 
             return CardResult::error(\sprintf('Erreur interne : %s', $e->getMessage()));
         }
+    }
+
+    /**
+     * Oublie les données en cache de la carte (et de ses flux) : la lecture
+     * suivante attend la source. Après une action qui les change.
+     */
+    public function forget(CardInstance $card): void
+    {
+        $keys = [$this->key($card, null)];
+        foreach (array_keys($this->registry->feeds($card)) as $feed) {
+            $keys[] = $this->key($card, $feed);
+        }
+        $this->cache->deleteItems($keys);
+    }
+
+    private function key(CardInstance $card, ?string $feed): string
+    {
+        // Les options font partie de la clé : une carte modifiée dans le YAML
+        // n'attend pas l'expiration de l'ancienne version.
+        // Les clés et réglages du profil aussi : ce qui est saisi dans « Ma config » sert tout de suite.
+        $revision = null === $card->profile ? '' : $this->profileCredentials?->revision($card->profile).'|'.$this->profileSettings?->revision($card->profile);
+
+        return 'card.'.hash('xxh128', $card->id.'|'.$feed.'|'.serialize($card->options).'|'.$revision);
     }
 
     /**

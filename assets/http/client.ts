@@ -29,6 +29,13 @@ export const fetchProfiles = (signal?: AbortSignal) => getJson<ProfileSummary[]>
 export const fetchDashboard = (profile: string, signal?: AbortSignal) =>
   getJson<DashboardView>(`/api/dashboards/${encodeURIComponent(profile)}`, signal)
 
+/**
+ * Action d'une carte (lancer une tâche…) ; ApiError 409 avec la raison si elle
+ * est refusée, 502 si la source est injoignable.
+ */
+export const runCardAction = <T = Record<string, unknown>>(id: string, action: string, body: Record<string, unknown> = {}) =>
+  getJson<T>(`/api/cards/${encodeURIComponent(id)}/actions/${encodeURIComponent(action)}`, undefined, sendJson('POST', body))
+
 /** Données d'une carte ; `feed` pour un de ses flux (rythme propre, voir CardView.feeds). */
 export const fetchCard = (id: string, signal?: AbortSignal, feed?: string) =>
   getJson<CardResult>(`/api/cards/${encodeURIComponent(id)}${feed ? `?feed=${encodeURIComponent(feed)}` : ''}`, signal)

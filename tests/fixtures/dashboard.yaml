@@ -68,6 +68,10 @@ services:
     name: Recettes
     url: https://recettes.example
     host: beta
+  taches:
+    name: Tâches
+    url: https://taches.example
+    check: http://10.0.0.14:8090
 
 # Messages ntfy (cloche) : alice suit deux sujets, bob aucun.
 notifications:
@@ -132,3 +136,4 @@ profiles:
           - { type: gw2, api: https://gw2.test, span: 2, rows: 2 }
           - { type: gw2, id: gw2-profil, credentials: profile, api: https://gw2.test, span: 2, rows: 2 }
           - { type: weather, id: meteo-profil, place: Village fictif, latitude: 45.0, longitude: 5.0, location: profile, api: https://meteo.test, span: 2, rows: 2 }
+          - { type: urssaf, id: urssaf, service: taches, task: declaration, screen: https://ecran.example, refresh: 5, span: 4, rows: 6 }
