@@ -35,6 +35,13 @@ services:
     url: https://dns.example/admin
     icon: sh-pi-hole
     host: box
+  papiers:
+    name: Papiers
+    description: Documents scannés
+    url: https://papiers.example
+    check: http://192.0.2.10:8000
+    icon: sh-paperless-ngx
+    host: serveur
   maison:
     name: Maison connectée
     url: https://maison.example
@@ -60,6 +67,7 @@ profiles:
           - { type: service, service: photos }
           - { type: service, service: recettes }
           - { type: service, service: dns }
+          - { type: factures, service: papiers, span: 2, rows: 2, refresh: 3600 }
       - title: Énergie
         tab: Maison
         cards:

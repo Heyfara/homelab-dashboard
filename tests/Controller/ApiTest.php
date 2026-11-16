@@ -353,6 +353,20 @@ final class ApiTest extends WebTestCase
         self::assertSame(514400, $json['data']['delivery']['coins']);
     }
 
+    public function testFacturesCard(): void
+    {
+        $card = $this->getJson('/api/dashboards/bob')['sections'][0]['cards'][22];
+        self::assertSame('factures', $card['type']);
+        self::assertSame(['title' => 'Factures à payer', 'url' => 'https://papiers.example', 'soonDays' => 5], $card['props']);
+
+        $json = $this->getJson('/api/cards/'.$card['id']);
+
+        self::assertSame('ok', $json['status'], (string) $json['error']);
+        self::assertSame([42, 41, 43], array_column($json['data']['invoices'], 'id'));
+        self::assertSame('https://papiers.example/documents/42/details', $json['data']['invoices'][0]['url']);
+        self::assertEquals(286.49, $json['data']['total']);
+    }
+
     public function testUnknownCard(): void
     {
         $this->getJson('/api/cards/nope', 404);

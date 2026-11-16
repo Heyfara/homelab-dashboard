@@ -8,6 +8,7 @@ import { CalibreWebCard } from './CalibreWebCard'
 import { DaguCard } from './DaguCard'
 import { DocFetcherCard } from './DocFetcherCard'
 import { EnergyCard } from './EnergyCard'
+import { FacturesCard } from './FacturesCard'
 import { ImmichCard } from './ImmichCard'
 import { C411Card } from './C411Card'
 import { ContainersCard } from './ContainersCard'
@@ -63,6 +64,7 @@ export const cardRegistry: Record<string, CardComponent> = {
   'calibre-web': CalibreWebCard,
   backups: BackupsCard,
   'doc-fetcher': DocFetcherCard,
+  factures: FacturesCard,
   dagu: DaguCard,
   energy: EnergyCard,
   temperatures: TemperaturesCard,

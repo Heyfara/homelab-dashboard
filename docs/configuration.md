@@ -24,6 +24,7 @@ Variables d'environnement liées :
 | `JELU_API_TOKEN` | jeton d'API Jelu avec le scope `reading:read` (cartes `jelu`) |
 | `CRAFTY_API_TOKEN` | clé d'API Crafty Controller, sans accès complet (cartes `crafty`) |
 | `HEALTHCHECKS_API_KEY` | clé API (lecture-écriture) du projet Healthchecks (cartes `backups` et `doc-fetcher`) : la clé en lecture seule ne donne pas les rapports des pings. Le dashboard ne fait que lire |
+| `PAPERLESS_API_TOKEN` | jeton d'API Paperless-ngx d'un utilisateur en lecture seule (cartes `factures`) : droits « voir » sur les documents, types de document, correspondants et champs personnalisés, et accès aux factures elles-mêmes |
 | `GW2_API_KEY` | clé d'API Guild Wars 2 du compte (cartes `gw2` et `gw2-bosses`) : droits `account`, `wallet`, `progression`, `tradingpost` |
 | `NTFY_TOKEN` | jeton ntfy d'un compte qui ne peut que lire (cloche, section `notifications`) |
 | `PROFILE_DATA_DIR` | dossier des données saisies par chaque profil : clés et réglages de « Ma config » (clés chiffrées) et ordre des cartes ; vide = `var/profiles`. En prod : un volume privé, sauvegardé |
@@ -726,6 +727,45 @@ sans enveloppe ni `schedule`, est aussi accepté :
   }
 }
 ```
+
+### `factures`
+
+Factures pas encore payées, lues dans Paperless-ngx. Un job séparé remplit,
+sur les documents du type `document_type`, des champs personnalisés : le
+montant (monétaire), l'échéance et la date de paiement (dates). La carte ne
+fait que lire (GET) :
+
+- **En-tête** : nombre de factures en attente, total à payer (« + ? » si
+  certaines n'ont pas de montant ; dans la devise la plus courante, les autres
+  devises n'y entrent pas) et lien vers Paperless.
+- **Une ligne par facture**, par échéance croissante (sans échéance à la fin) :
+  titre et correspondant (lien vers le document), montant, échéance : « en
+  retard de 4 j » (rouge), « aujourd'hui », « demain », « dans 3 j » (ambre,
+  jusqu'à `soon_days`), puis la date. Montant ou échéance inconnus : « ? ».
+- Une facture est **en attente** tant que le champ `paid` n'est pas posé ou
+  n'a pas de date. Si ce champ n'existe pas dans Paperless, toutes les factures
+  du type sont listées. Un champ `amount` ou `due` absent donne « ? ».
+
+| Option | Défaut | Rôle |
+|---|---|---|
+| `service` | obligatoire | service Paperless du catalogue, avec une `url` (liens) ; `check` sert d'adresse pour l'API s'il est donné ; jeton dans `PAPERLESS_API_TOKEN` |
+| `document_type` | `Facture` | type de document des factures (nom, sans tenir compte de la casse) |
+| `fields` | voir ci-dessous | noms des champs personnalisés : `amount` (`Montant`), `due` (`Échéance`), `paid` (`Payée le`) ; ne donner que ceux qui changent |
+| `soon_days` | `7` | échéance proche (ambre) à ce nombre de jours ou moins |
+
+```yaml
+- type: factures
+  service: paperless
+  fields: { due: Date limite }   # facultatif
+  span: 2
+  rows: 2
+  refresh: 3600
+```
+
+Le jeton est celui d'un utilisateur Paperless en lecture seule : Paperless ne
+lui montre que les documents qu'il a le droit de voir (propriétaire ou
+permissions du document). Une liste vide alors que des factures attendent vient
+souvent de là.
 
 ### `dagu`
 

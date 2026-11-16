@@ -17,6 +17,9 @@ Le texte en bas de la carte vient de l'une de deux sources :
 | « API Ultra.cc introuvable (404) » | script Ultra-API pas installé, ou route en `total_stats` (doc d'Ultra.cc) | installer le script sur la seedbox ; la carte appelle `/ultra-api/total-stats` (tiret) |
 | « Clé API C411 refusée (401) » / « … pas le scope « Profil (lecture) » (403) » | clé fausse, ou créée sans le scope | créer une nouvelle clé en cochant *Profil (lecture)* |
 | « Limite de l'API C411 atteinte (429) » | plus de 30 requêtes/min sur la clé (Torznab compris) | rien à faire : les appels reprennent après une minute |
+| « Paperless refuse la requête (406) : … version … » | Paperless trop ancien pour la version 9 de l'API demandée (`Accept: application/json; version=9`) | mettre Paperless à jour |
+| « Paperless refuse la requête (400) : … custom_field_query … » | filtre « non payée » refusé (nom de champ, ou Paperless trop ancien pour `custom_field_query`) | vérifier `fields.paid` de la carte factures |
+| Carte `factures` vide alors que des factures attendent | l'utilisateur du jeton ne voit pas ces documents (permissions par document), ou `document_type` ne correspond pas | donner le droit de voir à l'utilisateur en lecture seule ; vérifier le nom du type |
 | « GitHub refuse la recherche : … cannot be searched … » | un des `repos` n'existe pas, ou le jeton n'y a pas accès (dépôt privé sans jeton) | vérifier l'orthographe ; donner au jeton l'accès à ce dépôt |
 | « Jeton GitHub refusé (401) » / « Limite de l'API GitHub atteinte » | jeton expiré ou révoqué ; trop de recherches | recréer le jeton ; attendre la reprise indiquée |
 | « Clé Backblaze refusée (401) » | clé fausse ou supprimée | recréer une clé *Read Only* dans Backblaze |
