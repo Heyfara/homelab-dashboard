@@ -78,13 +78,13 @@ describe('Gw2BossesCard', () => {
     expect(bar.closest('li')!.textContent).toContain('dans 14 min')
     expect(bar.getAttribute('aria-valuenow')).toBe('7')
     expect(bar.style.width).toBe('7%')
-    expect(bar.className).toContain('bg-amber-300')
+    expect(bar.className).toContain('bg-violet-300')
     expect(bar.className).not.toContain('mask-image')
 
     act(() => vi.advanceTimersByTime(10 * 60_000))
     const soon = screen.getByRole('progressbar')
     expect(soon.getAttribute('aria-valuenow')).toBe('73')
-    expect(soon.className).toContain('bg-orange-400')
+    expect(soon.className).toContain('bg-fuchsia-400')
   })
 
   it('pas de barre dans la liste quand le prochain passage est déjà à gauche', () => {

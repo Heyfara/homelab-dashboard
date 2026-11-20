@@ -88,7 +88,7 @@ export const Gw2BossesCard: CardComponent<Gw2BossesProps, Gw2BossesData> = ({ ca
                   <span className="w-9 shrink-0 text-zinc-500 tabular-nums dark:text-slate-400">{hour(s.startsAt)}</span>
                   <Portrait boss={boss} name={name} className="size-4 rounded text-[0.55rem]" />
                   <span className={`min-w-0 flex-1 truncate text-zinc-700 dark:text-slate-200 ${s.done ? 'line-through' : ''}`}>{name}</span>
-                  {approaching && <span className="shrink-0 text-[0.65rem] font-semibold text-amber-700 tabular-nums dark:text-amber-300">{countdown(s.startsAt, now)}</span>}
+                  {approaching && <span className="shrink-0 text-[0.65rem] font-semibold text-violet-700 tabular-nums dark:text-violet-300">{countdown(s.startsAt, now)}</span>}
                   {s.done && <span className="shrink-0 text-emerald-600 dark:text-emerald-400">✓</span>}
                 </li>
               )
@@ -124,7 +124,7 @@ function NextBoss({ slot, boss, now, waypointIcon }: { slot: BossSlot; boss: Bos
   )
 }
 
-/** Fond de la ligne du prochain passage : se remplit pendant les 15 min qui précèdent, orange vif les 5 dernières ; pleine de sa couleur, avec un dégradé plus soutenu sur le bout qui avance, qui reste net. */
+/** Fond de la ligne du prochain passage : se remplit pendant les 15 min qui précèdent, en violet puis fuchsia les 5 dernières ; pleine de sa couleur, avec un dégradé plus soutenu sur le bout qui avance, qui reste net. */
 function ApproachFill({ slot, name, now }: { slot: BossSlot; name: string; now: Date }) {
   const { phase, ratio } = approach(slot.startsAt, now)
   const percent = Math.round(ratio * 100)
@@ -136,10 +136,10 @@ function ApproachFill({ slot, name, now }: { slot: BossSlot; name: string; now: 
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={percent}
-      className={`absolute inset-y-0 left-0 -z-10 overflow-hidden rounded-md transition-[width] duration-1000 ease-linear ${phase === 'soon' ? 'bg-orange-400/40 dark:bg-orange-500/30' : 'bg-amber-300/40 dark:bg-amber-400/20'}`}
+      className={`absolute inset-y-0 left-0 -z-10 overflow-hidden rounded-md transition-[width] duration-1000 ease-linear ${phase === 'soon' ? 'bg-fuchsia-400/40 dark:bg-fuchsia-500/30' : 'bg-violet-300/40 dark:bg-violet-400/20'}`}
       style={{ width: `${percent}%` }}
     >
-      <span className={`absolute inset-y-0 right-0 w-6 max-w-full bg-gradient-to-r from-transparent ${phase === 'soon' ? 'to-orange-500/60 dark:to-orange-400/50' : 'to-amber-400/60 dark:to-amber-300/40'}`} />
+      <span className={`absolute inset-y-0 right-0 w-6 max-w-full bg-gradient-to-r from-transparent ${phase === 'soon' ? 'to-fuchsia-500/60 dark:to-fuchsia-400/50' : 'to-violet-400/60 dark:to-violet-300/40'}`} />
     </span>
   )
 }
