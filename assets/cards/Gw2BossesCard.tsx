@@ -44,6 +44,7 @@ export const Gw2BossesCard: CardComponent<Gw2BossesProps, Gw2BossesData> = ({ ca
   return (
     <div className="flex h-full flex-col gap-2">
       <header className="flex items-center gap-2">
+        {data?.waypointIcon && <img loading="lazy" src={data.waypointIcon} alt="" className="size-6 shrink-0" />}
         <h3 className="min-w-0 truncate font-semibold text-zinc-900 dark:text-slate-50">
           <ExternalLink href={card.props.link} title="Horaires des événements sur le wiki" className="hover:underline">
             {card.title ?? card.props.title}

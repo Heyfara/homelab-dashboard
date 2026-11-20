@@ -46,6 +46,7 @@ describe('Gw2BossesCard', () => {
     render(<Gw2BossesCard card={card} result={result(data)} />)
 
     expect(screen.getByRole('link', { name: 'Boss du monde' }).getAttribute('href')).toBe('https://wiki.guildwars2.com/wiki/Event_timers')
+    expect(screen.getByRole('heading').parentElement!.querySelector(':scope > img')?.getAttribute('src')).toBe('https://render.example/waypoint.png')
   })
 
   it('jauge du jour : une pastille par boss, pleine quand il est fait', () => {
