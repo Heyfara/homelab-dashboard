@@ -3,13 +3,13 @@ import { describe, expect, it } from 'vitest'
 import { GW2_LOGO, Gw2Logo } from './Gw2Logo'
 
 describe('Gw2Logo', () => {
-  it('le dragon du logo officiel (wiki), recadré, décoratif', () => {
+  it('l’icône du jeu (wiki), entière, en petit comme les icônes des autres cartes', () => {
     const { container } = render(<Gw2Logo />)
 
     const img = container.querySelector('img')!
     expect(img.getAttribute('src')).toBe(GW2_LOGO)
-    expect(GW2_LOGO).toMatch(/^https:\/\/wiki\.guildwars2\.com\/images\/.*Guild_Wars_2_logo\.svg\.png$/)
+    expect(GW2_LOGO).toBe('https://wiki.guildwars2.com/images/7/7d/GW2_icon_small.png')
     expect(img.getAttribute('alt')).toBe('')
-    expect(container.firstElementChild!.className).toContain('overflow-hidden')
+    expect(img.className).toContain('size-6')
   })
 })
