@@ -49,6 +49,25 @@ describe('RommCard', () => {
     expect(screen.getByRole('link', { name: 'GX4000 : 1 jeu' }).getAttribute('href')).toBe('https://jeux.example/platform/4')
   })
 
+  it('beaucoup de plateformes : les 4 plus fournies, puis « +N autres » vers RomM', () => {
+    const platforms = Array.from({ length: 7 }, (_, i) => ({ name: `Console ${i + 1}`, games: 70 - i * 10, link: `https://jeux.example/platform/${i + 1}` }))
+    render(<RommCard card={card} result={result({ ...data, platforms })} />)
+
+    const items = screen.getByRole('list', { name: 'Plateformes' }).querySelectorAll(':scope > li')
+    expect(items).toHaveLength(5)
+    expect(items[3]!.textContent).toContain('Console 4')
+    const more = screen.getByRole('link', { name: '3 autres plateformes : Console 5, Console 6, Console 7' })
+    expect(more.textContent).toBe('+3 autres')
+    expect(more.getAttribute('href')).toBe('https://jeux.example')
+    expect(more.getAttribute('title')).toBe('Console 5 (30 jeux)\nConsole 6 (20 jeux)\nConsole 7 (10 jeux)')
+  })
+
+  it('peu de plateformes : pas de « autres »', () => {
+    render(<RommCard card={card} result={result(data)} />)
+
+    expect(screen.queryByText(/autres?$/)).toBeNull()
+  })
+
   it('aucun jeu : le dit', () => {
     render(<RommCard card={card} result={result({ stats: { games: 0, platforms: 0, saves: 0 }, games: [], platforms: [] })} />)
 

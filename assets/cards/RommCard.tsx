@@ -16,6 +16,8 @@ export type RommData = {
 }
 
 const WEEK = 7 * 86400_000
+/** Plateformes en pastilles (les plus fournies, triées côté PHP) ; les autres tiennent dans « +N autres » */
+const TOP_PLATFORMS = 4
 
 const count = (n: number, one: string, many: string) => `${formatNumber(n)} ${n > 1 ? many : one}`
 
@@ -23,6 +25,10 @@ export const RommCard: CardComponent<RommProps, RommData> = ({ card, result }) =
   const { title, service, url, icon } = card.props
   const data = result?.status === 'ok' ? result.data : null
   const now = Date.now()
+  const platforms = data?.platforms ?? []
+  // une seule de trop : autant la montrer que d'écrire « +1 autre »
+  const shown = platforms.length > TOP_PLATFORMS + 1 ? platforms.slice(0, TOP_PLATFORMS) : platforms
+  const others = platforms.slice(shown.length)
 
   return (
     <div className="flex h-full flex-col gap-3">
@@ -69,9 +75,9 @@ export const RommCard: CardComponent<RommProps, RommData> = ({ card, result }) =
               />
             )}
           />
-          {data.platforms.length > 0 && (
+          {shown.length > 0 && (
             <ul aria-label="Plateformes" className="flex shrink-0 gap-1.5 overflow-hidden">
-              {data.platforms.map((p) => (
+              {shown.map((p) => (
                 <li key={p.link} className="min-w-0 shrink">
                   <ExternalLink
                     href={p.link}
@@ -84,6 +90,18 @@ export const RommCard: CardComponent<RommProps, RommData> = ({ card, result }) =
                   </ExternalLink>
                 </li>
               ))}
+              {others.length > 0 && (
+                <li className="shrink-0">
+                  <ExternalLink
+                    href={url}
+                    aria-label={`${others.length} autres plateformes : ${others.map((p) => p.name).join(', ')}`}
+                    title={others.map((p) => `${p.name} (${count(p.games, 'jeu', 'jeux')})`).join('\n')}
+                    className="flex items-center rounded-full px-2 py-0.5 text-xs text-zinc-500 ring-1 ring-zinc-200 hover:bg-zinc-100 hover:text-zinc-800 focus-visible:outline-2 focus-visible:outline-indigo-500 dark:text-slate-400 dark:ring-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                  >
+                    +{others.length} autres
+                  </ExternalLink>
+                </li>
+              )}
             </ul>
           )}
         </>
