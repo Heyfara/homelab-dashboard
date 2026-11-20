@@ -70,19 +70,26 @@ describe('Gw2BossesCard', () => {
     expect(next.querySelector('img')?.getAttribute('src')).toBe('https://wiki.example/svanir.jpg')
   })
 
-  it('barre d’approche : se remplit avant le boss, verte pendant le combat', () => {
+  it('la ligne du prochain passage se remplit avant son heure, avec le temps restant', () => {
+    vi.setSystemTime(new Date('2026-11-16T20:16:00Z'))
     render(<Gw2BossesCard card={card} result={result(data)} />)
 
-    const bar = screen.getByRole('progressbar', { name: 'Approche du boss' })
-    expect(bar.getAttribute('aria-valuenow')).toBe('47')
-    expect((bar.firstElementChild as HTMLElement).style.width).toBe('47%')
+    const bar = screen.getByRole('progressbar', { name: 'Mégadestructeur : dans 14 min' })
+    expect(bar.closest('li')!.textContent).toContain('dans 14 min')
+    expect(bar.getAttribute('aria-valuenow')).toBe('7')
+    expect(bar.style.width).toBe('7%')
+    expect(bar.className).toContain('bg-amber-300')
 
-    act(() => vi.advanceTimersByTime(5 * 60_000))
-    expect((screen.getByRole('progressbar').firstElementChild as HTMLElement).className).toContain('bg-orange-500')
+    act(() => vi.advanceTimersByTime(10 * 60_000))
+    const soon = screen.getByRole('progressbar')
+    expect(soon.getAttribute('aria-valuenow')).toBe('73')
+    expect(soon.className).toContain('bg-orange-400')
+  })
 
-    act(() => vi.advanceTimersByTime(5 * 60_000))
-    const fighting = screen.getByRole('progressbar', { name: 'Combat en cours' })
-    expect((fighting.firstElementChild as HTMLElement).className).toContain('bg-emerald-500')
+  it('pas de barre dans la liste quand le prochain passage est déjà à gauche', () => {
+    render(<Gw2BossesCard card={card} result={result(data)} />)
+
+    expect(screen.queryByRole('progressbar')).toBeNull()
   })
 
   it('copie le point de passage pour le chat du jeu', async () => {

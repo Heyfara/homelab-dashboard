@@ -1009,10 +1009,10 @@ Reine Karka) :
 - **prochain boss pas encore fait** : portrait, zone, compte à rebours
   (« dans 13 min », puis « en cours » pendant 15 min) et heure ; le bouton à l'icône du point de passage
   (icône officielle `map_waypoint`) copie le code de son point de passage, à coller dans le chat du jeu ;
-  dessous, une fine barre se remplit pendant les 15 min qui précèdent (orange
-  vif les 5 dernières), puis passe au vert et se vide pendant le combat ;
 - **passages suivants** dans l'ordre, avec une mini-vignette, ceux déjà faits
-  grisés et cochés.
+  grisés et cochés ; la ligne du prochain passage pas encore commencé se
+  remplit pendant les 15 min qui précèdent (orange vif les 5 dernières), avec
+  le temps restant à droite (sauf si ce passage est déjà le bloc de gauche).
 
 | Option | Défaut | Rôle |
 |---|---|---|
