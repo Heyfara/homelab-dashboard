@@ -70,6 +70,21 @@ describe('Gw2BossesCard', () => {
     expect(next.querySelector('img')?.getAttribute('src')).toBe('https://wiki.example/svanir.jpg')
   })
 
+  it('barre d’approche : se remplit avant le boss, verte pendant le combat', () => {
+    render(<Gw2BossesCard card={card} result={result(data)} />)
+
+    const bar = screen.getByRole('progressbar', { name: 'Approche du boss' })
+    expect(bar.getAttribute('aria-valuenow')).toBe('47')
+    expect((bar.firstElementChild as HTMLElement).style.width).toBe('47%')
+
+    act(() => vi.advanceTimersByTime(5 * 60_000))
+    expect((screen.getByRole('progressbar').firstElementChild as HTMLElement).className).toContain('bg-orange-500')
+
+    act(() => vi.advanceTimersByTime(5 * 60_000))
+    const fighting = screen.getByRole('progressbar', { name: 'Combat en cours' })
+    expect((fighting.firstElementChild as HTMLElement).className).toContain('bg-emerald-500')
+  })
+
   it('copie le point de passage pour le chat du jeu', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined)
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })

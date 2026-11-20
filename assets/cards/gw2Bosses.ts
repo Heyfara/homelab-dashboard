@@ -32,3 +32,22 @@ export function countdown(startsAt: string, now: Date): string {
 
   return `dans ${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, '0')}`
 }
+
+/** La jauge commence à se remplir 15 min avant le boss (un boss par quart d'heure) */
+const APPROACH_MS = 15 * 60_000
+/** Les dernières minutes, en couleur plus vive */
+const SOON_MS = 5 * 60_000
+
+/**
+ * Barre d'approche du prochain boss : `waiting` puis `soon` (5 dernières
+ * minutes), la jauge se remplit de 0 à 1 pendant les 15 min qui précèdent ;
+ * `active` pendant le combat, elle se vide de 1 à 0.
+ */
+export function approach(startsAt: string, now: Date): { phase: 'waiting' | 'soon' | 'active'; ratio: number } {
+  const ms = new Date(startsAt).getTime() - now.getTime()
+  if (ms <= 0) return { phase: 'active', ratio: round(Math.max(0, 1 + ms / ACTIVE_MS)) }
+
+  return { phase: ms <= SOON_MS ? 'soon' : 'waiting', ratio: round(Math.max(0, 1 - ms / APPROACH_MS)) }
+}
+
+const round = (n: number) => Math.round(n * 1000) / 1000

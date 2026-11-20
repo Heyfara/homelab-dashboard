@@ -3,7 +3,7 @@ import type { CardComponent } from './registry'
 import { ExternalLink } from '../ui/ExternalLink'
 import { formatRelative } from '../ui/format'
 import { Gw2Logo } from '../ui/Gw2Logo'
-import { bossesView, countdown, type BossInfo, type BossSlot } from './gw2Bosses'
+import { approach, bossesView, countdown, type BossInfo, type BossSlot } from './gw2Bosses'
 
 /** Props de Gw2BossesCard::describe() côté PHP. */
 export type Gw2BossesProps = { title: string; link: string; count: number }
@@ -113,8 +113,30 @@ function NextBoss({ slot, boss, now, waypointIcon }: { slot: BossSlot; boss: Bos
           <span className="flex-1" />
           <CopyWaypoint code={boss.waypoint} icon={waypointIcon} />
         </p>
+        <ApproachBar startsAt={slot.startsAt} now={now} />
       </div>
     </>
+  )
+}
+
+const BAR_COLOR = { waiting: 'bg-amber-400', soon: 'bg-orange-500', active: 'bg-emerald-500' } as const
+
+/** Fine jauge sous le compte à rebours : se remplit avant le boss, se vide pendant le combat. */
+function ApproachBar({ startsAt, now }: { startsAt: string; now: Date }) {
+  const { phase, ratio } = approach(startsAt, now)
+  const percent = Math.round(ratio * 100)
+
+  return (
+    <div
+      role="progressbar"
+      aria-label={phase === 'active' ? 'Combat en cours' : 'Approche du boss'}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={percent}
+      className="mt-1 h-1 overflow-hidden rounded-full bg-zinc-900/10 dark:bg-slate-700"
+    >
+      <div className={`h-full rounded-full transition-[width] duration-1000 ease-linear ${BAR_COLOR[phase]}`} style={{ width: `${percent}%` }} />
+    </div>
   )
 }
 

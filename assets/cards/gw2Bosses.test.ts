@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bossesView, countdown, type BossSlot } from './gw2Bosses'
+import { approach, bossesView, countdown, type BossSlot } from './gw2Bosses'
 
 const slot = (id: string, startsAt: string, done = false): BossSlot => ({ id, startsAt, done })
 const slots: BossSlot[] = [
@@ -51,5 +51,27 @@ describe('countdown', () => {
     expect(countdown(start, at('2026-11-16T20:29:15Z'))).toBe('dans 45 s')
     expect(countdown(start, at('2026-11-16T20:17:30Z'))).toBe('dans 13 min')
     expect(countdown(start, at('2026-11-16T19:25:00Z'))).toBe('dans 1 h 05')
+  })
+})
+
+describe('approach', () => {
+  const start = '2026-11-16T20:30:00Z'
+
+  it('plus de 15 min avant : jauge vide', () => {
+    expect(approach(start, at('2026-11-16T20:00:00Z'))).toEqual({ phase: 'waiting', ratio: 0 })
+  })
+
+  it('se remplit pendant les 15 min qui précèdent', () => {
+    expect(approach(start, at('2026-11-16T20:15:00Z'))).toEqual({ phase: 'waiting', ratio: 0 })
+    expect(approach(start, at('2026-11-16T20:21:00Z'))).toEqual({ phase: 'waiting', ratio: 0.4 })
+  })
+
+  it('les 5 dernières minutes : imminent', () => {
+    expect(approach(start, at('2026-11-16T20:27:00Z'))).toEqual({ phase: 'soon', ratio: 0.8 })
+  })
+
+  it('en cours : se vide pendant les 15 min du combat', () => {
+    expect(approach(start, at('2026-11-16T20:30:00Z'))).toEqual({ phase: 'active', ratio: 1 })
+    expect(approach(start, at('2026-11-16T20:36:00Z'))).toEqual({ phase: 'active', ratio: 0.6 })
   })
 })
