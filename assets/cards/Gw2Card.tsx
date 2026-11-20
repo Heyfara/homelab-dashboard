@@ -17,7 +17,7 @@ export type Gw2Data = {
 
 const COIN = 1
 
-/** Icône du titre : carte explorée à 100 % (wiki GW2). Le dessin n'occupe que ~148 px sur 192 (lueur autour) : agrandi à 130 % pour paraître à 40 px comme les icônes des autres cartes (ServiceIcon). */
+/** Icône du titre : carte explorée à 100 % (wiki GW2). Le dessin n'occupe que ~148 px sur 192 (lueur autour) : agrandi à 110 %. */
 export const GW2_ACCOUNT_ICON = 'https://wiki.guildwars2.com/images/0/01/Map_Explored_100%25.png'
 
 /** Pièces de cuivre → or, argent, cuivre (1 or = 100 argent = 10 000 cuivre). */
@@ -31,7 +31,7 @@ export const Gw2Card: CardComponent<{ title: string }, Gw2Data> = ({ card, resul
   return (
     <div className="flex h-full flex-col gap-2.5">
       <header className="flex items-center gap-2">
-        <img loading="lazy" src={GW2_ACCOUNT_ICON} alt="" className="size-10 shrink-0 scale-130" />
+        <img loading="lazy" src={GW2_ACCOUNT_ICON} alt="" className="size-10 shrink-0 scale-110" />
         <h3 className="min-w-0 truncate font-semibold text-zinc-900 dark:text-slate-50">{card.title ?? card.props.title}</h3>
         {data && (
           <span className="min-w-0 truncate text-xs text-zinc-500 dark:text-slate-400">
