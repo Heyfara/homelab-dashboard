@@ -154,9 +154,9 @@ function CopyWaypoint({ code, icon }: { code: string; icon: string | null }) {
       onClick={copy}
       aria-label={`Copier le point de passage ${code}`}
       title={`Copier le point de passage ${code}, à coller dans le chat du jeu`}
-      className="flex h-9 shrink-0 items-center rounded-md bg-white/70 px-1 text-[0.7rem] font-semibold text-zinc-700 ring-1 ring-amber-300 hover:bg-white dark:bg-slate-700 dark:text-slate-100 dark:ring-slate-600 dark:hover:bg-slate-600"
+      className="flex h-8 min-w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-white/70 text-[0.7rem] font-semibold text-zinc-700 ring-1 ring-amber-300 hover:bg-white dark:bg-slate-700 dark:text-slate-100 dark:ring-slate-600 dark:hover:bg-slate-600"
     >
-      {copied ? '✓ Copié' : icon ? <img src={icon} alt="" className="size-8" /> : 'PP'}
+      {copied ? <span className="px-1">✓ Copié</span> : icon ? <img src={icon} alt="" className="size-8" /> : <span className="px-1">PP</span>}
     </button>
   )
 }
