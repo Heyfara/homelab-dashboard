@@ -7,7 +7,6 @@ type VaultPeriod = { done: number; total: number; claimed: boolean; acclaim: num
 /** Données de Gw2Card::fetch() côté PHP. Icônes publiques de render.guildwars2.com. */
 export type Gw2Data = {
   account: { name: string; fractalLevel: number; wvwRank: number }
-  icon: string | null
   coinIcons: { gold: string | null; silver: string | null; copper: string | null }
   /** Monnaies dans l'ordre de l'option `currencies` ; id 1 = l'or, en pièces de cuivre */
   wallet: { id: number; name: string; icon: string; value: number }[]
@@ -17,6 +16,9 @@ export type Gw2Data = {
 }
 
 const COIN = 1
+
+/** Icône du titre : carte explorée à 100 % (wiki GW2). Le dessin n'occupe que ~148 px sur 192 (lueur autour) : posé dans une pastille ronde blanche de 40 px, comme les icônes des autres cartes, et agrandi à 115 % dedans. */
+export const GW2_ACCOUNT_ICON = 'https://wiki.guildwars2.com/images/0/01/Map_Explored_100%25.png'
 
 /** Pièces de cuivre → or, argent, cuivre (1 or = 100 argent = 10 000 cuivre). */
 export function coins(copper: number): { gold: number; silver: number; copper: number } {
@@ -29,7 +31,9 @@ export const Gw2Card: CardComponent<{ title: string }, Gw2Data> = ({ card, resul
   return (
     <div className="flex h-full flex-col gap-2.5">
       <header className="flex items-center gap-2">
-        {data?.icon && <img loading="lazy" src={data.icon} alt="" className="size-7 shrink-0" />}
+        <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-white ring-1 ring-zinc-200 dark:ring-slate-700">
+          <img loading="lazy" src={GW2_ACCOUNT_ICON} alt="" className="size-10 scale-115" />
+        </span>
         <h3 className="min-w-0 truncate font-semibold text-zinc-900 dark:text-slate-50">{card.title ?? card.props.title}</h3>
         {data && (
           <span className="min-w-0 truncate text-xs text-zinc-500 dark:text-slate-400">

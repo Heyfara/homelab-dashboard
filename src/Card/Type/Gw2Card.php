@@ -57,7 +57,7 @@ final readonly class Gw2Card implements CardTypeInterface
         $key = $this->credentials->resolve($card, 'GW2_API_KEY', 'gw2');
         $now = new \DateTimeImmutable($this->now ?? 'now', new \DateTimeZone('UTC'));
         $account = $this->gw2->account($api, $key);
-        $icons = $this->gw2->fileIcons($api, ['map_waypoint', 'ui_coin_gold', 'ui_coin_silver', 'ui_coin_copper']);
+        $icons = $this->gw2->fileIcons($api, ['ui_coin_gold', 'ui_coin_silver', 'ui_coin_copper']);
         $delivery = $this->gw2->delivery($api, $key);
         [$crafted, $craftable] = $this->gw2->dailyCrafting($api, $key);
 
@@ -81,7 +81,6 @@ final readonly class Gw2Card implements CardTypeInterface
 
         return [
             'account' => ['name' => (string) $account['name'], 'fractalLevel' => (int) ($account['fractal_level'] ?? 0), 'wvwRank' => (int) ($account['wvw']['rank'] ?? $account['wvw_rank'] ?? 0)],
-            'icon' => $icons['map_waypoint'] ?? null,
             'coinIcons' => ['gold' => $icons['ui_coin_gold'] ?? null, 'silver' => $icons['ui_coin_silver'] ?? null, 'copper' => $icons['ui_coin_copper'] ?? null],
             'wallet' => $this->gw2->wallet($api, $card->options['currencies'], $key),
             'delivery' => ['coins' => $delivery['coins'], 'items' => \count($delivery['items'])],

@@ -108,7 +108,7 @@ nombreuses séries ou des requêtes.
 - `GET /api/profiles/{profil}/config` (`ProfileConfigController`) liste les
   sections du profil : les services de `CredentialKinds::usedBy()` (ceux dont
   une carte du profil est en `credentials: profile`, d'après
-  `CredentialKindInterface::cardType()`) et le lieu de la météo s'il a une
+  `CredentialKindInterface::cardTypes()`) et le lieu de la météo s'il a une
   carte en `location: profile`. Écritures : `PUT`/`DELETE
   …/credentials/{service}` et `…/config/weather`.
 - **Réglages non secrets** (`ProfileSettings`, `<profil>.settings.json`) : en

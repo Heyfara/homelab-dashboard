@@ -95,6 +95,17 @@ final readonly class Gw2Client
     }
 
     /**
+     * Boss du monde dont le compte a eu le coffre depuis la réinitialisation
+     * (0 h UTC) : identifiants de /v2/worldbosses. Droit `progression`.
+     *
+     * @return list<string>
+     */
+    public function accountWorldBosses(string $api, #[\SensitiveParameter] string $key): array
+    {
+        return array_values(array_map('strval', $this->get($api, '/v2/account/worldbosses', $key)));
+    }
+
+    /**
      * Icônes de l'interface du jeu (pièces, point de passage…), par identifiant.
      *
      * @param list<string> $ids identifiants de /v2/files : ui_coin_gold…

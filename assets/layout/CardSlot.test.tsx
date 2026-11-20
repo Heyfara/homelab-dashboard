@@ -33,6 +33,28 @@ describe('CardSlot', () => {
     expect(fetcher).toHaveBeenCalledWith('c1', expect.any(AbortSignal), 'live')
   })
 
+  it('une carte qui plante (données d’une ancienne version) ne fait pas tomber la page, et se rétablit à la réponse suivante', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const Picky: CardComponent<{ text: string }, { items: string[] }> = ({ result }) => <p>{result?.status === 'ok' ? result.data.items.join(',') : '…'}</p>
+    snapshots.saveCard('c-old', { ...okResult, data: { n: 3 } })
+    let answer: (r: CardResult) => void = () => {}
+    const fetcher = vi.fn(() => new Promise<CardResult>((resolve) => (answer = resolve)))
+    render(
+      <>
+        <CardSlot card={{ ...card, id: 'c-old', type: 'picky' }} registry={{ picky: Picky as CardComponent }} fetcher={fetcher} />
+        <p>reste de la page</p>
+      </>,
+    )
+
+    screen.getByText('reste de la page')
+    const message = screen.getByText(/Affichage impossible/)
+    expect(message.textContent).toContain('vider le stockage local')
+
+    answer({ ...okResult, data: { items: ['a', 'b'] }, fetchedAt: new Date().toISOString() })
+    await screen.findByText('a,b')
+    vi.restoreAllMocks()
+  })
+
   it('signale un type sans composant', () => {
     render(<CardSlot card={{ ...card, type: 'meteo' }} registry={registry} fetcher={vi.fn()} />)
 

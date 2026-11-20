@@ -95,6 +95,17 @@ fichier du front servi sous `/api/…` (un dossier `assets/api/`) part donc vers
 l'API, qui répond en JSON. Ne pas nommer de dossier `assets/api` ;
 `assets/viteProxy.test.ts` le vérifie.
 
+## Carte « Affichage impossible : les données gardées par le navigateur… »
+
+Le navigateur garde la dernière réponse de chaque carte (`localStorage`,
+`assets/http/snapshots.ts`) et l'affiche à l'ouverture. Si une mise à jour a
+changé le format des données de la carte, l'ancienne copie peut la faire
+planter. `CardErrorBoundary` limite la panne à la carte, qui se rétablit à la
+réponse suivante du serveur. Si le message reste : vider le stockage local
+du site (outils de développement → Stockage → Stockage local, ou
+`localStorage.clear()` dans la console), puis recharger. Avant cette
+protection, toute la page restait blanche.
+
 ## Un container qui tourne apparaît « Arrêté »
 
 Beszel ne le connaît pas sous ce nom : comparer `container:` avec le nom listé

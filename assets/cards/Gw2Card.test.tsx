@@ -1,14 +1,13 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { CardResult, CardView } from '../http/types'
-import { coins, Gw2Card, type Gw2Data } from './Gw2Card'
+import { coins, Gw2Card, GW2_ACCOUNT_ICON, type Gw2Data } from './Gw2Card'
 
 const card: CardView<{ title: string }> = { id: 'g', type: 'gw2', title: null, span: 2, rows: 2, refresh: 300, props: { title: 'Guild Wars 2' } }
 const inHours = (h: number) => new Date(Date.now() + h * 3600_000).toISOString()
 
 const data: Gw2Data = {
   account: { name: 'Joueur.1234', fractalLevel: 42, wvwRank: 321 },
-  icon: 'https://render.example/waypoint.png',
   coinIcons: { gold: 'https://render.example/gold.png', silver: 'https://render.example/silver.png', copper: 'https://render.example/copper.png' },
   wallet: [
     { id: 1, name: 'Pièce', icon: 'https://render.example/coin.png', value: 1234567 },
@@ -38,6 +37,12 @@ describe('Gw2Card', () => {
     render(<GwCard />)
 
     const head = screen.getByRole('heading').parentElement!
+    expect(head.querySelector('img')?.getAttribute('src')).toBe(GW2_ACCOUNT_ICON)
+    const badge = head.querySelector('img')!.parentElement!
+    expect(badge.className).toContain('size-10')
+    expect(badge.className).toContain('rounded-full')
+    expect(badge.className).toContain('bg-white')
+    expect(GW2_ACCOUNT_ICON).toBe('https://wiki.guildwars2.com/images/0/01/Map_Explored_100%25.png')
     expect(text(head)).toContain('Joueur.1234')
     expect(text(head)).toContain('Fractales 42 · McM 321')
     expect(text(screen.getByTitle(/au comptoir/))).toBe('51 or à récupérer')

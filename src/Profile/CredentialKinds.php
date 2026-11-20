@@ -51,7 +51,7 @@ final readonly class CredentialKinds
             }
         }
 
-        return array_filter($this->kinds, static fn (CredentialKindInterface $k): bool => isset($types[$k->cardType()]));
+        return array_filter($this->kinds, static fn (CredentialKindInterface $k): bool => [] !== array_intersect_key($types, array_flip($k->cardTypes())));
     }
 
     public function get(string $id): ?CredentialKindInterface

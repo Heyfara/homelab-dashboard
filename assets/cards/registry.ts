@@ -18,6 +18,7 @@ import { MealieCard } from './MealieCard'
 import { QbittorrentCard } from './QbittorrentCard'
 import { CraftyCard } from './CraftyCard'
 import { Gw2Card } from './Gw2Card'
+import { Gw2BossesCard } from './Gw2BossesCard'
 import { JeluCard } from './JeluCard'
 import { MinecraftCard } from './MinecraftCard'
 import { MusicAssistantCard } from './MusicAssistantCard'
@@ -72,5 +73,6 @@ export const cardRegistry: Record<string, CardComponent> = {
   crafty: CraftyCard,
   minecraft: MinecraftCard,
   gw2: Gw2Card,
+  'gw2-bosses': Gw2BossesCard,
   romm: RommCard,
 }
