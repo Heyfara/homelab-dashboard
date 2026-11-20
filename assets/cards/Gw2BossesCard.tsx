@@ -76,14 +76,14 @@ export const Gw2BossesCard: CardComponent<Gw2BossesProps, Gw2BossesData> = ({ ca
             {next && data.bosses[next.id] ? <NextBoss slot={next} boss={data.bosses[next.id]!} now={now} waypointIcon={data.waypointIcon} /> : <p className="px-1 text-sm text-emerald-700 dark:text-emerald-400">Tous les boss sont faits.</p>}
           </div>
 
-          <ul aria-label="Passages suivants" className="flex min-h-0 min-w-0 flex-col justify-center gap-1 overflow-hidden">
+          <ul aria-label="Passages suivants" className="flex min-h-0 min-w-0 flex-col justify-center gap-0.5 overflow-hidden px-2">
             {list.map((s) => {
               const boss = data.bosses[s.id]
               const name = boss?.name ?? s.id
               const approaching = s === nextStart
 
               return (
-                <li key={`${s.id}-${s.startsAt}`} aria-label={s.done ? `${name}, fait` : name} title={boss ? `${name} · ${boss.zone}` : name} className={`relative isolate -mx-1 flex shrink-0 items-center gap-2 overflow-hidden rounded px-1 text-xs ${approaching ? 'bg-zinc-100 dark:bg-slate-800' : ''} ${s.done ? 'opacity-50' : ''}`}>
+                <li key={`${s.id}-${s.startsAt}`} aria-label={s.done ? `${name}, fait` : name} title={boss ? `${name} · ${boss.zone}` : name} className={`relative isolate -mx-2 flex shrink-0 items-center gap-2 overflow-hidden rounded-md px-2 py-0.5 text-xs ${approaching ? 'bg-zinc-100 dark:bg-slate-800' : ''} ${s.done ? 'opacity-50' : ''}`}>
                   {approaching && <ApproachFill slot={s} name={name} now={now} />}
                   <span className="w-9 shrink-0 text-zinc-500 tabular-nums dark:text-slate-400">{hour(s.startsAt)}</span>
                   <Portrait boss={boss} name={name} className="size-4 rounded text-[0.55rem]" />
@@ -124,7 +124,7 @@ function NextBoss({ slot, boss, now, waypointIcon }: { slot: BossSlot; boss: Bos
   )
 }
 
-/** Fond de la ligne du prochain passage : se remplit pendant les 15 min qui précèdent, orange vif les 5 dernières. */
+/** Fond de la ligne du prochain passage : se remplit pendant les 15 min qui précèdent, orange vif les 5 dernières ; le bout s'estompe au lieu de s'arrêter net. */
 function ApproachFill({ slot, name, now }: { slot: BossSlot; name: string; now: Date }) {
   const { phase, ratio } = approach(slot.startsAt, now)
   const percent = Math.round(ratio * 100)
@@ -136,7 +136,7 @@ function ApproachFill({ slot, name, now }: { slot: BossSlot; name: string; now: 
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={percent}
-      className={`absolute inset-y-0 left-0 -z-10 rounded transition-[width] duration-1000 ease-linear ${phase === 'soon' ? 'bg-orange-400/50 dark:bg-orange-500/40' : 'bg-amber-300/40 dark:bg-amber-400/20'}`}
+      className={`absolute inset-y-0 left-0 -z-10 rounded-l-md transition-[width] [mask-image:linear-gradient(to_right,black_calc(100%_-_16px),transparent)] duration-1000 ease-linear ${phase === 'soon' ? 'bg-orange-400/50 dark:bg-orange-500/40' : 'bg-amber-300/40 dark:bg-amber-400/20'}`}
       style={{ width: `${percent}%` }}
     />
   )
