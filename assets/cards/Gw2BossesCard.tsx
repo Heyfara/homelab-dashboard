@@ -124,7 +124,7 @@ function NextBoss({ slot, boss, now, waypointIcon }: { slot: BossSlot; boss: Bos
   )
 }
 
-/** Fond de la ligne du prochain passage : se remplit pendant les 15 min qui précèdent, orange vif les 5 dernières ; dégradé de sa propre couleur, plus dense vers le bout, qui reste net. */
+/** Fond de la ligne du prochain passage : se remplit pendant les 15 min qui précèdent, orange vif les 5 dernières ; pleine de sa couleur, avec un dégradé plus soutenu sur le bout qui avance, qui reste net. */
 function ApproachFill({ slot, name, now }: { slot: BossSlot; name: string; now: Date }) {
   const { phase, ratio } = approach(slot.startsAt, now)
   const percent = Math.round(ratio * 100)
@@ -136,9 +136,11 @@ function ApproachFill({ slot, name, now }: { slot: BossSlot; name: string; now: 
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={percent}
-      className={`absolute inset-y-0 left-0 -z-10 rounded-md bg-gradient-to-r transition-[width] duration-1000 ease-linear ${phase === 'soon' ? 'from-orange-400/15 to-orange-400/70 dark:from-orange-500/10 dark:to-orange-500/50' : 'from-amber-300/15 to-amber-300/70 dark:from-amber-400/5 dark:to-amber-400/35'}`}
+      className={`absolute inset-y-0 left-0 -z-10 overflow-hidden rounded-md transition-[width] duration-1000 ease-linear ${phase === 'soon' ? 'bg-orange-400/40 dark:bg-orange-500/30' : 'bg-amber-300/40 dark:bg-amber-400/20'}`}
       style={{ width: `${percent}%` }}
-    />
+    >
+      <span className={`absolute inset-y-0 right-0 w-6 max-w-full bg-gradient-to-r from-transparent ${phase === 'soon' ? 'to-orange-500/60 dark:to-orange-400/50' : 'to-amber-400/60 dark:to-amber-300/40'}`} />
+    </span>
   )
 }
 
