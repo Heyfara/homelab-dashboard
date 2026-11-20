@@ -38,8 +38,10 @@ describe('Gw2Card', () => {
 
     const head = screen.getByRole('heading').parentElement!
     expect(head.querySelector('img')?.getAttribute('src')).toBe(GW2_ACCOUNT_ICON)
-    expect(head.querySelector('img')?.getAttribute('class')).toContain('size-10')
-    expect(head.querySelector('img')?.getAttribute('class')).toContain('scale-110')
+    const badge = head.querySelector('img')!.parentElement!
+    expect(badge.className).toContain('size-10')
+    expect(badge.className).toContain('rounded-full')
+    expect(badge.className).toContain('bg-white')
     expect(GW2_ACCOUNT_ICON).toBe('https://wiki.guildwars2.com/images/0/01/Map_Explored_100%25.png')
     expect(text(head)).toContain('Joueur.1234')
     expect(text(head)).toContain('Fractales 42 · McM 321')
