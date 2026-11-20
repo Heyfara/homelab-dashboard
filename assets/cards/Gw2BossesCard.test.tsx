@@ -77,7 +77,7 @@ describe('Gw2BossesCard', () => {
 
     const icon = screen.getByRole('button', { name: /point de passage/ }).querySelector('img')
     expect(icon?.getAttribute('src')).toBe('https://render.example/waypoint.png')
-    expect(icon?.getAttribute('class')).toContain('size-6')
+    expect(icon?.getAttribute('class')).toContain('size-8')
 
     await act(async () => fireEvent.click(screen.getByRole('button', { name: /point de passage/ })))
 
