@@ -124,7 +124,7 @@ function NextBoss({ slot, boss, now, waypointIcon }: { slot: BossSlot; boss: Bos
   )
 }
 
-/** Fond de la ligne du prochain passage : se remplit pendant les 15 min qui précèdent, orange vif les 5 dernières ; le bout s'estompe au lieu de s'arrêter net. */
+/** Fond de la ligne du prochain passage : se remplit pendant les 15 min qui précèdent, orange vif les 5 dernières ; dégradé de sa propre couleur, plus dense vers le bout, qui reste net. */
 function ApproachFill({ slot, name, now }: { slot: BossSlot; name: string; now: Date }) {
   const { phase, ratio } = approach(slot.startsAt, now)
   const percent = Math.round(ratio * 100)
@@ -136,7 +136,7 @@ function ApproachFill({ slot, name, now }: { slot: BossSlot; name: string; now: 
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={percent}
-      className={`absolute inset-y-0 left-0 -z-10 rounded-l-md transition-[width] [mask-image:linear-gradient(to_right,black_calc(100%_-_16px),transparent)] duration-1000 ease-linear ${phase === 'soon' ? 'bg-orange-400/50 dark:bg-orange-500/40' : 'bg-amber-300/40 dark:bg-amber-400/20'}`}
+      className={`absolute inset-y-0 left-0 -z-10 rounded-md bg-gradient-to-r transition-[width] duration-1000 ease-linear ${phase === 'soon' ? 'from-orange-400/15 to-orange-400/70 dark:from-orange-500/10 dark:to-orange-500/50' : 'from-amber-300/15 to-amber-300/70 dark:from-amber-400/5 dark:to-amber-400/35'}`}
       style={{ width: `${percent}%` }}
     />
   )
