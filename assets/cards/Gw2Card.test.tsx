@@ -38,6 +38,7 @@ describe('Gw2Card', () => {
 
     const head = screen.getByRole('heading').parentElement!
     expect(head.querySelector('img')?.getAttribute('src')).toBe(GW2_ACCOUNT_ICON)
+    expect(head.querySelector('img')?.getAttribute('class')).toContain('scale-130')
     expect(GW2_ACCOUNT_ICON).toBe('https://wiki.guildwars2.com/images/0/01/Map_Explored_100%25.png')
     expect(text(head)).toContain('Joueur.1234')
     expect(text(head)).toContain('Fractales 42 · McM 321')
