@@ -17,6 +17,8 @@ export type Gw2BossesData = {
   resetAt: string
   /** Pourquoi les boss faits sont inconnus */
   doneError: string | null
+  /** Icône officielle du point de passage (render.guildwars2.com) */
+  waypointIcon: string | null
 }
 
 const time = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' })
@@ -66,7 +68,7 @@ export const Gw2BossesCard: CardComponent<Gw2BossesProps, Gw2BossesData> = ({ ca
       ) : (
         <div className="grid min-h-0 flex-1 grid-cols-2 gap-3">
           <div role="group" aria-label="Prochain boss" className="flex min-w-0 items-center gap-3 rounded-xl bg-gradient-to-br from-amber-50 to-orange-100 p-2 dark:from-slate-800 dark:to-slate-800/40">
-            {next && data.bosses[next.id] ? <NextBoss slot={next} boss={data.bosses[next.id]!} now={now} /> : <p className="px-1 text-sm text-emerald-700 dark:text-emerald-400">Tous les boss sont faits.</p>}
+            {next && data.bosses[next.id] ? <NextBoss slot={next} boss={data.bosses[next.id]!} now={now} waypointIcon={data.waypointIcon} /> : <p className="px-1 text-sm text-emerald-700 dark:text-emerald-400">Tous les boss sont faits.</p>}
           </div>
 
           <ul aria-label="Passages suivants" className="flex min-h-0 min-w-0 flex-col justify-center gap-1 overflow-hidden">
@@ -90,7 +92,7 @@ export const Gw2BossesCard: CardComponent<Gw2BossesProps, Gw2BossesData> = ({ ca
   )
 }
 
-function NextBoss({ slot, boss, now }: { slot: BossSlot; boss: BossInfo; now: Date }) {
+function NextBoss({ slot, boss, now, waypointIcon }: { slot: BossSlot; boss: BossInfo; now: Date; waypointIcon: string | null }) {
   const started = new Date(slot.startsAt).getTime() <= now.getTime()
 
   return (
@@ -107,7 +109,7 @@ function NextBoss({ slot, boss, now }: { slot: BossSlot; boss: BossInfo; now: Da
           <span className={`truncate font-semibold tabular-nums ${started ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>{countdown(slot.startsAt, now)}</span>
           {!started && <span className="text-zinc-500 tabular-nums dark:text-slate-400">· {hour(slot.startsAt)}</span>}
           <span className="flex-1" />
-          <CopyWaypoint code={boss.waypoint} />
+          <CopyWaypoint code={boss.waypoint} icon={waypointIcon} />
         </p>
       </div>
     </>
@@ -128,7 +130,7 @@ function Portrait({ boss, name, className }: { boss: BossInfo | undefined; name:
 }
 
 /** Copie le code du point de passage, à coller dans le chat du jeu. */
-function CopyWaypoint({ code }: { code: string }) {
+function CopyWaypoint({ code, icon }: { code: string; icon: string | null }) {
   const [copied, setCopied] = useState(false)
   useEffect(() => {
     if (!copied) return
@@ -150,9 +152,9 @@ function CopyWaypoint({ code }: { code: string }) {
       onClick={copy}
       aria-label={`Copier le point de passage ${code}`}
       title={`Copier le point de passage ${code}, à coller dans le chat du jeu`}
-      className="shrink-0 rounded-md bg-white/70 px-1 py-0.5 text-[0.7rem] font-semibold text-zinc-700 ring-1 ring-amber-300 hover:bg-white dark:bg-slate-700 dark:text-slate-100 dark:ring-slate-600 dark:hover:bg-slate-600"
+      className="flex h-6 shrink-0 items-center rounded-md bg-white/70 px-1 text-[0.7rem] font-semibold text-zinc-700 ring-1 ring-amber-300 hover:bg-white dark:bg-slate-700 dark:text-slate-100 dark:ring-slate-600 dark:hover:bg-slate-600"
     >
-      {copied ? '✓ Copié' : '📍'}
+      {copied ? '✓ Copié' : icon ? <img src={icon} alt="" className="size-5" /> : 'PP'}
     </button>
   )
 }

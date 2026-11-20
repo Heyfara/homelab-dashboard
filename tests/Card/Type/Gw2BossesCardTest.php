@@ -107,6 +107,11 @@ final class Gw2BossesCardTest extends TestCase
         self::assertNull($data['doneError']);
     }
 
+    public function testWaypointIconFromTheApi(): void
+    {
+        self::assertSame('https://render.example/waypoint.png', $this->fetch()['waypointIcon']);
+    }
+
     public function testBossSheetsOnce(): void
     {
         $bosses = $this->fetch()['bosses'];
@@ -150,5 +155,6 @@ final class Gw2BossesCardTest extends TestCase
         self::assertCount(96, $data['slots']);
         self::assertNull($data['done']);
         self::assertStringContainsString('injoignable', (string) $data['doneError']);
+        self::assertNull($data['waypointIcon']);
     }
 }

@@ -1007,8 +1007,8 @@ Reine Karka) :
   (verte quand il est fait aujourd'hui, nom au survol) et le temps avant la
   réinitialisation (0 h UTC) ;
 - **prochain boss pas encore fait** : portrait, zone, compte à rebours
-  (« dans 13 min », puis « en cours » pendant 15 min) et heure ; le bouton 📍
-  copie le code de son point de passage, à coller dans le chat du jeu ;
+  (« dans 13 min », puis « en cours » pendant 15 min) et heure ; le bouton à l'icône du point de passage
+  (icône officielle `map_waypoint`) copie le code de son point de passage, à coller dans le chat du jeu ;
 - **passages suivants** dans l'ordre, avec une mini-vignette, ceux déjà faits
   grisés et cochés.
 

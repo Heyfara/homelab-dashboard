@@ -74,6 +74,12 @@ final readonly class Gw2BossesCard implements CardTypeInterface
             $error = $e->getMessage();
         }
 
+        try {
+            $waypointIcon = $this->gw2->fileIcons($card->options['api'], ['map_waypoint'])['map_waypoint'] ?? null;
+        } catch (SourceUnavailableException) {
+            $waypointIcon = null;
+        }
+
         $slots = [];
         foreach (WorldBossSchedule::upcoming($now, self::SLOTS) as $slot) {
             $slots[] = [
@@ -90,6 +96,8 @@ final readonly class Gw2BossesCard implements CardTypeInterface
             'done' => $killed,
             'resetAt' => $resetAt->format(\DATE_ATOM),
             'doneError' => $error,
+            /** Icône officielle du point de passage (bouton de copie) */
+            'waypointIcon' => $waypointIcon,
         ];
     }
 }

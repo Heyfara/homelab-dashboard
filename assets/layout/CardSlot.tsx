@@ -5,6 +5,7 @@ import { cardRegistry, type CardComponent } from '../cards/registry'
 import { useCardData } from '../hooks/useCardData'
 import { useInView } from '../hooks/useInView'
 import { formatRelative } from '../ui/format'
+import { CardErrorBoundary } from './CardErrorBoundary'
 import { CardFrame } from './CardFrame'
 
 type Fetcher = (id: string, signal: AbortSignal, feed?: string) => Promise<CardResult>
@@ -42,7 +43,9 @@ function LiveCard({ card, Component, fetcher }: { card: CardView; Component: Car
       {Object.entries(card.feeds ?? {}).map(([feed, refresh]) => (
         <FeedPoller key={feed} id={card.id} feed={feed} refresh={refresh} active={inView} fetcher={fetcher} onResult={onFeed} />
       ))}
-      <Component card={card} result={result} feeds={feeds} />
+      <CardErrorBoundary resetKey={result?.fetchedAt}>
+        <Component card={card} result={result} feeds={feeds} />
+      </CardErrorBoundary>
     </CardFrame>
   )
 }

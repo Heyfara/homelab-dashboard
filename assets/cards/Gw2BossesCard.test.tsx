@@ -30,6 +30,7 @@ const data: Gw2BossesData = {
   done: ['admiral_taidha_covington', 'megadestroyer'],
   resetAt: '2026-11-17T00:00:00Z',
   doneError: null,
+  waypointIcon: 'https://render.example/waypoint.png',
 }
 const result = (d: Gw2BossesData): CardResult<Gw2BossesData> => ({ status: 'ok', data: d, error: null, fetchedAt: '' })
 const text = (el: Element) => (el.textContent ?? '').replace(/[  ]/g, ' ')
@@ -72,6 +73,8 @@ describe('Gw2BossesCard', () => {
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
     render(<Gw2BossesCard card={card} result={result(data)} />)
 
+    expect(screen.getByRole('button', { name: /point de passage/ }).querySelector('img')?.getAttribute('src')).toBe('https://render.example/waypoint.png')
+
     await act(async () => fireEvent.click(screen.getByRole('button', { name: /point de passage/ })))
 
     expect(writeText).toHaveBeenCalledWith('[&BMIDAAA=]')
@@ -80,12 +83,20 @@ describe('Gw2BossesCard', () => {
     expect(screen.getByRole('button', { name: /point de passage/ }).textContent).not.toContain('Copié')
   })
 
+  it('sans icône du jeu : le bouton reste, en texte', () => {
+    render(<Gw2BossesCard card={card} result={result({ ...data, waypointIcon: null })} />)
+
+    const button = screen.getByRole('button', { name: /point de passage/ })
+    expect(button.querySelector('img')).toBeNull()
+    expect(button.textContent).toBe('PP')
+  })
+
   it('sans portrait : l’initiale du boss', () => {
     render(<Gw2BossesCard card={card} result={result({ ...data, slots: data.slots.map((s) => ({ ...s, done: s.id !== 'megadestroyer' })) })} />)
 
     const next = screen.getByRole('group', { name: 'Prochain boss' })
     expect(text(next)).toContain('Mégadestructeur')
-    expect(next.querySelector('img')).toBeNull()
+    expect(next.querySelector(':scope > img')).toBeNull()
     expect(text(next)).toContain('M')
   })
 
