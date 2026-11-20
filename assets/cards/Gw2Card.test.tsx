@@ -1,8 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { CardResult, CardView } from '../http/types'
-import { GW2_LOGO } from '../ui/Gw2Logo'
-import { coins, Gw2Card, type Gw2Data } from './Gw2Card'
+import { coins, Gw2Card, GW2_ACCOUNT_ICON, type Gw2Data } from './Gw2Card'
 
 const card: CardView<{ title: string }> = { id: 'g', type: 'gw2', title: null, span: 2, rows: 2, refresh: 300, props: { title: 'Guild Wars 2' } }
 const inHours = (h: number) => new Date(Date.now() + h * 3600_000).toISOString()
@@ -38,7 +37,8 @@ describe('Gw2Card', () => {
     render(<GwCard />)
 
     const head = screen.getByRole('heading').parentElement!
-    expect(head.querySelector('img')?.getAttribute('src')).toBe(GW2_LOGO)
+    expect(head.querySelector('img')?.getAttribute('src')).toBe(GW2_ACCOUNT_ICON)
+    expect(GW2_ACCOUNT_ICON).toBe('https://wiki.guildwars2.com/images/0/01/Map_Explored_100%25.png')
     expect(text(head)).toContain('Joueur.1234')
     expect(text(head)).toContain('Fractales 42 · McM 321')
     expect(text(screen.getByTitle(/au comptoir/))).toBe('51 or à récupérer')
