@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CardResult, CardView } from '../http/types'
 import { Gw2BossesCard, type Gw2BossesData, type Gw2BossesProps } from './Gw2BossesCard'
@@ -13,15 +13,21 @@ const card: CardView<Gw2BossesProps> = {
   props: { title: 'Boss du monde', link: 'https://wiki.guildwars2.com/wiki/Event_timers', count: 2 },
 }
 
+const boss = (name: string, zone: string, waypoint: string, image: string | null) => ({ name, zone, waypoint, image })
 const data: Gw2BossesData = {
+  bosses: {
+    admiral_taidha_covington: boss('Amiral Taidha Covington', 'Côte de la marée sanglante', '[&BKgBAAA=]', 'https://wiki.example/taidha.jpg'),
+    svanir_shaman_chief: boss('Chef chamane de Svanir', 'Contreforts du voyageur', '[&BMIDAAA=]', 'https://wiki.example/svanir.jpg'),
+    megadestroyer: boss('Mégadestructeur', 'Mont Maelström', '[&BM0CAAA=]', null),
+    fire_elemental: boss('Élémentaire de feu', 'Province de Metrica', '[&BEcAAAA=]', null),
+  },
   slots: [
-    { id: 'admiral_taidha_covington', name: 'Amiral Taidha Covington', startsAt: '2026-11-16T20:00:00Z', done: true },
-    { id: 'svanir_shaman_chief', name: 'Chef chamane de Svanir', startsAt: '2026-11-16T20:15:00Z', done: false },
-    { id: 'megadestroyer', name: 'Mégadestructeur', startsAt: '2026-11-16T20:30:00Z', done: true },
-    { id: 'fire_elemental', name: 'Élémentaire de feu', startsAt: '2026-11-16T20:45:00Z', done: false },
+    { id: 'admiral_taidha_covington', startsAt: '2026-11-16T20:00:00Z', done: true },
+    { id: 'svanir_shaman_chief', startsAt: '2026-11-16T20:15:00Z', done: false },
+    { id: 'megadestroyer', startsAt: '2026-11-16T20:30:00Z', done: true },
+    { id: 'fire_elemental', startsAt: '2026-11-16T20:45:00Z', done: false },
   ],
-  done: 4,
-  total: 10,
+  done: ['admiral_taidha_covington', 'megadestroyer'],
   resetAt: '2026-11-17T00:00:00Z',
   doneError: null,
 }
@@ -30,31 +36,63 @@ const text = (el: Element) => (el.textContent ?? '').replace(/[  ]/g, ' ')
 
 describe('Gw2BossesCard', () => {
   beforeEach(() => {
-    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval', 'setTimeout', 'clearTimeout'] })
     vi.setSystemTime(new Date('2026-11-16T20:07:00Z'))
   })
   afterEach(() => vi.useRealTimers())
 
-  it('titre : lien vers les horaires du wiki, et compteur du jour', () => {
+  it('titre : lien vers les horaires du wiki', () => {
     render(<Gw2BossesCard card={card} result={result(data)} />)
 
-    const link = screen.getByRole('link', { name: 'Boss du monde' })
-    expect(link.getAttribute('href')).toBe('https://wiki.guildwars2.com/wiki/Event_timers')
-    expect(text(screen.getByTitle(/faits aujourd/))).toBe('4/10')
+    expect(screen.getByRole('link', { name: 'Boss du monde' }).getAttribute('href')).toBe('https://wiki.guildwars2.com/wiki/Event_timers')
   })
 
-  it('le prochain boss pas fait, avec son compte à rebours', () => {
+  it('jauge du jour : une pastille par boss, pleine quand il est fait', () => {
+    render(<Gw2BossesCard card={card} result={result(data)} />)
+
+    const gauge = screen.getByRole('list', { name: '2 boss sur 4 faits aujourd’hui' })
+    const dots = gauge.querySelectorAll('li')
+    expect(dots).toHaveLength(4)
+    expect(dots[0]!.getAttribute('title')).toBe('Amiral Taidha Covington : fait')
+    expect(dots[1]!.getAttribute('title')).toBe('Chef chamane de Svanir : à faire')
+  })
+
+  it('le prochain boss pas fait : portrait, zone, compte à rebours', () => {
     render(<Gw2BossesCard card={card} result={result(data)} />)
 
     const next = screen.getByRole('group', { name: 'Prochain boss' })
     expect(text(next)).toContain('Chef chamane de Svanir')
+    expect(text(next)).toContain('Contreforts du voyageur')
     expect(text(next)).toContain('dans 8 min')
+    expect(next.querySelector('img')?.getAttribute('src')).toBe('https://wiki.example/svanir.jpg')
+  })
+
+  it('copie le point de passage pour le chat du jeu', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
+    render(<Gw2BossesCard card={card} result={result(data)} />)
+
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: /point de passage/ })))
+
+    expect(writeText).toHaveBeenCalledWith('[&BMIDAAA=]')
+    expect(screen.getByRole('button', { name: /point de passage/ }).textContent).toContain('Copié')
+    act(() => vi.advanceTimersByTime(2000))
+    expect(screen.getByRole('button', { name: /point de passage/ }).textContent).not.toContain('Copié')
+  })
+
+  it('sans portrait : l’initiale du boss', () => {
+    render(<Gw2BossesCard card={card} result={result({ ...data, slots: data.slots.map((s) => ({ ...s, done: s.id !== 'megadestroyer' })) })} />)
+
+    const next = screen.getByRole('group', { name: 'Prochain boss' })
+    expect(text(next)).toContain('Mégadestructeur')
+    expect(next.querySelector('img')).toBeNull()
+    expect(text(next)).toContain('M')
   })
 
   it('les passages suivants, faits grisés et cochés', () => {
     render(<Gw2BossesCard card={card} result={result(data)} />)
 
-    const items = screen.getByRole('list', { name: 'Passages suivants' }).querySelectorAll('li')
+    const items = screen.getByRole('list', { name: 'Passages suivants' }).querySelectorAll(':scope > li')
     expect(items).toHaveLength(2)
     expect(text(items[0]!)).toContain('Amiral Taidha Covington')
     expect(items[0]!.getAttribute('aria-label')).toContain('fait')
@@ -70,17 +108,18 @@ describe('Gw2BossesCard', () => {
     expect(text(screen.getByRole('group', { name: 'Prochain boss' }))).toContain('en cours depuis 1 min')
   })
 
-  it('tous faits : le dit, avec la réinitialisation', () => {
-    render(<Gw2BossesCard card={card} result={result({ ...data, slots: data.slots.map((s) => ({ ...s, done: true })), done: 10 })} />)
+  it('tous faits : le dit', () => {
+    render(<Gw2BossesCard card={card} result={result({ ...data, slots: data.slots.map((s) => ({ ...s, done: true })), done: Object.keys(data.bosses) })} />)
 
     expect(text(screen.getByRole('group', { name: 'Prochain boss' }))).toContain('Tous les boss sont faits')
   })
 
-  it('sans clé : l’horaire reste, la raison est dite', () => {
+  it('sans clé : l’horaire reste, la raison est dite, pas de jauge', () => {
     render(<Gw2BossesCard card={card} result={result({ ...data, slots: data.slots.map((s) => ({ ...s, done: false })), done: null, doneError: 'Pas encore de clé pour ce profil' })} />)
 
     expect(text(screen.getByRole('group', { name: 'Prochain boss' }))).toContain('Amiral Taidha Covington')
     expect(screen.getByTitle('Pas encore de clé pour ce profil')).toBeTruthy()
+    expect(screen.queryByRole('list', { name: /faits aujourd/ })).toBeNull()
   })
 
   it('chargement', () => {

@@ -78,7 +78,6 @@ final readonly class Gw2BossesCard implements CardTypeInterface
         foreach (WorldBossSchedule::upcoming($now, self::SLOTS) as $slot) {
             $slots[] = [
                 'id' => $slot['id'],
-                'name' => $slot['name'],
                 'startsAt' => $slot['startsAt']->format(\DATE_ATOM),
                 // fait aujourd'hui : le passage d'après la réinitialisation est à refaire
                 'done' => null !== $killed && $slot['startsAt'] < $resetAt && \in_array($slot['id'], $killed, true),
@@ -86,9 +85,9 @@ final readonly class Gw2BossesCard implements CardTypeInterface
         }
 
         return [
+            'bosses' => WorldBossSchedule::bosses(),
             'slots' => $slots,
-            'done' => null === $killed ? null : \count($killed),
-            'total' => \count(WorldBossSchedule::ids()),
+            'done' => $killed,
             'resetAt' => $resetAt->format(\DATE_ATOM),
             'doneError' => $error,
         ];

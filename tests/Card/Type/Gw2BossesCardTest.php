@@ -96,16 +96,24 @@ final class Gw2BossesCardTest extends TestCase
 
         self::assertCount(96, $data['slots']);
         self::assertSame(
-            ['id' => 'admiral_taidha_covington', 'name' => 'Amiral Taidha Covington', 'startsAt' => '2026-11-16T00:00:00+00:00', 'done' => true],
+            ['id' => 'admiral_taidha_covington', 'startsAt' => '2026-11-16T00:00:00+00:00', 'done' => true],
             $data['slots'][0],
             'en cours depuis 7 min, déjà fait',
         );
         self::assertSame(['svanir_shaman_chief', true], [$data['slots'][1]['id'], $data['slots'][1]['done']]);
         self::assertSame(['megadestroyer', false], [$data['slots'][2]['id'], $data['slots'][2]['done']]);
-        self::assertSame(2, $data['done'], 'Tequatl et Drakkar ne comptent pas : hors des boss affichés');
-        self::assertSame(10, $data['total']);
+        self::assertSame(['admiral_taidha_covington', 'svanir_shaman_chief'], $data['done'], 'Tequatl et Drakkar ne comptent pas : hors des boss affichés');
         self::assertSame('2026-11-17T00:00:00+00:00', $data['resetAt']);
         self::assertNull($data['doneError']);
+    }
+
+    public function testBossSheetsOnce(): void
+    {
+        $bosses = $this->fetch()['bosses'];
+
+        self::assertCount(10, $bosses);
+        self::assertSame('Amiral Taidha Covington', $bosses['admiral_taidha_covington']['name']);
+        self::assertSame('[&BKgBAAA=]', $bosses['admiral_taidha_covington']['waypoint']);
     }
 
     public function testPassagesAfterTheResetAreNotDone(): void

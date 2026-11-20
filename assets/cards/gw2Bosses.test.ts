@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { bossesView, countdown, type BossSlot } from './gw2Bosses'
 
-const slot = (id: string, startsAt: string, done = false): BossSlot => ({ id, name: id, startsAt, done })
+const slot = (id: string, startsAt: string, done = false): BossSlot => ({ id, startsAt, done })
 const slots: BossSlot[] = [
   slot('taidha', '2026-11-16T20:00:00Z', true),
   slot('svanir', '2026-11-16T20:15:00Z', true),

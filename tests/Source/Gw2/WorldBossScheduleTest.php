@@ -98,5 +98,23 @@ final class WorldBossScheduleTest extends TestCase
     public function testTenBosses(): void
     {
         self::assertCount(10, WorldBossSchedule::ids());
+        self::assertSame(WorldBossSchedule::ids(), array_keys(WorldBossSchedule::bosses()));
+    }
+
+    /** Codes relevés dans https://wiki.guildwars2.com/wiki/Widget:Event_timer/data.json (core-wb) */
+    public function testBossSheet(): void
+    {
+        $bosses = WorldBossSchedule::bosses();
+
+        self::assertSame(
+            ['name' => 'Amiral Taidha Covington', 'zone' => 'Côte de la marée sanglante', 'waypoint' => '[&BKgBAAA=]', 'image' => 'https://wiki.guildwars2.com/images/thumb/8/8d/Admiral_Taidha_Covington.jpg/128px-Admiral_Taidha_Covington.jpg'],
+            $bosses['admiral_taidha_covington'],
+        );
+        self::assertSame('[&BNQCAAA=]', $bosses['inquest_golem_mark_ii']['waypoint']);
+        self::assertSame('Mont Maelström', $bosses['megadestroyer']['zone']);
+        self::assertNull($bosses['megadestroyer']['image'], 'pas de portrait sur le wiki');
+        foreach ($bosses as $id => $boss) {
+            self::assertMatchesRegularExpression('/^\[&B[A-Za-z0-9+\/]{6}=\]$/', $boss['waypoint'], $id);
+        }
     }
 }

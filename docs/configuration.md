@@ -1003,11 +1003,14 @@ français quand la route le permet :
 Boss du monde de Guild Wars 2 (hors boss difficiles : Tequatl, Triple Trouble,
 Reine Karka) :
 - **en-tête** : titre en lien vers les [horaires des événements du
-  wiki](https://wiki.guildwars2.com/wiki/Event_timers), boss faits aujourd'hui
-  (`4/10`) et temps avant la réinitialisation (0 h UTC) ;
-- **prochain boss pas encore fait**, avec son compte à rebours (« dans 13 min »,
-  puis « en cours » pendant 15 min) et son heure ;
-- **passages suivants** dans l'ordre, ceux déjà faits grisés et cochés.
+  wiki](https://wiki.guildwars2.com/wiki/Event_timers), une pastille par boss
+  (verte quand il est fait aujourd'hui, nom au survol) et le temps avant la
+  réinitialisation (0 h UTC) ;
+- **prochain boss pas encore fait** : portrait, zone, compte à rebours
+  (« dans 13 min », puis « en cours » pendant 15 min) et heure ; le bouton 📍
+  copie le code de son point de passage, à coller dans le chat du jeu ;
+- **passages suivants** dans l'ordre, avec une mini-vignette, ceux déjà faits
+  grisés et cochés.
 
 | Option | Défaut | Rôle |
 |---|---|---|
@@ -1022,8 +1025,11 @@ Reine Karka) :
 - **Horaire** : l'API ne le donne pas. Il est écrit dans
   `src/Source/Gw2/WorldBossSchedule.php`, recopié du tableau « Full schedule »
   de https://wiki.guildwars2.com/wiki/World_boss (un boss par quart d'heure,
-  chacun toutes les 2 ou 3 h, en UTC). Si ArenaNet le change, mettre ce
-  fichier et son test à jour d'après le wiki.
+  chacun toutes les 2 ou 3 h, en UTC). Zones (wiki FR), codes de point de
+  passage (`Widget:Event_timer/data.json` du wiki) et portraits (miniatures du
+  wiki, chargées par le navigateur) sont au même endroit. Le Mégadestructeur et
+  Ulgoth n'ont pas de portrait sur le wiki : leur initiale le remplace. Si
+  ArenaNet change l'horaire, mettre ce fichier et son test à jour d'après le wiki.
 - **Boss faits** : `/v2/account/worldbosses` (droit `progression`). Sans clé,
   ou si l'API ne répond pas, l'horaire reste affiché sans les coches, et un ⚠
   donne la raison au survol.

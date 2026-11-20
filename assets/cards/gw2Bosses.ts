@@ -1,5 +1,8 @@
+/** Fiche d'un boss (WorldBossSchedule::bosses() côté PHP). */
+export type BossInfo = { name: string; zone: string; waypoint: string; image: string | null }
+
 /** Un passage de boss du monde (Gw2BossesCard::fetch() côté PHP). */
-export type BossSlot = { id: string; name: string; startsAt: string; done: boolean }
+export type BossSlot = { id: string; startsAt: string; done: boolean }
 
 /** Un boss est « en cours » pendant 15 min après son apparition (WorldBossSchedule::ACTIVE_MINUTES). */
 export const ACTIVE_MS = 15 * 60_000
