@@ -10,6 +10,6 @@ describe('Gw2Logo', () => {
     expect(img.getAttribute('src')).toBe(GW2_LOGO)
     expect(GW2_LOGO).toBe('https://wiki.guildwars2.com/images/7/7d/GW2_icon_small.png')
     expect(img.getAttribute('alt')).toBe('')
-    expect(img.className).toContain('size-6')
+    expect(img.className).toContain('size-7')
   })
 })
