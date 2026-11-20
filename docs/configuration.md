@@ -1042,11 +1042,9 @@ Reine Karka) :
 ### `romm`
 
 Bibliothèque de jeux [RomM](https://romm.app) : derniers jeux ajoutés en slider
-(jaquette, plateforme, badge « Nouveau » la première semaine), nombre de jeux,
-de plateformes et de sauvegardes (sauvegardes + états) dans l'en-tête, puis le
-nombre de jeux des 4 plateformes les plus fournies ; les autres sont regroupées
-en « +N autres » (liste au survol, lien vers RomM). Jeu non identifié :
-nom du fichier.
+(jaquette, plateforme, badge « Nouveau » la première semaine), puis en bas le
+nombre de jeux, de plateformes et de sauvegardes (sauvegardes + états). Jeu non
+identifié : nom du fichier.
 
 Les jaquettes sont publiques dans RomM (`/assets/romm/resources/…`) : le
 navigateur les lit directement, sans relais.

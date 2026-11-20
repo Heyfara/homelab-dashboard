@@ -84,11 +84,7 @@ final class RommCardTest extends TestCase
             'addedAt' => '2026-10-23T12:20:46+00:00',
         ], $data['games'][0]);
         self::assertNull($data['games'][1]['cover']);
-        self::assertSame([
-            ['name' => 'Amstrad CPC', 'games' => 21, 'link' => 'https://jeux.example/platform/1'],
-            ['name' => 'Nintendo Entertainment System', 'games' => 5, 'link' => 'https://jeux.example/platform/3'],
-            ['name' => 'GX4000', 'games' => 2, 'link' => 'https://jeux.example/platform/4'],
-        ], $data['platforms'], 'les plus fournies d\'abord');
+        self::assertSame(['stats', 'games'], array_keys($data), 'plus de liste des plateformes : la carte ne montre que leur nombre');
         self::assertStringStartsWith('http://romm:8080/api/', $this->urls[0], 'API sur l\'adresse check');
         self::assertStringContainsString('limit=12', implode(' ', $this->urls));
     }
@@ -99,7 +95,6 @@ final class RommCardTest extends TestCase
         $data = $card->fetch($this->instance($card, ['platforms' => ['acpc', 'amstrad-gx4000']]), $this->dashboard);
 
         self::assertSame(['games' => 23, 'platforms' => 2, 'saves' => 10], $data['stats']);
-        self::assertSame(['Amstrad CPC', 'GX4000'], array_column($data['platforms'], 'name'));
         $roms = array_values(array_filter($this->urls, static fn (string $u): bool => str_contains($u, '/api/roms')));
         self::assertStringContainsString('platform_ids=1&platform_ids=4', $roms[0]);
     }

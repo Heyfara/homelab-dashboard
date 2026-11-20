@@ -66,7 +66,6 @@ final readonly class RommCard implements CardTypeInterface
             $this->romm->platforms($api),
             static fn (RommPlatform $p): bool => $p->games > 0 && ([] === $only || \in_array($p->slug, $only, true)),
         );
-        usort($platforms, static fn (RommPlatform $a, RommPlatform $b): int => $b->games <=> $a->games);
         $stats = $this->romm->stats($api);
 
         // Filtre sans plateforme correspondante : rien, plutôt que tous les jeux.
@@ -88,11 +87,6 @@ final readonly class RommCard implements CardTypeInterface
                 'link' => \sprintf('%s/rom/%d', $public, $g->id),
                 'addedAt' => $g->addedAt?->format(\DATE_ATOM),
             ], $games),
-            'platforms' => array_map(static fn (RommPlatform $p): array => [
-                'name' => $p->name,
-                'games' => $p->games,
-                'link' => \sprintf('%s/platform/%d', $public, $p->id),
-            ], $platforms),
         ];
     }
 }
