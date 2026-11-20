@@ -1,5 +1,6 @@
 import type { CardComponent } from './registry'
 import { formatNumber, formatRelative } from '../ui/format'
+import { Gw2Logo } from '../ui/Gw2Logo'
 
 export type Gw2Objective = { period: 'daily' | 'weekly'; title: string; current: number; complete: number; acclaim: number }
 type VaultPeriod = { done: number; total: number; claimed: boolean; acclaim: number; resetAt: string }
@@ -7,7 +8,6 @@ type VaultPeriod = { done: number; total: number; claimed: boolean; acclaim: num
 /** Données de Gw2Card::fetch() côté PHP. Icônes publiques de render.guildwars2.com. */
 export type Gw2Data = {
   account: { name: string; fractalLevel: number; wvwRank: number }
-  icon: string | null
   coinIcons: { gold: string | null; silver: string | null; copper: string | null }
   /** Monnaies dans l'ordre de l'option `currencies` ; id 1 = l'or, en pièces de cuivre */
   wallet: { id: number; name: string; icon: string; value: number }[]
@@ -29,7 +29,7 @@ export const Gw2Card: CardComponent<{ title: string }, Gw2Data> = ({ card, resul
   return (
     <div className="flex h-full flex-col gap-2.5">
       <header className="flex items-center gap-2">
-        {data?.icon && <img loading="lazy" src={data.icon} alt="" className="size-7 shrink-0" />}
+        <Gw2Logo />
         <h3 className="min-w-0 truncate font-semibold text-zinc-900 dark:text-slate-50">{card.title ?? card.props.title}</h3>
         {data && (
           <span className="min-w-0 truncate text-xs text-zinc-500 dark:text-slate-400">

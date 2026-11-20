@@ -114,7 +114,7 @@ final class Gw2CardTest extends TestCase
         self::assertSame([1, 63, 2, 4], array_column($data['wallet'], 'id'));
         self::assertSame(['coins' => 514400, 'items' => 1], $data['delivery']);
         self::assertSame(['gold' => 'https://render.example/gold.png', 'silver' => 'https://render.example/silver.png', 'copper' => 'https://render.example/copper.png'], $data['coinIcons']);
-        self::assertSame('https://render.example/waypoint.png', $data['icon']);
+        self::assertArrayNotHasKey('icon', $data, 'logo du jeu côté front');
         self::assertSame(['done' => 1, 'total' => 5], $data['crafting']);
     }
 

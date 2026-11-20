@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CardResult, CardView } from '../http/types'
+import { GW2_LOGO } from '../ui/Gw2Logo'
 import { Gw2BossesCard, type Gw2BossesData, type Gw2BossesProps } from './Gw2BossesCard'
 
 const card: CardView<Gw2BossesProps> = {
@@ -46,7 +47,7 @@ describe('Gw2BossesCard', () => {
     render(<Gw2BossesCard card={card} result={result(data)} />)
 
     expect(screen.getByRole('link', { name: 'Boss du monde' }).getAttribute('href')).toBe('https://wiki.guildwars2.com/wiki/Event_timers')
-    expect(screen.getByRole('heading').parentElement!.querySelector(':scope > img')?.getAttribute('src')).toBe('https://render.example/waypoint.png')
+    expect(screen.getByRole('heading').parentElement!.querySelector('img')?.getAttribute('src')).toBe(GW2_LOGO)
   })
 
   it('jauge du jour : une pastille par boss, pleine quand il est fait', () => {
@@ -74,7 +75,9 @@ describe('Gw2BossesCard', () => {
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
     render(<Gw2BossesCard card={card} result={result(data)} />)
 
-    expect(screen.getByRole('button', { name: /point de passage/ }).querySelector('img')?.getAttribute('src')).toBe('https://render.example/waypoint.png')
+    const icon = screen.getByRole('button', { name: /point de passage/ }).querySelector('img')
+    expect(icon?.getAttribute('src')).toBe('https://render.example/waypoint.png')
+    expect(icon?.getAttribute('class')).toContain('size-6')
 
     await act(async () => fireEvent.click(screen.getByRole('button', { name: /point de passage/ })))
 

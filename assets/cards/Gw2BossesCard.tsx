@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { CardComponent } from './registry'
 import { ExternalLink } from '../ui/ExternalLink'
 import { formatRelative } from '../ui/format'
+import { Gw2Logo } from '../ui/Gw2Logo'
 import { bossesView, countdown, type BossInfo, type BossSlot } from './gw2Bosses'
 
 /** Props de Gw2BossesCard::describe() côté PHP. */
@@ -44,7 +45,7 @@ export const Gw2BossesCard: CardComponent<Gw2BossesProps, Gw2BossesData> = ({ ca
   return (
     <div className="flex h-full flex-col gap-2">
       <header className="flex items-center gap-2">
-        {data?.waypointIcon && <img loading="lazy" src={data.waypointIcon} alt="" className="size-6 shrink-0" />}
+        <Gw2Logo />
         <h3 className="min-w-0 truncate font-semibold text-zinc-900 dark:text-slate-50">
           <ExternalLink href={card.props.link} title="Horaires des événements sur le wiki" className="hover:underline">
             {card.title ?? card.props.title}
@@ -153,9 +154,9 @@ function CopyWaypoint({ code, icon }: { code: string; icon: string | null }) {
       onClick={copy}
       aria-label={`Copier le point de passage ${code}`}
       title={`Copier le point de passage ${code}, à coller dans le chat du jeu`}
-      className="flex h-6 shrink-0 items-center rounded-md bg-white/70 px-1 text-[0.7rem] font-semibold text-zinc-700 ring-1 ring-amber-300 hover:bg-white dark:bg-slate-700 dark:text-slate-100 dark:ring-slate-600 dark:hover:bg-slate-600"
+      className="flex h-7 shrink-0 items-center rounded-md bg-white/70 px-1 text-[0.7rem] font-semibold text-zinc-700 ring-1 ring-amber-300 hover:bg-white dark:bg-slate-700 dark:text-slate-100 dark:ring-slate-600 dark:hover:bg-slate-600"
     >
-      {copied ? '✓ Copié' : icon ? <img src={icon} alt="" className="size-5" /> : 'PP'}
+      {copied ? '✓ Copié' : icon ? <img src={icon} alt="" className="size-6" /> : 'PP'}
     </button>
   )
 }
