@@ -82,9 +82,9 @@ export const DaguCard: CardComponent<{ title: string; url: string }, DaguData> =
           Aucune tâche à afficher
         </p>
       ) : (
-        <ul className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-hidden">
+        <ul aria-label="Tâches planifiées" className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto [scrollbar-width:thin]">
           {data.tasks.map((task) => (
-            <li key={task.name}>
+            <li key={task.name} className="shrink-0">
               <TaskRow task={task} />
             </li>
           ))}

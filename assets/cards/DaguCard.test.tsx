@@ -77,6 +77,15 @@ describe('DaguCard', () => {
     expect(runs[1]!.getAttribute('aria-label')).toContain('(à la main)')
   })
 
+  it('trop de tâches pour la hauteur : la liste défile au lieu de les couper', () => {
+    render(<DaguCard card={card} result={result(data)} />)
+
+    const list = screen.getByRole('list', { name: 'Tâches planifiées' })
+    expect(list.className).toContain('overflow-y-auto')
+    expect(list.className).not.toContain('overflow-hidden')
+    expect(list.querySelector('li')?.className).toContain('shrink-0')
+  })
+
   it('lien vers Dagu dans l’en-tête', () => {
     render(<DaguCard card={card} result={result(data)} />)
 
