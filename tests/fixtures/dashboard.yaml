@@ -64,6 +64,10 @@ services:
     name: Minecraft
     url: https://minecraft.example
     check: http://10.0.0.13:8443
+  papiers:
+    name: Papiers
+    url: https://papiers.example
+    check: http://10.0.0.14:8000
   recettes:
     name: Recettes
     url: https://recettes.example
@@ -132,3 +136,4 @@ profiles:
           - { type: gw2, api: https://gw2.test, span: 2, rows: 2 }
           - { type: gw2, id: gw2-profil, credentials: profile, api: https://gw2.test, span: 2, rows: 2 }
           - { type: weather, id: meteo-profil, place: Village fictif, latitude: 45.0, longitude: 5.0, location: profile, api: https://meteo.test, span: 2, rows: 2 }
+          - { type: factures, service: papiers, soon_days: 5, span: 2, rows: 2 }

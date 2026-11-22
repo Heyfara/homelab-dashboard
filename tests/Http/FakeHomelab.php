@@ -11,6 +11,7 @@ use App\Tests\Source\Jelu\JeluClientTest;
 use App\Tests\Source\Ntfy\NtfyClientTest;
 use App\Tests\Source\MusicAssistant\MusicAssistantClientTest;
 use App\Tests\Source\OpenMeteo\OpenMeteoClientTest;
+use App\Tests\Source\Paperless\PaperlessClientTest;
 use App\Tests\Source\CalibreWeb\CalibreWebClientTest;
 use App\Tests\Source\Immich\ImmichClientTest;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -131,6 +132,12 @@ final class FakeHomelab
 
         if ('https://images.example/minecraft/famille.png' === $url) {
             return new MockResponse('', ['response_headers' => ['Last-Modified' => 'Tue, 20 Oct 2026 22:01:53 GMT', 'Content-Type' => 'image/png']]);
+        }
+
+        if (str_starts_with($url, 'http://10.0.0.14:8000/')) {
+            parse_str((string) parse_url($url, \PHP_URL_QUERY), $query);
+
+            return PaperlessClientTest::homelab((string) $path, $query);
         }
 
         if (str_starts_with($url, 'http://10.0.0.13:8443/')) {
