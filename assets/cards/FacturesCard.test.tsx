@@ -73,6 +73,22 @@ describe('FacturesCard', () => {
     expect(screen.getByText('20 déc.').className).not.toMatch(/text-(rose|amber)/)
   })
 
+  it('badge « N en retard » en rouge dans l’en-tête', () => {
+    const lateToo = { ...data, invoices: [invoice(44, { dueDate: '2026-10-01' }), ...data.invoices], count: 5 }
+    render(<FacturesCard card={card} result={result(lateToo)} now={now} />)
+
+    const badge = screen.getByLabelText('2 factures en retard')
+    expect(text(badge)).toBe('2 en retard')
+    expect(badge.className).toContain('bg-rose')
+  })
+
+  it('pas de badge de retard quand rien n’est en retard', () => {
+    // Échéance aujourd'hui : pas encore en retard.
+    render(<FacturesCard card={card} result={result({ ...data, invoices: [invoice(45, { dueDate: '2026-11-16' })], count: 1 })} now={now} />)
+
+    expect(screen.queryByLabelText(/en retard/)).toBeNull()
+  })
+
   it('soon_days de la carte', () => {
     render(<FacturesCard card={{ ...card, props: { ...card.props, soonDays: 2 } }} result={result(data)} now={now} />)
 

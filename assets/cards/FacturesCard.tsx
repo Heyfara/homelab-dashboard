@@ -49,6 +49,7 @@ const ROW_ACCENT: Record<DueTone, string> = {
 export function FacturesCard({ card, result, now = new Date() }: { card: CardView<FacturesProps>; result: CardResult<FacturesData> | null; now?: Date }) {
   const { title, url, soonDays } = card.props
   const data = result?.status === 'ok' ? result.data : null
+  const late = data?.invoices.filter((invoice) => invoiceDue(invoice.dueDate, now, soonDays).tone === 'late').length ?? 0
 
   return (
     <div className="flex h-full flex-col gap-2.5">
@@ -63,6 +64,14 @@ export function FacturesCard({ card, result, now = new Date() }: { card: CardVie
             className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-bold tabular-nums ${data.count > 0 ? 'bg-zinc-800 text-white dark:bg-slate-200 dark:text-slate-900' : 'bg-zinc-100 text-zinc-600 dark:bg-slate-800 dark:text-slate-300'}`}
           >
             {data.count}
+          </span>
+        )}
+        {late > 0 && (
+          <span
+            aria-label={`${late} ${late > 1 ? 'factures' : 'facture'} en retard`}
+            className="shrink-0 rounded-full bg-rose-600 px-2 py-0.5 text-xs font-bold whitespace-nowrap text-white tabular-nums dark:bg-rose-500"
+          >
+            {late} en retard
           </span>
         )}
         <span className="flex-1" />

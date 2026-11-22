@@ -735,7 +735,8 @@ sur les documents du type `document_type`, des champs personnalisés : le
 montant (monétaire), l'échéance et la date de paiement (dates). La carte ne
 fait que lire (GET) :
 
-- **En-tête** : nombre de factures en attente, total à payer (« + ? » si
+- **En-tête** : nombre de factures en attente, badge rouge « N en retard »
+  s'il y en a (échéance dépassée, calculée dans le navigateur), total à payer (« + ? » si
   certaines n'ont pas de montant ; dans la devise la plus courante, les autres
   devises n'y entrent pas) et lien vers Paperless.
 - **Une ligne par facture**, par échéance croissante (sans échéance à la fin) :
