@@ -48,6 +48,12 @@ services:
     check: http://192.0.2.10:8123
     icon: sh-home-assistant
     host: serveur
+  gazette:
+    name: Gazette
+    description: Le journal de la famille
+    url: https://gazette.example
+    icon: https://gazette.example/build/favicon.svg   # l'icône servie par l'appli
+    host: serveur
 
 notifications:
   url: http://10.0.0.2:2586
@@ -68,6 +74,7 @@ profiles:
           - { type: service, service: recettes }
           - { type: service, service: dns }
           - { type: factures, service: papiers, span: 2, rows: 2, refresh: 3600 }
+          - { type: gazette, service: gazette, rows: 2, refresh: 3600 }
       - title: Énergie
         tab: Maison
         cards:

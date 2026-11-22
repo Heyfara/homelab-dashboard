@@ -562,6 +562,28 @@ d'abord. Photos publiques, chargées directement.
 - { type: mealie, service: mealie, span: 2, rows: 2, refresh: 3600 }
 ```
 
+### `gazette`
+
+Gazette familiale (dépôt `Heyfara/gazette`) : **J+N**, les jours depuis le
+dernier envoi (jours calendaires, heure de Paris), en orange au-delà de
+`warn_after_days` ; les derniers numéros envoyés (titre, sinon le mois) ; en
+bas, le numéro en préparation et le nombre de notes de son carnet. Chaque
+numéro ouvre sa page dans la gazette (`/numeros/<id>`). Avant le premier
+envoi : « Pas encore envoyée ». Lit `GET /api/issues`, sans clé (l'appli n'a
+pas d'authentification). L'icône est celle de l'appli, par son adresse :
+`icon: https://gazette.home/build/favicon.svg` dans le catalogue.
+
+| Option | Défaut | Rôle |
+|---|---|---|
+| `service` | obligatoire | service du catalogue, avec une `url` |
+| `limit` | `3` | derniers numéros envoyés affichés (1 à 12) |
+| `warn_after_days` | `35` | au-delà, le nombre de jours passe en alerte |
+| `show_draft` | `true` | afficher le numéro en préparation |
+
+```yaml
+- { type: gazette, service: gazette, rows: 2, refresh: 3600 }
+```
+
 ### `audiobookshelf`
 
 Livres audio : **reprendre l'écoute** (livres commencés et pas finis, le plus
