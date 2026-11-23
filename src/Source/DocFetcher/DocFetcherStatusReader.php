@@ -8,7 +8,9 @@ use App\Source\SourceUnavailableException;
 /**
  * Passages de doc-fetcher, lus dans Healthchecks : le rapport de chaque ping de
  * fin est le passage (`{"schedule": …, "run": {…}}`, ou le passage seul).
- * Format d'un passage : voir docs/configuration.md.
+ * Format d'un passage : voir docs/configuration.md. Un ping d'échec sans
+ * rapport (doc-fetcher planté avant de l'écrire, backup-run envoie alors la fin
+ * du log) devient un passage en échec, sans site.
  */
 final readonly class DocFetcherStatusReader
 {
@@ -24,7 +26,7 @@ final readonly class DocFetcherStatusReader
      */
     public function status(string $baseUrl, string $check, int $runs): DocFetcherStatus
     {
-        $reports = $this->healthchecks->reports($baseUrl, $check, $runs);
+        $reports = $this->healthchecks->endPings($baseUrl, $check, $runs);
         if ([] === $reports) {
             throw new SourceUnavailableException(\sprintf('Aucun passage enregistré dans Healthchecks (check « %s »)', $check));
         }
@@ -32,9 +34,13 @@ final readonly class DocFetcherStatusReader
         $schedule = null;
         $list = [];
         foreach ($reports as $report) {
-            $json = json_decode($report, true);
+            $json = json_decode($report->body, true);
             $run = \is_array($json['run'] ?? null) ? $json['run'] : $json;
             if (!\is_array($run) || !isset($run['started_at'], $run['state'])) {
+                if ($report->failed) {
+                    $list[] = new DocFetcherRun($report->startedAt(), $report->date, 'failed', false, [], self::crashCause($report->body));
+                    continue;
+                }
                 throw new SourceUnavailableException(\sprintf('Un rapport du check « %s » n\'est pas un passage de doc-fetcher (started_at, state)', $check));
             }
             $schedule ??= ($json['schedule'] ?? '') ?: null;
@@ -42,6 +48,18 @@ final readonly class DocFetcherStatusReader
         }
 
         return new DocFetcherStatus($schedule, $list);
+    }
+
+    /**
+     * Cause d'un plantage d'après la fin du log : la ligne de l'exception
+     * Python (`RuntimeError: …`), sinon la dernière ligne non vide.
+     */
+    private static function crashCause(string $log): ?string
+    {
+        $lines = array_values(array_filter(array_map('trim', explode("\n", $log)), static fn (string $l): bool => '' !== $l));
+        $exception = array_find(array_reverse($lines), static fn (string $l): bool => 1 === preg_match('/^[A-Za-z_][\w.]*(Error|Exception|Interrupt|Exit)\b(:|$)/', $l));
+
+        return mb_substr($exception ?? array_last($lines) ?? '', 0, 300) ?: null;
     }
 
     /**
@@ -66,6 +84,7 @@ final readonly class DocFetcherStatusReader
                 ), array_values($s['imported'] ?? [])),
                 array_map('strval', array_values($s['errors'] ?? [])),
             ), array_values($r['sites'] ?? [])),
+            ($r['error'] ?? '') ?: null,
         );
     }
 }

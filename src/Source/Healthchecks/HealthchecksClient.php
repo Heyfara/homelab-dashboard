@@ -49,20 +49,35 @@ final readonly class HealthchecksClient
      */
     public function reports(string $baseUrl, string $slug, int $limit): array
     {
+        return array_map(static fn (HealthchecksReport $p): string => $p->body, $this->endPings($baseUrl, $slug, $limit));
+    }
+
+    /**
+     * Pings de fin des derniers passages (succès ou échec) avec leur contenu.
+     *
+     * @return list<HealthchecksReport> le plus récent d'abord ; vide si le check n'a pas encore de rapport
+     */
+    public function endPings(string $baseUrl, string $slug, int $limit): array
+    {
         $baseUrl = rtrim($baseUrl, '/');
         $uuid = $this->get($baseUrl.'/api/v3/checks/', ['slug' => $slug])['checks'][0]['uuid'] ?? null;
         if (null === $uuid) {
             throw new SourceUnavailableException(\sprintf('Check « %s » absent de Healthchecks', $slug));
         }
 
-        $ends = array_filter(
+        $ends = \array_slice(array_values(array_filter(
             $this->get(\sprintf('%s/api/v3/checks/%s/pings/', $baseUrl, $uuid))['pings'] ?? [],
             static fn (array $p): bool => \in_array($p['type'] ?? null, ['success', 'fail'], true) && null !== ($p['body_url'] ?? null),
-        );
+        )), 0, $limit);
         // Requêtes lancées d'un coup : HttpClient les mène en parallèle.
-        $responses = array_map(fn (array $p): ResponseInterface => $this->request((string) $p['body_url']), \array_slice(array_values($ends), 0, $limit));
+        $responses = array_map(fn (array $p): ResponseInterface => $this->request((string) $p['body_url']), $ends);
 
-        return array_map(fn (ResponseInterface $r): string => $this->content($r), $responses);
+        return array_map(fn (array $p, ResponseInterface $r): HealthchecksReport => new HealthchecksReport(
+            new \DateTimeImmutable((string) $p['date']),
+            'fail' === $p['type'],
+            isset($p['duration']) ? (float) $p['duration'] : null,
+            $this->content($r),
+        ), $ends, $responses);
     }
 
     /**

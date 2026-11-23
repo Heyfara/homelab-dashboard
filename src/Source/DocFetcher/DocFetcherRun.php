@@ -16,6 +16,8 @@ final readonly class DocFetcherRun
         /** Lancé au terminal, pas par le cron */
         public bool $manual,
         public array $sites,
+        /** Passage planté avant d'écrire son rapport : la cause, lue dans la fin du log */
+        public ?string $error = null,
     ) {
     }
 }
