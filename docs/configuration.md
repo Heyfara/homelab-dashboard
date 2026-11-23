@@ -703,6 +703,10 @@ son ping de fin à Healthchecks ; la carte lit les `runs` derniers :
   s'affichent au survol ; celle d'un site bloqué aussi en clair sous la liste.
 - **Historique** : une pastille par passage lu (vert, ambre, rouge ; atténuée
   si lancé à la main), détail au survol.
+- **Passage planté** : un ping d'échec sans rapport (le script s'est arrêté
+  avant de l'écrire ; `backup-run` envoie alors la fin du log) compte comme
+  passage en échec, sans site. Sa cause (ligne de l'exception Python, sinon
+  dernière ligne du log) s'affiche en rouge si c'est le dernier passage.
 - **Derniers documents importés** : titre, site, date du document, avec un lien
   vers Paperless si `service` est donné.
 - **Pied** : la planification, si le script la connaît.

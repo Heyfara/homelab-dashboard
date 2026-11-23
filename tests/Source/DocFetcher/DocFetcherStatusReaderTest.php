@@ -2,6 +2,7 @@
 
 namespace App\Tests\Source\DocFetcher;
 
+use App\Source\DocFetcher\DocFetcherRun;
 use App\Source\DocFetcher\DocFetcherSite;
 use App\Source\DocFetcher\DocFetcherStatusReader;
 use App\Source\DocFetcher\ImportedDocument;
@@ -15,7 +16,7 @@ final class DocFetcherStatusReaderTest extends TestCase
     private const URL = 'https://healthchecks.test';
 
     /**
-     * @param list<string>|null $reports rapports de doc-fetcher, le plus récent d'abord ; sinon ceux de la fixture
+     * @param list<string|array{body: string, type: 'success'|'fail', date: string, duration: ?float}>|null $reports rapports de doc-fetcher, le plus récent d'abord ; sinon ceux de la fixture
      */
     public static function reader(?array $reports = null): DocFetcherStatusReader
     {
@@ -78,4 +79,56 @@ final class DocFetcherStatusReaderTest extends TestCase
         self::assertFalse($status->runs[0]->manual);
         self::assertEquals([new DocFetcherSite('paie', 'ok', null, null, [], [])], $status->runs[0]->sites);
     }
+
+    /**
+     * doc-fetcher planté avant d'écrire son rapport (Paperless injoignable…) :
+     * backup-run envoie la fin du log. Passage en échec, l'exception pour erreur.
+     */
+    public function testCrashBeforeReportIsFailedRun(): void
+    {
+        $status = self::reader([
+            ['body' => self::TRACEBACK, 'type' => 'fail', 'date' => '2026-11-23T00:00:02+00:00', 'duration' => 2.0],
+            ...\array_slice(HealthchecksClientTest::docFetcherReports(), 0, 1),
+        ])->status(self::URL, 'doc-fetcher', 12);
+
+        self::assertSame('chaque lundi à 7 h 30', $status->schedule);
+        self::assertEquals(new DocFetcherRun(
+            new \DateTimeImmutable('2026-11-23T00:00:00+00:00'),
+            new \DateTimeImmutable('2026-11-23T00:00:02+00:00'),
+            'failed',
+            false,
+            [],
+            'RuntimeError: GET http://paperless.test/api/ui_settings/ : HTTP 400',
+        ), $status->runs[0]);
+        self::assertSame('action', $status->runs[1]->state);
+        self::assertNull($status->runs[1]->error);
+    }
+
+    /** Sortie qui n'est pas un traceback Python (docker…) : sa dernière ligne. */
+    public function testCrashWithoutPythonException(): void
+    {
+        $run = self::reader([
+            ['body' => "docker: Error response from daemon: pull access denied.\nSee 'docker run --help'.\n\n", 'type' => 'fail', 'date' => '2026-11-23T00:00:02+00:00', 'duration' => null],
+        ])->status(self::URL, 'doc-fetcher', 12)->runs[0];
+
+        self::assertSame("See 'docker run --help'.", $run->error);
+        self::assertEquals($run->finishedAt, $run->startedAt);
+    }
+
+    private const TRACEBACK = <<<'TXT'
+        Traceback (most recent call last):
+          File "/app/doc_fetcher.py", line 255, in main
+            paperless = Paperless(config["paperless"]["url"], config["paperless"]["token"])
+          File "/app/doc_fetcher.py", line 103, in request
+            raise RuntimeError(f"{method} {url.split('?')[0]} : HTTP {e.code} {body}") from None
+        RuntimeError: GET http://paperless.test/api/ui_settings/ : HTTP 400 
+        <!doctype html>
+        <html lang="en">
+        <body>
+          <h1>Bad Request (400)</h1><p></p>
+        </body>
+        </html>
+
+
+        TXT;
 }

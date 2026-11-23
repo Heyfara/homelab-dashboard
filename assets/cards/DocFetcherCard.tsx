@@ -20,14 +20,15 @@ export type DocFetcherSite = {
   errors: string[]
 }
 
-export type DocFetcherRun = { startedAt: string; state: RunState; manual: boolean; imported: number }
+/** error : cause du plantage quand le passage n'a pas pu écrire son rapport, sinon null */
+export type DocFetcherRun = { startedAt: string; state: RunState; manual: boolean; imported: number; error: string | null }
 
 export type DocFetcherDocument = { id: number; title: string; created: string | null; site: string; importedAt: string; url: string | null }
 
 /** Données de DocFetcherCard::fetch() côté PHP. */
 export type DocFetcherData = {
   schedule: string | null
-  lastRun: { startedAt: string; finishedAt: string | null; state: RunState; manual: boolean } | null
+  lastRun: { startedAt: string; finishedAt: string | null; state: RunState; manual: boolean; error: string | null } | null
   /** Le cron n'est pas repassé depuis stale_days */
   stale: boolean
   sites: DocFetcherSite[]
@@ -53,7 +54,7 @@ export function siteStatus(site: DocFetcherSite): string {
 function runLabel(run: DocFetcherRun): string {
   const docs = run.imported === 0 ? 'aucun document importé' : `${run.imported} ${run.imported > 1 ? 'documents importés' : 'document importé'}`
 
-  return `Passage du ${new Date(run.startedAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}${run.manual ? ' (manuel)' : ''} : ${STATES[run.state] ?? run.state}, ${docs}`
+  return `Passage du ${new Date(run.startedAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}${run.manual ? ' (manuel)' : ''} : ${STATES[run.state] ?? run.state}, ${run.error ?? docs}`
 }
 
 export const DocFetcherCard: CardComponent<{ title: string }, DocFetcherData> = ({ card, result }) => {
@@ -97,6 +98,13 @@ export const DocFetcherCard: CardComponent<{ title: string }, DocFetcherData> = 
               </li>
             ))}
           </ul>
+
+          {data.lastRun?.state === 'failed' && data.lastRun.error && (
+            <p role="alert" title={data.lastRun.error} className="flex items-start gap-1.5 rounded-lg bg-rose-500/10 px-2.5 py-1.5 text-xs text-rose-800 dark:text-rose-200">
+              <AlertIcon className="mt-px size-3.5 shrink-0" />
+              <span className="line-clamp-2">Dernier passage en échec : {data.lastRun.error}</span>
+            </p>
+          )}
 
           {blocked && (
             <p role="alert" className="flex items-start gap-1.5 rounded-lg bg-amber-500/10 px-2.5 py-1.5 text-xs text-amber-800 dark:text-amber-200">

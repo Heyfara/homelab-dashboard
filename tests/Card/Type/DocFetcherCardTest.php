@@ -77,7 +77,7 @@ final class DocFetcherCardTest extends TestCase
     {
         $data = $this->fetch();
 
-        self::assertSame(['startedAt' => '2026-10-19T07:30:01+02:00', 'finishedAt' => '2026-10-19T07:31:12+02:00', 'state' => 'action', 'manual' => false], $data['lastRun']);
+        self::assertSame(['startedAt' => '2026-10-19T07:30:01+02:00', 'finishedAt' => '2026-10-19T07:31:12+02:00', 'state' => 'action', 'manual' => false, 'error' => null], $data['lastRun']);
         self::assertSame('chaque lundi à 7 h 30', $data['schedule']);
         self::assertFalse($data['stale']);
     }
@@ -100,6 +100,19 @@ final class DocFetcherCardTest extends TestCase
         self::assertTrue($data['lastRun']['manual']);
     }
 
+    public function testCrashedRunShowsItsError(): void
+    {
+        $card = new DocFetcherCard(DocFetcherStatusReaderTest::reader([
+            ['body' => "Traceback…\nRuntimeError: Paperless injoignable\n", 'type' => 'fail', 'date' => '2026-10-20T01:00:02+02:00', 'duration' => 1.0],
+            ...HealthchecksClientTest::docFetcherReports(),
+        ]), '2026-10-21T09:00:00+02:00');
+        $data = $card->fetch($this->instance($card), $this->dashboard);
+
+        self::assertSame(['startedAt' => '2026-10-20T01:00:01+02:00', 'finishedAt' => '2026-10-20T01:00:02+02:00', 'state' => 'failed', 'manual' => false, 'error' => 'RuntimeError: Paperless injoignable'], $data['lastRun']);
+        self::assertSame('RuntimeError: Paperless injoignable', array_last($data['history'])['error']);
+        self::assertCount(2, $data['sites'], 'état des sites : celui du dernier passage qui les a vus');
+    }
+
     public function testLatestStateOfEachSiteSortedByLabel(): void
     {
         self::assertSame([
@@ -111,10 +124,10 @@ final class DocFetcherCardTest extends TestCase
     public function testHistoryOldestFirst(): void
     {
         self::assertSame([
-            ['startedAt' => '2026-10-05T07:30:01+02:00', 'state' => 'ok', 'manual' => false, 'imported' => 0],
-            ['startedAt' => '2026-10-12T07:30:01+02:00', 'state' => 'failed', 'manual' => false, 'imported' => 0],
-            ['startedAt' => '2026-10-14T21:02:00+02:00', 'state' => 'ok', 'manual' => true, 'imported' => 2],
-            ['startedAt' => '2026-10-19T07:30:01+02:00', 'state' => 'action', 'manual' => false, 'imported' => 1],
+            ['startedAt' => '2026-10-05T07:30:01+02:00', 'state' => 'ok', 'manual' => false, 'imported' => 0, 'error' => null],
+            ['startedAt' => '2026-10-12T07:30:01+02:00', 'state' => 'failed', 'manual' => false, 'imported' => 0, 'error' => null],
+            ['startedAt' => '2026-10-14T21:02:00+02:00', 'state' => 'ok', 'manual' => true, 'imported' => 2, 'error' => null],
+            ['startedAt' => '2026-10-19T07:30:01+02:00', 'state' => 'action', 'manual' => false, 'imported' => 1, 'error' => null],
         ], $this->fetch()['history']);
     }
 

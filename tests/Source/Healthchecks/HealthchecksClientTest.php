@@ -4,12 +4,16 @@ namespace App\Tests\Source\Healthchecks;
 
 use App\Source\Healthchecks\HealthchecksCheck;
 use App\Source\Healthchecks\HealthchecksClient;
+use App\Source\Healthchecks\HealthchecksReport;
 use App\Source\SourceUnavailableException;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
+/**
+ * @phpstan-type EndPing array{body: string, type: 'success'|'fail', date: string, duration: ?float}
+ */
 final class HealthchecksClientTest extends TestCase
 {
     private const URL = 'https://healthchecks.test';
@@ -32,7 +36,7 @@ final class HealthchecksClientTest extends TestCase
     /**
      * Client HTTP vers une instance Healthchecks fictive.
      *
-     * @param array<string, list<string>>|null $reports rapports par check (slug), le plus récent d'abord ; sinon ceux de homelab()
+     * @param array<string, list<string|EndPing>>|null $reports rapports par check (slug), le plus récent d'abord ; sinon ceux de homelab()
      */
     public static function httpClient(?array $reports = null): MockHttpClient
     {
@@ -48,8 +52,11 @@ final class HealthchecksClientTest extends TestCase
      * sentinelle (rapport = tests/fixtures/backup-status.json) et doc-fetcher
      * (un rapport par passage de tests/fixtures/doc-fetcher-status.json).
      *
-     * @param array<string, mixed>             $query
-     * @param array<string, list<string>>|null $reports rapports par check (slug), le plus récent d'abord
+     * Un rapport est le contenu du ping de fin ; son type (succès, échec) se
+     * déduit de l'état du passage, sauf ping décrit en entier (EndPing).
+     *
+     * @param array<string, mixed>                     $query
+     * @param array<string, list<string|EndPing>>|null $reports rapports par check (slug), le plus récent d'abord
      */
     public static function homelab(string $path, array $query = [], ?array $reports = null): MockResponse
     {
@@ -66,16 +73,25 @@ final class HealthchecksClientTest extends TestCase
 
         if (isset($m[2])) {
             // Ping n° 2 (N - i) : rapport i (0 = le plus récent)
-            return new MockResponse($list[\count($list) - intdiv((int) $m[2], 2)]);
+            $report = $list[\count($list) - intdiv((int) $m[2], 2)];
+
+            return new MockResponse(\is_string($report) ? $report : $report['body']);
         }
 
         // Le plus récent d'abord : chaque passage = un ping de début puis un ping de fin avec rapport.
         $pings = [['type' => 'log', 'n' => 2 * \count($list) + 1, 'body_url' => null]];
         foreach ($list as $i => $report) {
             $n = 2 * (\count($list) - $i);
-            $json = json_decode($report, true);
-            $failed = 'failed' === ($json['run']['state'] ?? $json['state'] ?? null);
-            $pings[] = ['type' => $failed ? 'fail' : 'success', 'n' => $n, 'body_url' => \sprintf('https://healthchecks.test/api/v3/checks/u-%s/pings/%d/body', $m[1], $n)];
+            if (\is_string($report)) {
+                $json = json_decode($report, true);
+                $run = $json['run'] ?? $json;
+                $report = [
+                    'type' => 'failed' === ($run['state'] ?? null) ? 'fail' : 'success',
+                    'date' => $run['finished_at'] ?? $run['started_at'] ?? '2026-10-19T07:31:12+02:00',
+                    'duration' => null,
+                ];
+            }
+            $pings[] = ['type' => $report['type'], 'n' => $n, 'date' => $report['date'], 'duration' => $report['duration'], 'body_url' => \sprintf('https://healthchecks.test/api/v3/checks/u-%s/pings/%d/body', $m[1], $n)];
             $pings[] = ['type' => 'start', 'n' => $n - 1, 'body_url' => null];
         }
 
@@ -111,6 +127,21 @@ final class HealthchecksClientTest extends TestCase
     public function testFewerReportsThanAsked(): void
     {
         self::assertCount(4, $this->client()->reports(self::URL, 'doc-fetcher', 12));
+    }
+
+    public function testEndPingsWithDateAndOutcome(): void
+    {
+        $client = $this->client(static fn (string $path, array $query): MockResponse => self::homelab($path, $query, ['doc-fetcher' => [
+            ['body' => "Traceback…\nRuntimeError: boum\n", 'type' => 'fail', 'date' => '2026-11-23T00:00:02+00:00', 'duration' => 1.5],
+            ...\array_slice(self::docFetcherReports(), 0, 1),
+        ]]));
+
+        $pings = $client->endPings(self::URL, 'doc-fetcher', 12);
+
+        self::assertEquals([
+            new HealthchecksReport(new \DateTimeImmutable('2026-11-23T00:00:02+00:00'), true, 1.5, "Traceback…\nRuntimeError: boum\n"),
+            new HealthchecksReport(new \DateTimeImmutable('2026-10-19T07:31:12+02:00'), false, null, self::docFetcherReports()[0]),
+        ], $pings);
     }
 
     public function testCheckNeverPinged(): void

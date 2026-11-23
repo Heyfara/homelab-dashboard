@@ -8,16 +8,16 @@ const card: CardView<{ title: string }> = { id: 'd', type: 'doc-fetcher', title:
 const daysAgo = (d: number) => new Date(Date.now() - d * 86_400_000).toISOString()
 const data: DocFetcherData = {
   schedule: 'chaque lundi à 7 h 30',
-  lastRun: { startedAt: daysAgo(3), finishedAt: daysAgo(3), state: 'action', manual: false },
+  lastRun: { startedAt: daysAgo(3), finishedAt: daysAgo(3), state: 'action', manual: false, error: null },
   stale: false,
   sites: [
     { name: 'impots', label: 'Impôts', state: 'action', checkedAt: daysAgo(2), found: null, missing: null, errors: ['appareil non reconnu, code mail requis : lancer run.sh --site impots'] },
     { name: 'paie', label: 'Paie', state: 'ok', checkedAt: daysAgo(2), found: 12, missing: 1, errors: [] },
   ],
   history: [
-    { startedAt: '2026-10-05T07:30:01+02:00', state: 'ok', manual: false, imported: 0 },
-    { startedAt: '2026-10-12T07:30:01+02:00', state: 'failed', manual: false, imported: 0 },
-    { startedAt: '2026-10-19T07:30:01+02:00', state: 'action', manual: false, imported: 1 },
+    { startedAt: '2026-10-05T07:30:01+02:00', state: 'ok', manual: false, imported: 0, error: null },
+    { startedAt: '2026-10-12T07:30:01+02:00', state: 'failed', manual: false, imported: 0, error: 'RuntimeError: Paperless injoignable' },
+    { startedAt: '2026-10-19T07:30:01+02:00', state: 'action', manual: false, imported: 1, error: null },
   ],
   importedTotal: 1,
   documents: [{ id: 412, title: 'Bulletin septembre 2026', created: '2026-09-30', site: 'Paie', importedAt: daysAgo(2), url: 'https://papiers.example/documents/412/details' }],
@@ -63,6 +63,7 @@ describe('DocFetcherCard', () => {
     const runs = screen.getAllByRole('img', { name: /Passage du/ })
     expect(runs).toHaveLength(3)
     expect(runs[1]!.getAttribute('aria-label')).toContain('échec')
+    expect(runs[1]!.getAttribute('aria-label')).toContain('Paperless injoignable')
     expect(runs[2]!.getAttribute('aria-label')).toContain('1 document importé')
   })
 
@@ -77,6 +78,13 @@ describe('DocFetcherCard', () => {
     render(<DocFetcherCard card={card} result={result({ ...data, documents: [], importedTotal: 0 })} />)
 
     expect(screen.getByText('Aucun document importé récemment')).toBeTruthy()
+  })
+
+  it('dernier passage planté avant tout site : sa cause en clair', () => {
+    const crashed = { ...data, lastRun: { ...data.lastRun!, state: 'failed', error: 'RuntimeError: GET /api/ui_settings/ : HTTP 400' }, sites: [data.sites[1]!] }
+    render(<DocFetcherCard card={card} result={result(crashed)} />)
+
+    expect(text(screen.getByRole('alert'))).toBe('Dernier passage en échec : RuntimeError: GET /api/ui_settings/ : HTTP 400')
   })
 
   it('cron arrêté : signalé dans l’en-tête', () => {
