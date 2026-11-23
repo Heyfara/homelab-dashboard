@@ -84,6 +84,7 @@ final readonly class DocFetcherStatusReader
                 ), array_values($s['imported'] ?? [])),
                 array_map('strval', array_values($s['errors'] ?? [])),
             ), array_values($r['sites'] ?? [])),
+            ($r['error'] ?? '') ?: null,
         );
     }
 }

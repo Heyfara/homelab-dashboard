@@ -115,6 +115,14 @@ final class DocFetcherStatusReaderTest extends TestCase
         self::assertEquals($run->finishedAt, $run->startedAt);
     }
 
+    /** Erreur avant tout site (Paperless injoignable), écrite par doc-fetcher dans son rapport. */
+    public function testRunLevelErrorInReport(): void
+    {
+        $run = self::reader(['{"run": {"started_at": "2026-11-23T01:00:01+01:00", "state": "failed", "sites": [], "error": "Paperless : HTTP 400"}}'])->status(self::URL, 'doc-fetcher', 12)->runs[0];
+
+        self::assertSame(['failed', 'Paperless : HTTP 400'], [$run->state, $run->error]);
+    }
+
     private const TRACEBACK = <<<'TXT'
         Traceback (most recent call last):
           File "/app/doc_fetcher.py", line 255, in main
