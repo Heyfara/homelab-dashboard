@@ -85,6 +85,14 @@ profiles:
         cards:
           # Horaire des boss du monde ; les coches viennent de la clé saisie dans « Ma config »
           - { type: gw2-bosses, credentials: profile, count: 4, span: 2, refresh: 300 }
+      - title: Réseau
+        tab: Réseau
+        cards:
+          # Seule dans sa section : hauteur selon le contenu. Type et nom par MAC si la Freebox se trompe.
+          - type: network
+            span: 4
+            devices:
+              "00:16:3E:00:00:01": { type: server, name: serveur }
   famille:
     name: Famille
     color: rose

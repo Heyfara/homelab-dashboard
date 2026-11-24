@@ -26,4 +26,13 @@ describe('SectionGrid', () => {
 
     expect((container.firstElementChild?.firstElementChild as HTMLElement).style.getPropertyValue('--span')).toBe('2')
   })
+
+  it('carte à hauteur libre : la section devient une pile, sans hauteur imposée', () => {
+    const { container } = render(<SectionGrid columns={4} items={[{ key: 'r', span: 4, rows: 1, autoHeight: true }]} render={(item) => <span>{item.key}</span>} />)
+
+    const stack = container.firstElementChild as HTMLElement
+    expect(stack.className).not.toContain('auto-rows-(--card-row)')
+    expect(stack.className).toContain('flex-col')
+    expect(stack.textContent).toBe('r')
+  })
 })

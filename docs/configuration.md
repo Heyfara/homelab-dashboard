@@ -26,6 +26,7 @@ Variables d'environnement liées :
 | `HEALTHCHECKS_API_KEY` | clé API (lecture-écriture) du projet Healthchecks (cartes `backups` et `doc-fetcher`) : la clé en lecture seule ne donne pas les rapports des pings. Le dashboard ne fait que lire |
 | `PAPERLESS_API_TOKEN` | jeton d'API Paperless-ngx d'un utilisateur en lecture seule (cartes `factures`) : droits « voir » sur les documents, types de document, correspondants et champs personnalisés, et accès aux factures elles-mêmes |
 | `GW2_API_KEY` | clé d'API Guild Wars 2 du compte (cartes `gw2` et `gw2-bosses`) : droits `account`, `wallet`, `progression`, `tradingpost` |
+| `FREEBOX_URL`, `FREEBOX_APP_TOKEN` | adresse de la Freebox sur le réseau local (`http://192.168.1.254`) et jeton d'application obtenu avec `bin/console dashboard:freebox-authorize` (carte `network`) |
 | `NTFY_TOKEN` | jeton ntfy d'un compte qui ne peut que lire (cloche, section `notifications`) |
 | `PROFILE_DATA_DIR` | dossier des données saisies par chaque profil : clés et réglages de « Ma config » (clés chiffrées) et ordre des cartes ; vide = `var/profiles`. En prod : un volume privé, sauvegardé |
 | `TLS_CA_FILE` | CA à approuver pour Beszel et les sondes HTTPS (CA mkcert), vide = CA du système |
@@ -121,7 +122,7 @@ les sections sont dans le même onglet n'affiche pas de barre d'onglets.
   avec le nom en minuscules sans accents (« Médias et jeux » → `/tom/medias-et-jeux`).
 - `config` et `cles` sont réservés (adresses de « Ma config »).
 - Seules les cartes de l'onglet ouvert sont chargées.
-- Icône de l'onglet : maison pour le premier, bouclier pour `Admin`, imprimante 3D pour `Atelier`, grille pour les autres.
+- Icône de l'onglet : maison pour le premier, bouclier pour `Admin`, imprimante 3D pour `Atelier`, ampoule pour `Maison`, réseau pour `Réseau`, grille pour les autres.
 - Sur ordinateur, les onglets sont dans une barre latérale toujours visible (icônes seules en dessous de 1024 px de large ; au-delà, bouton en haut de la barre pour passer en icônes seules, retenu par l'appareil) ; sur téléphone, en barre fixe en bas.
 - « Réorganiser » déplace les cartes dans leur section, comme avant : changer une
   section d'onglet garde l'ordre choisi.
@@ -1194,5 +1195,50 @@ température n'apparaît pas.
 - Même jeton que `energy` (`HOME_ASSISTANT_TOKEN`, utilisateur non admin).
 - Identifiant d'une pièce : *Paramètres → Pièces et zones*, dans l'adresse
   de la pièce (`/config/areas/area/<id>`).
+
+### `network`
+
+Onglet Réseau : débit Internet du moment (avec le maximum de la ligne et une
+courbe des dernières minutes), appareils vus par la Freebox, et ce qui est à
+vérifier (appareil sans nom, IP différente de son bail statique). Prévue pour
+être **seule dans sa section** : elle prend la hauteur de son contenu, `rows`
+est ignoré, et la section devient une pile pleine largeur. Réservé à ce type.
+
+Source : l'API Freebox OS, en lecture seule. Les débits sont relus toutes les
+`rates_refresh` secondes (flux `rates`), la liste des appareils au rythme de
+`refresh`. La courbe est gardée dans le navigateur : elle repart à zéro au
+rechargement de la page.
+
+| Option | Défaut | Rôle |
+|---|---|---|
+| `devices` | `{}` | par adresse MAC : `type` et/ou `name` pour corriger ce que devine la Freebox (les serveurs y sont des « workstation »). Types : `box`, `network`, `server`, `computer`, `laptop`, `phone`, `tablet`, `tv`, `printer`, `speaker`, `camera`, `iot`, `console`, `other` |
+| `rates_refresh` | `5` | secondes entre deux lectures des débits (2 au moins) |
+| `keep_days` | `7` | jours pendant lesquels un appareil déconnecté reste dans la liste |
+
+```yaml
+- title: Réseau
+  tab: Réseau
+  cards:
+    - type: network
+      span: 4
+      devices:
+        "00:16:3E:00:00:01": { type: server, name: alpha }
+```
+
+**Jeton Freebox** (une seule fois, depuis le réseau de la maison) :
+
+1. `FREEBOX_URL=http://<ip de la box> bin/console dashboard:freebox-authorize`
+   (en dev : `docker compose run --rm -e FREEBOX_URL=… dashboard bin/console dashboard:freebox-authorize`).
+2. Accepter « Homelab Dashboard » sur l'écran de la Freebox.
+3. Mettre le jeton affiché dans `FREEBOX_APP_TOKEN` (vault du rôle Ansible).
+4. Dans Freebox OS, *Paramètres de la Freebox → Gestion des accès →
+   Applications* : décocher **toutes** les permissions de l'application. La
+   lecture des appareils, des baux statiques et de la connexion n'en demande
+   aucune.
+
+- « Sans nom » : ni la Freebox ni `devices` ne lui donnent de nom. Souvent un
+  téléphone avec une adresse MAC privée (aléatoire), marquée « Adresse privée ».
+- L'adresse `mafreebox.freebox.fr` ne répond pas toujours depuis un container
+  (DNS) : donner l'IP de la box dans `FREEBOX_URL`.
 
 <!-- Ajouter ici chaque nouveau type de carte (voir docs/ajouter-une-carte.md). -->
