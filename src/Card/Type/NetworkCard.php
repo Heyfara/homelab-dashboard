@@ -27,9 +27,11 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
     /** Types d'appareil connus du front (icônes) */
     public const TYPES = ['box', 'network', 'server', 'computer', 'laptop', 'phone', 'tablet', 'tv', 'printer', 'speaker', 'camera', 'iot', 'console', 'other'];
 
-    /** host_type de la Freebox → type du dashboard ; le reste devient `other` */
+    /**
+     * host_type de la Freebox → type du dashboard. `workstation`, type par défaut
+     * de la Freebox, n'y est pas : il ne dit rien, le fabricant décide.
+     */
     private const FREEBOX_TYPES = [
-        'workstation' => 'computer',
         'laptop' => 'laptop',
         'smartphone' => 'phone',
         'ip_phone' => 'phone',
@@ -42,7 +44,7 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
         'networking_device' => 'network',
         'vg_console' => 'console',
         'freebox_player' => 'tv',
-        'freebox_pop' => 'box',
+        'freebox_pop' => 'tv', // le Player Pop ; le Server, routeur, n'est pas dans la liste
         'freebox_server' => 'box',
         'freebox_delta' => 'box',
         'freebox_mini' => 'box',
@@ -50,6 +52,26 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
         'freebox_hd' => 'tv',
         'freebox_wifi' => 'network',
         'freebox_repeater' => 'network',
+    ];
+
+    /** Début du nom de fabricant → type, quand la Freebox n'en sait rien */
+    private const VENDOR_TYPES = [
+        'Espressif' => 'iot',
+        'Netatmo' => 'iot',
+        'Withings' => 'iot',
+        'Nest Labs' => 'iot',
+        'Tuya' => 'iot',
+        'Shelly' => 'iot',
+        'TP-Link' => 'network',
+        'GL Technologies' => 'network',
+        'Ubiquiti' => 'network',
+        'Giga-Byte' => 'computer',
+        'ASUSTek' => 'computer',
+        'Micro-Star' => 'computer',
+        'Intel Corporate' => 'computer',
+        'Raspberry Pi' => 'server',
+        'Brother' => 'printer',
+        'Sonos' => 'speaker',
     ];
 
     public function __construct(
@@ -109,7 +131,7 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
                 'mac' => $h->mac,
                 'name' => $config['name'] ?? $h->name,
                 'vendor' => $h->vendor,
-                'type' => $config['type'] ?? self::FREEBOX_TYPES[$h->type] ?? 'other',
+                'type' => $config['type'] ?? self::FREEBOX_TYPES[$h->type] ?? self::vendorType($h->vendor),
                 'ip' => $h->ipv4,
                 'expectedIp' => $leases[$h->mac] ?? null,
                 'online' => $h->active,
@@ -123,6 +145,17 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
             <=> [!$b['online'], strtolower($b['name'] ?? $b['vendor'] ?? $b['mac'])]);
 
         return ['devices' => $devices];
+    }
+
+    private static function vendorType(?string $vendor): string
+    {
+        foreach (self::VENDOR_TYPES as $prefix => $type) {
+            if (null !== $vendor && str_starts_with(strtolower($vendor), strtolower($prefix))) {
+                return $type;
+            }
+        }
+
+        return 'other';
     }
 
     public function feeds(CardInstance $card): array

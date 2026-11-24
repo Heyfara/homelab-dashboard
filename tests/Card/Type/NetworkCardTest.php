@@ -115,7 +115,7 @@ final class NetworkCardTest extends TestCase
             'mac' => '00:16:3E:00:00:01',
             'name' => 'serveur',
             'vendor' => 'Fabricant',
-            'type' => 'computer',
+            'type' => 'other',
             'ip' => '192.168.1.2',
             'expectedIp' => '192.168.1.2',
             'online' => true,
@@ -144,6 +144,37 @@ final class NetworkCardTest extends TestCase
         $printer = $card->fetch($this->instance($card), $this->dashboard)['devices'][1];
 
         self::assertSame(['192.168.1.30', '192.168.1.31'], [$printer['ip'], $printer['expectedIp']]);
+    }
+
+    /**
+     * @return iterable<string, array{string, string, string}>
+     */
+    public static function guessedTypes(): iterable
+    {
+        // « workstation » est le type par défaut de la Freebox : il ne dit rien.
+        yield 'type par défaut, fabricant inconnu' => ['workstation', 'Fabricant', 'other'];
+        yield 'type par défaut, carte mère de PC' => ['workstation', 'Giga-Byte Technology Co.,Ltd.', 'computer'];
+        yield 'type par défaut, module ESP' => ['workstation', 'Espressif Inc.', 'iot'];
+        yield 'type par défaut, point d’accès' => ['workstation', 'GL Technologies (Hong Kong) Limited', 'network'];
+        yield 'type par défaut, station météo' => ['workstation', 'Netatmo', 'iot'];
+        yield 'type précis de la Freebox' => ['printer', 'Espressif Inc.', 'printer'];
+        yield 'Player Pop' => ['freebox_pop', 'Freebox Sas', 'tv'];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('guessedTypes')]
+    public function testGuessedType(string $freeboxType, string $vendor, string $expected): void
+    {
+        $http = new MockHttpClient(static fn (string $method, string $url) => match ((string) parse_url($url, \PHP_URL_PATH)) {
+            '/api/v8/login/' => new JsonMockResponse(['success' => true, 'result' => ['challenge' => 'c']]),
+            '/api/v8/login/session/' => new JsonMockResponse(['success' => true, 'result' => ['session_token' => 's']]),
+            '/api/v8/lan/browser/pub/' => new JsonMockResponse(['success' => true, 'result' => [
+                self::host('00:16:3E:00:00:01', 'appareil', '192.168.1.2', true, '2026-11-24T11:59:00Z', ['host_type' => $freeboxType, 'vendor_name' => $vendor]),
+            ]]),
+            '/api/v8/dhcp/static_lease/' => new JsonMockResponse(['success' => true]),
+        });
+        $card = new NetworkCard(new FreeboxClient($http, new ArrayAdapter(), 'http://box.test', 'jeton'), self::NOW);
+
+        self::assertSame($expected, $card->fetch($this->instance($card), $this->dashboard)['devices'][0]['type']);
     }
 
     public function testConfiguredNameAndTypeWin(): void

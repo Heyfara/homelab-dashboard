@@ -1211,7 +1211,7 @@ rechargement de la page.
 
 | Option | Défaut | Rôle |
 |---|---|---|
-| `devices` | `{}` | par adresse MAC : `type` et/ou `name` pour corriger ce que devine la Freebox (les serveurs y sont des « workstation »). Types : `box`, `network`, `server`, `computer`, `laptop`, `phone`, `tablet`, `tv`, `printer`, `speaker`, `camera`, `iot`, `console`, `other` |
+| `devices` | `{}` | par adresse MAC : `type` et/ou `name` pour corriger ce qui est deviné. Le type vient de la Freebox quand elle le connaît, sinon du fabricant de la carte réseau (Espressif → `iot`, TP-Link → `network`…), sinon `other`. Types : `box`, `network`, `server`, `computer`, `laptop`, `phone`, `tablet`, `tv`, `printer`, `speaker`, `camera`, `iot`, `console`, `other` |
 | `rates_refresh` | `5` | secondes entre deux lectures des débits (2 au moins) |
 | `keep_days` | `7` | jours pendant lesquels un appareil déconnecté reste dans la liste |
 
