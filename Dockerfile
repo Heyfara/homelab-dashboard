@@ -8,6 +8,10 @@ RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
     && docker-php-ext-enable apcu \
     && apk del .build-deps
 
+# Client SSH : lecture des points d'accès OpenWrt (carte network), clé limitée
+# à un seul script sur le routeur. Voir docs/architecture.md.
+RUN apk add --no-cache openssh-client
+
 COPY --from=composer:2.10.3 /usr/bin/composer /usr/bin/composer
 COPY docker/php/app.ini $PHP_INI_DIR/conf.d/zz-app.ini
 COPY docker/php/fpm-pool.conf /usr/local/etc/php-fpm.d/zz-pool.conf

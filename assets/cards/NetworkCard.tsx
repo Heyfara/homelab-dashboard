@@ -4,17 +4,25 @@ import { useSampleHistory } from '../hooks/useSampleHistory'
 import { formatRelative, formatSpeed } from '../ui/format'
 import { AlertIcon, ArrowDownIcon, ArrowUpIcon, NetworkIcon, ServerIcon } from '../ui/icons'
 import { Sparkline } from '../ui/Sparkline'
-import { countDevices, deviceLabel, filterDevices, ipMismatch, isUnknown, TYPE_LABELS, type Device, type DeviceFilter } from './network/devices'
+import { bandLabel, countDevices, countZones, deviceLabel, filterDevices, ipMismatch, isUnknown, placeLabel, TYPE_LABELS, UNCERTAIN, weakSignal, type Device, type DeviceFilter } from './network/devices'
 
 /** Props de NetworkCard::describe() côté PHP. */
 export type NetworkProps = { title: string }
 
+/** Point d'accès lu par SSH ; `error` s'il n'a pas répondu. */
+export type AccessPointInfo = { id: string; zone: string; error: string | null; uplink: string; radios: Record<string, string> }
+
 /** Données de NetworkCard::fetch() côté PHP. */
-export type NetworkData = { devices: Device[] }
+export type NetworkData = { devices: Device[]; accessPoints: AccessPointInfo[]; wiredZone: string }
+
+/** Débit d'un lien, vu de l'appareil branché : `down` = vers lui. Octets par seconde. */
+export type LinkRate = { down: number; up: number }
 
 /** Flux `rates` (NetworkCard::fetchFeed). Débits en octets par seconde. */
 export type NetworkRates = {
   wan: { state: string; media: string; down: number; up: number; maxDown: number; maxUp: number }
+  /** Par point d'accès ; `ports` vide au premier relevé (il en faut deux) */
+  accessPoints: Record<string, { error: string | null; ports: Record<string, LinkRate> }>
 }
 
 /** Mesures gardées pour les courbes : 5 min au rythme de 5 s. */
@@ -42,6 +50,8 @@ export const NetworkCard: CardComponent<NetworkProps, NetworkData> = ({ card, re
   const wan = ratesResult?.status === 'ok' ? (ratesResult.data as NetworkRates).wan : null
   const history = useSampleHistory(wan ? ratesResult!.fetchedAt : null, wan ? { down: wan.down, up: wan.up } : null, HISTORY)
   const [filter, setFilter] = useState<DeviceFilter>('all')
+  const [zone, setZone] = useState<string | null>(null)
+  const portRates = ratesResult?.status === 'ok' ? (ratesResult.data as NetworkRates).accessPoints : {}
 
   if (data === null) {
     return (
@@ -58,7 +68,8 @@ export const NetworkCard: CardComponent<NetworkProps, NetworkData> = ({ card, re
 
   const counts = countDevices(data.devices)
   const mismatches = data.devices.filter(ipMismatch)
-  const shown = filterDevices(data.devices, filter)
+  const shown = filterDevices(data.devices, filter, zone)
+  const zones = countZones(data.devices, [...data.accessPoints.map((ap) => ap.zone), data.wiredZone])
 
   return (
     <div className="flex flex-col gap-4">
@@ -102,19 +113,29 @@ export const NetworkCard: CardComponent<NetworkProps, NetworkData> = ({ card, re
         </section>
       )}
 
-      <section aria-label="Appareils" className="flex flex-col gap-2">
-        <div role="group" aria-label="Filtrer les appareils" className="flex flex-wrap gap-1.5">
-          {FILTERS.map((f) => (
-            <button
-              key={f.key}
-              type="button"
-              aria-pressed={filter === f.key}
-              onClick={() => setFilter(f.key)}
-              className="rounded-full px-3 py-1 text-sm ring-1 ring-zinc-200 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-indigo-500 aria-pressed:bg-indigo-600 aria-pressed:text-white aria-pressed:ring-indigo-600 dark:ring-slate-700 dark:hover:bg-slate-800 dark:aria-pressed:bg-indigo-500"
-            >
-              {f.label} <span className="tabular-nums opacity-70">{counts[f.key]}</span>
-            </button>
+      {data.accessPoints.length > 0 && (
+        <section aria-label="Points d’accès" className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          {data.accessPoints.map((ap) => (
+            <AccessPointPanel key={ap.id} ap={ap} devices={data.devices} rates={portRates[ap.id]?.ports ?? {}} />
           ))}
+        </section>
+      )}
+
+      <section aria-label="Appareils" className="flex flex-col gap-2">
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
+          <div role="group" aria-label="Filtrer les appareils" className="flex flex-wrap gap-1.5">
+            {FILTERS.map((f) => (
+              <Chip key={f.key} pressed={filter === f.key} onClick={() => setFilter(f.key)} label={f.label} count={counts[f.key]} />
+            ))}
+          </div>
+          {zones.length > 1 && (
+            <div role="group" aria-label="Filtrer par position" className="flex flex-wrap gap-1.5">
+              <Chip pressed={zone === null} onClick={() => setZone(null)} label="Toutes" />
+              {zones.map((z) => (
+                <Chip key={z.zone} pressed={zone === z.zone} onClick={() => setZone(z.zone)} label={z.zone === UNCERTAIN ? 'Incertaine' : z.zone} count={z.count} />
+              ))}
+            </div>
+          )}
         </div>
         <ul className="divide-y divide-zinc-100 dark:divide-slate-800">
           {shown.map((d) => (
@@ -122,6 +143,69 @@ export const NetworkCard: CardComponent<NetworkProps, NetworkData> = ({ card, re
           ))}
         </ul>
       </section>
+    </div>
+  )
+}
+
+function Chip({ pressed, onClick, label, count }: { pressed: boolean; onClick: () => void; label: string; count?: number }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={pressed}
+      onClick={onClick}
+      className="rounded-full px-3 py-1 text-sm ring-1 ring-zinc-200 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-indigo-500 aria-pressed:bg-indigo-600 aria-pressed:text-white aria-pressed:ring-indigo-600 dark:ring-slate-700 dark:hover:bg-slate-800 dark:aria-pressed:bg-indigo-500"
+    >
+      {label} {count !== undefined && <span className="tabular-nums opacity-70">{count}</span>}
+    </button>
+  )
+}
+
+/** Un point d'accès : lien vers le switch, radios, puis ports câblés utilisés. */
+function AccessPointPanel({ ap, devices, rates }: { ap: AccessPointInfo; devices: Device[]; rates: Record<string, LinkRate> }) {
+  const on = (port: string) => devices.filter((d) => d.online && d.place?.ap === ap.id && d.place.port === port)
+  const radios = Object.entries(ap.radios).sort(([, a], [, b]) => Number(a) - Number(b))
+  const cables = [...new Set([...Object.keys(rates), ...devices.filter((d) => d.place?.ap === ap.id && d.place.link === 'cable').map((d) => d.place!.port!)])]
+    .filter((port) => port !== ap.uplink && !(port in ap.radios))
+    .filter((port) => on(port).length > 0 || (rates[port] !== undefined && rates[port].down + rates[port].up > 0))
+    .sort()
+
+  return (
+    <div className="flex flex-col gap-1 rounded-xl bg-zinc-50 p-3 dark:bg-slate-800/60">
+      <p className="flex items-baseline gap-2">
+        <span className="font-semibold text-zinc-900 dark:text-slate-50">{ap.zone}</span>
+        <span className="text-xs text-zinc-500 dark:text-slate-400">{ap.id}</span>
+      </p>
+      {ap.error !== null ? (
+        <p className="flex items-start gap-2 text-sm text-amber-800 dark:text-amber-200">
+          <AlertIcon className="mt-0.5 size-4 shrink-0" />
+          {ap.error}
+        </p>
+      ) : (
+        <>
+          <PortLine label={`Vers le switch (${ap.uplink})`} rate={rates[ap.uplink]} />
+          {radios.map(([port, band]) => {
+            const n = on(port).length
+            return <PortLine key={port} label={`Wi-Fi ${bandLabel(band)}`} detail={`${n} appareil${n > 1 ? 's' : ''}`} rate={rates[port]} />
+          })}
+          {cables.map((port) => (
+            <PortLine key={port} label={`Câble ${port}`} detail={on(port).map(deviceLabel).join(', ')} rate={rates[port]} />
+          ))}
+        </>
+      )}
+    </div>
+  )
+}
+
+function PortLine({ label, detail, rate }: { label: string; detail?: string; rate: LinkRate | undefined }) {
+  return (
+    <div role="group" aria-label={label} className="flex items-baseline gap-2 text-sm">
+      <span className="shrink-0 text-zinc-700 dark:text-slate-200">{label}</span>
+      <span className="min-w-0 flex-1 truncate text-xs text-zinc-500 dark:text-slate-400">{detail}</span>
+      {rate !== undefined && (
+        <span className="shrink-0 text-xs whitespace-nowrap tabular-nums">
+          <span className="text-down">↓ {formatSpeed(rate.down)}</span> <span className="text-up">↑ {formatSpeed(rate.up)}</span>
+        </span>
+      )}
     </div>
   )
 }
@@ -167,7 +251,7 @@ function DeviceRow({ device: d }: { device: Device }) {
   const unknown = isUnknown(d)
 
   return (
-    <li className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-0.5 py-2 text-sm md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_8rem]">
+    <li className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-0.5 py-2 text-sm md:grid-cols-[minmax(0,2fr)_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_8rem]">
       <div className="flex min-w-0 items-center gap-2">
         <span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${d.online ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-slate-600'}`} />
         <div className="min-w-0">
@@ -180,6 +264,7 @@ function DeviceRow({ device: d }: { device: Device }) {
           </p>
         </div>
       </div>
+      <Position device={d} className="hidden md:block" />
       <p className="text-right font-mono text-xs text-zinc-700 md:text-left dark:text-slate-300">
         {d.ip ?? '—'}
         {ipMismatch(d) && (
@@ -189,10 +274,26 @@ function DeviceRow({ device: d }: { device: Device }) {
         )}
       </p>
       <p className="hidden truncate font-mono text-xs text-zinc-500 md:block dark:text-slate-400">{d.mac}</p>
+      <Position device={d} className="col-span-2 md:hidden" />
       <p className="col-span-2 text-xs text-zinc-500 md:col-span-1 md:text-right dark:text-slate-400">
         <span className="font-mono md:hidden">{d.mac} · </span>
         {d.online ? 'En ligne' : d.lastSeen !== null ? `Vu ${formatRelative(d.lastSeen)}` : 'Hors ligne'}
       </p>
     </li>
+  )
+}
+
+function Position({ device: d, className }: { device: Device; className: string }) {
+  const p = d.place
+  if (p === null) {
+    return <p className={`${className} truncate text-xs text-zinc-500 italic dark:text-slate-400`}>{d.online ? UNCERTAIN : ''}</p>
+  }
+
+  return (
+    <p className={`${className} truncate text-xs text-zinc-700 dark:text-slate-300`}>
+      {placeLabel(p)}
+      {p.signal !== null && <span className={weakSignal(p) ? 'text-amber-700 dark:text-amber-300' : 'text-zinc-500 dark:text-slate-400'}> · {p.signal} dBm</span>}
+      {p.seenAt !== null && <span className="text-zinc-500 dark:text-slate-400"> · vu {formatRelative(p.seenAt)}</span>}
+    </p>
   )
 }
