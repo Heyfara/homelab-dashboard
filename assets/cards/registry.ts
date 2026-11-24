@@ -24,6 +24,7 @@ import { Gw2BossesCard } from './Gw2BossesCard'
 import { JeluCard } from './JeluCard'
 import { MinecraftCard } from './MinecraftCard'
 import { MusicAssistantCard } from './MusicAssistantCard'
+import { NetworkCard } from './NetworkCard'
 import { WeatherCard } from './WeatherCard'
 import { RommCard } from './RommCard'
 import { ServiceCard } from './ServiceCard'
@@ -79,4 +80,11 @@ export const cardRegistry: Record<string, CardComponent> = {
   gw2: Gw2Card,
   'gw2-bosses': Gw2BossesCard,
   romm: RommCard,
+  network: NetworkCard,
 }
+
+/**
+ * Types dont la carte prend la hauteur de son contenu au lieu de `rows`
+ * rangées. Réservé à l'onglet Réseau, pas une option du YAML.
+ */
+export const autoHeightTypes = new Set(['network'])

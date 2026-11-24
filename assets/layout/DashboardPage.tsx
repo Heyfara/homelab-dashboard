@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { fetchDashboard, resetLayout, saveLayout } from '../http/client'
 import { snapshots } from '../http/snapshots'
+import { autoHeightTypes } from '../cards/registry'
 import type { CardView, DashboardView } from '../http/types'
 import { useJson } from '../hooks/useJson'
 import { profileBadge } from '../ui/profileColors'
@@ -239,7 +240,7 @@ export function DashboardPage({
           </h2>
           <SectionGrid
             columns={section.columns}
-            items={section.cards.map((card) => ({ ...card, key: card.id }))}
+            items={section.cards.map((card) => ({ ...card, key: card.id, autoHeight: autoHeightTypes.has(card.type) }))}
             render={(card) => {
               const position = section.cards.findIndex((c) => c.id === card.id)
               return (
