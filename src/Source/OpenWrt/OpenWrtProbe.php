@@ -2,6 +2,7 @@
 
 namespace App\Source\OpenWrt;
 
+use App\Network\ApSnapshot;
 use App\Source\SourceUnavailableException;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
@@ -34,7 +35,7 @@ final readonly class OpenWrtProbe
         $this->clock = $clock ?? static fn (): float => microtime(true);
     }
 
-    public function snapshot(string $address): OpenWrtSnapshot
+    public function snapshot(string $address): ApSnapshot
     {
         $dir = rtrim($this->sshDir, '/');
         if ('' === $this->sshDir || !is_file($dir.'/id_ed25519') || !is_file($dir.'/known_hosts')) {
@@ -53,7 +54,7 @@ final readonly class OpenWrtProbe
             throw new SourceUnavailableException(\sprintf('%s injoignable en SSH : %s', $address, trim($err) ?: 'code '.$code));
         }
 
-        return OpenWrtSnapshot::fromJson($out, $readAt);
+        return ApSnapshot::fromJson($out, $readAt);
     }
 
     /**

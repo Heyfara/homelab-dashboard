@@ -1,21 +1,23 @@
 <?php
 
-namespace App\Source\OpenWrt;
+namespace App\Network;
 
 use App\Source\SourceUnavailableException;
 
 /**
- * Relevé d'un point d'accès OpenWrt, tel que l'écrit le script dashboard-probe
- * (rôle Ansible openwrt-dashboard-probe).
+ * Relevé d'un point d'accès : ce qu'il voit à l'instant `readAt`. Les points
+ * d'accès OpenWrt le donnent entier (script dashboard-probe du rôle Ansible
+ * openwrt-dashboard-probe, lu par fromJson) ; l'Archer TP-Link ne donne que
+ * ses appareils associés, sans signal.
  */
-final readonly class OpenWrtSnapshot
+final readonly class ApSnapshot
 {
     /**
      * @param float                                                       $readAt   instant du relevé côté dashboard (s, à la microseconde)
      * @param array<string, array{int, int}>                              $ports    octets [reçus, émis] par port du bridge
      * @param array<string, float>                                        $radios   fréquence de chaque radio (GHz)
      * @param list<array{mac: string, port: string, age: float}>          $fdb      MAC apprises par le bridge, âge en s
-     * @param list<array{mac: string, radio: string, signal: int, inactive: int}> $stations appareils associés, inactivité en ms
+     * @param list<array{mac: string, radio: string, signal: ?int, inactive: int}> $stations appareils associés, inactivité en ms
      */
     public function __construct(
         public float $readAt,

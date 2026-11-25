@@ -2,7 +2,6 @@
 
 namespace App\Network;
 
-use App\Source\OpenWrt\OpenWrtSnapshot;
 
 /**
  * Position de chaque appareil, déduite de ce que voient les points d'accès :
@@ -32,7 +31,7 @@ final readonly class Placement
     /**
      * @param list<string>                    $macs           appareils à placer (MAJUSCULES)
      * @param array<string, AccessPoint>      $aps
-     * @param array<string, ?OpenWrtSnapshot> $snapshots      par point d'accès, null s'il n'a pas répondu
+     * @param array<string, ?ApSnapshot> $snapshots      par point d'accès, null s'il n'a pas répondu
      * @param list<string>                    $infrastructure MAC des points d'accès eux-mêmes
      * @param array<string, mixed>            $memory
      *
@@ -46,6 +45,8 @@ final readonly class Placement
             if (null === $s || !isset($aps[$id])) {
                 continue;
             }
+            // Daté par le relevé, pas par maintenant : un relevé gardé en cache ne passe pas devant un plus frais.
+            $at = (int) floor($s->readAt);
             foreach ($s->fdb as $f) {
                 if ($f['age'] > self::FDB_FRESH) {
                     continue;
@@ -58,14 +59,14 @@ final readonly class Placement
                 self::keepFreshest($seen, $f['mac'], [
                     'ap' => $id, 'link' => $wifi ? 'wifi' : 'cable', 'port' => $f['port'],
                     'band' => $wifi ? self::band($s->radios[$f['port']]) : null, 'signal' => null,
-                    'at' => $now - (int) round($f['age']),
+                    'at' => $at - (int) round($f['age']),
                 ]);
             }
             foreach ($s->stations as $st) {
                 self::keepFreshest($seen, $st['mac'], [
                     'ap' => $id, 'link' => 'wifi', 'port' => $st['radio'],
                     'band' => isset($s->radios[$st['radio']]) ? self::band($s->radios[$st['radio']]) : null,
-                    'signal' => $st['signal'], 'at' => $now - intdiv($st['inactive'], 1000),
+                    'signal' => $st['signal'], 'at' => $at - intdiv($st['inactive'], 1000),
                 ], preferSignal: true);
             }
         }

@@ -13,7 +13,7 @@ export type NetworkProps = { title: string }
 
 /** Point d'accès lu par SSH ; `error` s'il n'a pas répondu. */
 /** `device` : MAC de l'appareil du point d'accès lui-même, s'il est dans la liste. */
-export type AccessPointInfo = { id: string; zone: string; error: string | null; uplink: string; radios: Record<string, string>; device: string | null }
+export type AccessPointInfo = { id: string; zone: string; error: string | null; uplink: string; radios: Record<string, string>; device: string | null; kind: 'openwrt' | 'tplink' }
 
 /** Données de NetworkCard::fetch() côté PHP. */
 export type NetworkData = { devices: Device[]; accessPoints: AccessPointInfo[]; wiredZone: string }
@@ -224,7 +224,8 @@ function AccessPointPanel({ ap, devices, rates }: { ap: AccessPointInfo; devices
         </p>
       ) : (
         <>
-          <PortLine label={`Vers le switch (${ap.uplink})`} rate={rates[ap.uplink]} />
+          {/* Un point d'accès TP-Link ne donne pas les compteurs de ses ports. */}
+          {ap.kind === 'openwrt' && <PortLine label={`Vers le switch (${ap.uplink})`} rate={rates[ap.uplink]} />}
           {radios.map(([port, band]) => {
             const n = on(port).length
             return <PortLine key={port} label={`Wi-Fi ${bandLabel(band)}`} detail={`${n} appareil${n > 1 ? 's' : ''}`} rate={rates[port]} />

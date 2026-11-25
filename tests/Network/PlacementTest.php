@@ -4,7 +4,7 @@ namespace App\Tests\Network;
 
 use App\Network\AccessPoint;
 use App\Network\Placement;
-use App\Source\OpenWrt\OpenWrtSnapshot;
+use App\Network\ApSnapshot;
 use PHPUnit\Framework\TestCase;
 
 final class PlacementTest extends TestCase
@@ -29,9 +29,9 @@ final class PlacementTest extends TestCase
      * @param list<array{string, string, float}>   $fdb
      * @param list<array{string, string, int, int}> $stations
      */
-    private static function snapshot(array $fdb = [], array $stations = []): OpenWrtSnapshot
+    private static function snapshot(array $fdb = [], array $stations = []): ApSnapshot
     {
-        return OpenWrtSnapshot::fromArray([
+        return ApSnapshot::fromArray([
             'time' => self::NOW,
             'ports' => ['eth1' => [0, 0], 'lan2' => [0, 0], 'ra0' => [0, 0], 'rax0' => [0, 0]],
             'radios' => ['ra0' => 2.467, 'rax0' => 5.62],
@@ -41,7 +41,7 @@ final class PlacementTest extends TestCase
     }
 
     /**
-     * @param array<string, ?OpenWrtSnapshot> $snapshots
+     * @param array<string, ?ApSnapshot> $snapshots
      * @param array<string, mixed>            $memory
      * @param list<string>                    $macs
      *
@@ -142,6 +142,20 @@ final class PlacementTest extends TestCase
         [$places] = $this->place(['flint' => null], $memory, now: self::NOW + 60);
 
         self::assertSame(['flint', 'lan2', self::NOW], [$places[self::PC]['ap'], $places[self::PC]['port'], $places[self::PC]['seenAt']]);
+    }
+
+    public function testOldSnapshotDoesNotBeatAFreshOne(): void
+    {
+        // L'Archer n'est relu qu'une fois par minute : son relevé gardé en cache date.
+        $this->aps['archer'] = new AccessPoint('archer', '192.168.1.133', 'Étage', 'eth1');
+        $old = new ApSnapshot(self::NOW - 50, [], ['wlan2g' => 2.4], [], [['mac' => self::TABLET, 'radio' => 'wlan2g', 'signal' => null, 'inactive' => 0]]);
+
+        [$places] = $this->place([
+            'archer' => $old,
+            'flint' => self::snapshot(stations: [[self::TABLET, 'rax0', -50, 3000]]),
+        ]);
+
+        self::assertSame(['Bureau', -50], [$places[self::TABLET]['zone'], $places[self::TABLET]['signal']]);
     }
 
     public function testFreshestAccessPointWinsWhenRoaming(): void
