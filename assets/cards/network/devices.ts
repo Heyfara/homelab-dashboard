@@ -1,6 +1,22 @@
 /** Types d'appareil (NetworkCard::TYPES côté PHP). */
 export type DeviceType = 'box' | 'network' | 'server' | 'computer' | 'laptop' | 'phone' | 'tablet' | 'tv' | 'printer' | 'speaker' | 'camera' | 'iot' | 'console' | 'other'
 
+/** Position déduite des points d'accès (Placement côté PHP). */
+export type Place = {
+  zone: string
+  /** Point d'accès, null sur le switch de la baie */
+  ap: string | null
+  link: 'wifi' | 'cable' | null
+  /** Port du point d'accès : lan2, ra0… */
+  port: string | null
+  /** Bande Wi-Fi en GHz : '2.4', '5' ou '6' */
+  band: string | null
+  /** Signal en dBm */
+  signal: number | null
+  /** Plus vu à cet endroit depuis : la position est gardée quelques minutes */
+  seenAt: string | null
+}
+
 /** Un appareil de NetworkCard::fetch(). */
 export type Device = {
   mac: string
@@ -14,6 +30,8 @@ export type Device = {
   lastSeen: string | null
   /** Adresse MAC privée (aléatoire), fréquente sur les téléphones */
   randomMac: boolean
+  /** null : position incertaine, ou appareil hors ligne jamais placé */
+  place: Place | null
 }
 
 export type DeviceFilter = 'all' | 'online' | 'unknown'
@@ -47,13 +65,36 @@ export const isUnknown = (d: Device) => d.name === null
 /** L'appareil n'a pas l'adresse que lui réserve la Freebox. */
 export const ipMismatch = (d: Device) => d.expectedIp !== null && d.ip !== null && d.ip !== d.expectedIp
 
+/** Zone des appareils en ligne qu'aucun point d'accès ne situe. */
+export const UNCERTAIN = 'Position incertaine'
+
+export const bandLabel = (band: string) => `${band.replace('.', ',')} GHz`
+
+export function placeLabel(p: Place): string {
+  if (p.link === 'wifi') return `${p.zone} · Wi-Fi${p.band !== null ? ` ${bandLabel(p.band)}` : ''}`
+  return `${p.zone} · câble${p.ap !== null && p.port !== null ? ` ${p.port}` : ''}`
+}
+
+/** Au-dessous, la connexion devient instable. */
+export const weakSignal = (p: Place) => p.signal !== null && p.signal < -75
+
+export const zoneOf = (d: Device): string | null => d.place?.zone ?? (d.online ? UNCERTAIN : null)
+
+/** Nombre d'appareils par zone, dans l'ordre donné ; les zones vides sont omises. */
+export function countZones(devices: Device[], zones: string[]): { zone: string; count: number }[] {
+  return [...zones, UNCERTAIN]
+    .map((zone) => ({ zone, count: devices.filter((d) => zoneOf(d) === zone).length }))
+    .filter((z) => z.count > 0)
+}
+
 const FILTERS: Record<DeviceFilter, (d: Device) => boolean> = {
   all: () => true,
   online: (d) => d.online,
   unknown: isUnknown,
 }
 
-export const filterDevices = (devices: Device[], filter: DeviceFilter) => devices.filter(FILTERS[filter])
+export const filterDevices = (devices: Device[], filter: DeviceFilter, zone: string | null = null) =>
+  devices.filter((d) => FILTERS[filter](d) && (zone === null || zoneOf(d) === zone))
 
 export const countDevices = (devices: Device[]): Record<DeviceFilter, number> => ({
   all: devices.length,

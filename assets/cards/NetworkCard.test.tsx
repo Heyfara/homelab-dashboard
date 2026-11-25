@@ -16,6 +16,7 @@ const device = (d: Partial<Device>): Device => ({
   online: true,
   lastSeen: new Date().toISOString(),
   randomMac: false,
+  place: { zone: 'Baie', ap: null, link: 'cable', port: null, band: null, signal: null, seenAt: null },
   ...d,
 })
 
@@ -23,11 +24,18 @@ const data: NetworkData = {
   devices: [
     device({}),
     device({ mac: '00:16:3E:00:00:02', name: 'imprimante', type: 'printer', ip: '192.168.1.30', expectedIp: '192.168.1.31' }),
-    device({ mac: 'DA:A1:19:00:00:05', name: null, vendor: null, type: 'other', ip: '192.168.1.60', expectedIp: null, randomMac: true }),
-    device({ mac: '00:16:3E:00:00:03', name: 'ancien-portable', type: 'laptop', online: false, lastSeen: new Date(Date.now() - 3 * 3600_000).toISOString(), expectedIp: null }),
+    device({ mac: 'DA:A1:19:00:00:05', name: null, vendor: null, type: 'other', ip: '192.168.1.60', expectedIp: null, randomMac: true, place: null }),
+    device({ mac: '00:16:3E:00:00:03', name: 'ancien-portable', type: 'laptop', online: false, lastSeen: new Date(Date.now() - 3 * 3600_000).toISOString(), expectedIp: null, place: null }),
+    device({ mac: '00:16:3E:00:00:06', name: 'pc-bureau', type: 'computer', ip: '192.168.1.70', expectedIp: null, place: { zone: 'Bureau', ap: 'flint', link: 'cable', port: 'lan2', band: null, signal: null, seenAt: null } }),
+    device({ mac: '00:16:3E:00:00:07', name: 'tablette', type: 'tablet', ip: '192.168.1.71', expectedIp: null, place: { zone: 'Bureau', ap: 'flint', link: 'wifi', port: 'rax0', band: '5', signal: -80, seenAt: new Date(Date.now() - 120_000).toISOString() } }),
   ],
+  accessPoints: [{ id: 'flint', zone: 'Bureau', error: null, uplink: 'eth1', radios: { ra0: '2.4', rax0: '5' } }],
+  wiredZone: 'Baie',
 }
-const rates: NetworkRates = { wan: { state: 'up', media: 'ftth', down: 2_500_000, up: 40_000, maxDown: 125_000_000, maxUp: 87_500_000 } }
+const rates: NetworkRates = {
+  wan: { state: 'up', media: 'ftth', down: 2_500_000, up: 40_000, maxDown: 125_000_000, maxUp: 87_500_000 },
+  accessPoints: { flint: { error: null, ports: { eth1: { down: 3_000_000, up: 100_000 }, lan2: { down: 1_500_000, up: 20_000 }, ra0: { down: 0, up: 0 }, rax0: { down: 4_000, up: 1_000 }, lan4: { down: 0, up: 0 } } } },
+}
 
 const ok = <T,>(d: T): CardResult<T> => ({ status: 'ok', data: d, error: null, fetchedAt: '2026-11-24T12:00:00+00:00' })
 const text = (el: Element) => (el.textContent ?? '').replace(/[  ]/g, ' ')
@@ -42,14 +50,14 @@ describe('NetworkCard', () => {
     expect(down).toContain('2,5 Mo/s')
     expect(down).toContain('max. 1 Gb/s')
     expect(text(screen.getByRole('group', { name: 'Montant' }))).toContain('max. 700 Mb/s')
-    expect(text(screen.getByRole('group', { name: 'Appareils' }))).toContain('3 en ligne sur 4')
+    expect(text(screen.getByRole('group', { name: 'Appareils' }))).toContain('5 en ligne sur 6')
   })
 
   it('débits pas encore lus : tuiles en attente, la liste reste là', () => {
     renderCard(null)
 
     expect(screen.getByRole('group', { name: 'Descendant' }).getAttribute('aria-busy')).toBe('true')
-    expect(screen.getAllByRole('listitem')).toHaveLength(4)
+    expect(screen.getAllByRole('listitem')).toHaveLength(6)
   })
 
   it('signale les IP qui ne suivent pas leur bail et les appareils sans nom', () => {
@@ -78,13 +86,54 @@ describe('NetworkCard', () => {
 
     const filters = screen.getByRole('group', { name: 'Filtrer les appareils' })
     fireEvent.click(within(filters).getByRole('button', { name: /En ligne/ }))
-    expect(screen.getAllByRole('listitem')).toHaveLength(3)
+    expect(screen.getAllByRole('listitem')).toHaveLength(5)
 
     const unknown = within(filters).getByRole('button', { name: /Sans nom/ })
     expect(text(unknown)).toContain('1')
     fireEvent.click(unknown)
     expect(unknown.getAttribute('aria-pressed')).toBe('true')
     expect(screen.getAllByRole('listitem')).toHaveLength(1)
+  })
+
+  it('liste : position, signal et position gardée', () => {
+    renderCard()
+
+    const row = (name: string) => text(screen.getAllByRole('listitem').find((li) => text(li).includes(name))!)
+    expect(row('pc-bureau')).toContain('Bureau · câble lan2')
+    expect(row('alpha')).toContain('Baie · câble')
+    expect(row('tablette')).toContain('Bureau · Wi-Fi 5 GHz')
+    expect(row('tablette')).toContain('-80 dBm')
+    expect(row('tablette')).toContain('il y a 2 minutes')
+    expect(row('Adresse privée')).toContain('Position incertaine')
+  })
+
+  it('filtre par position', () => {
+    renderCard()
+
+    const zones = screen.getByRole('group', { name: 'Filtrer par position' })
+    expect(text(within(zones).getByRole('button', { name: /Bureau/ }))).toContain('2')
+    fireEvent.click(within(zones).getByRole('button', { name: /Baie/ }))
+    expect(screen.getAllByRole('listitem')).toHaveLength(2)
+    fireEvent.click(within(zones).getByRole('button', { name: /Toutes/ }))
+    expect(screen.getAllByRole('listitem')).toHaveLength(6)
+  })
+
+  it('points d’accès : amont, radios et ports utilisés, avec leurs débits', () => {
+    renderCard()
+
+    const ap = within(screen.getByRole('region', { name: 'Points d’accès' }))
+    const line = (label: RegExp) => text(ap.getByRole('group', { name: label }))
+    expect(line(/Vers le switch/)).toContain('3 Mo/s')
+    expect(line(/Wi-Fi 5 GHz/)).toContain('1 appareil')
+    expect(line(/Câble lan2/)).toContain('pc-bureau')
+    expect(line(/Câble lan2/)).toContain('1,5 Mo/s')
+    expect(ap.queryByRole('group', { name: /lan4/ })).toBeNull()
+  })
+
+  it('point d’accès injoignable : signalé', () => {
+    render(<NetworkCard card={card} result={ok({ ...data, accessPoints: [{ ...data.accessPoints[0]!, error: '192.168.1.175 injoignable en SSH : délai dépassé' }] })} feeds={{ rates: ok(rates) }} />)
+
+    expect(text(screen.getByRole('region', { name: 'Points d’accès' }))).toContain('injoignable en SSH')
   })
 
   it('chargement : squelette', () => {
