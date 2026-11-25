@@ -27,6 +27,7 @@ Variables d'environnement liées :
 | `PAPERLESS_API_TOKEN` | jeton d'API Paperless-ngx d'un utilisateur en lecture seule (cartes `factures`) : droits « voir » sur les documents, types de document, correspondants et champs personnalisés, et accès aux factures elles-mêmes |
 | `GW2_API_KEY` | clé d'API Guild Wars 2 du compte (cartes `gw2` et `gw2-bosses`) : droits `account`, `wallet`, `progression`, `tradingpost` |
 | `FREEBOX_URL`, `FREEBOX_APP_TOKEN` | adresse de la Freebox sur le réseau local (`http://192.168.1.254`) et jeton d'application obtenu avec `bin/console dashboard:freebox-authorize` (carte `network`) |
+| `NETWORK_SSH_DIR` | dossier avec la clé privée SSH du dashboard (`id_ed25519`) et les clés d'hôte des points d'accès (`known_hosts`), lisibles par PHP-FPM (carte `network`, option `access_points`) |
 | `NTFY_TOKEN` | jeton ntfy d'un compte qui ne peut que lire (cloche, section `notifications`) |
 | `PROFILE_DATA_DIR` | dossier des données saisies par chaque profil : clés et réglages de « Ma config » (clés chiffrées) et ordre des cartes ; vide = `var/profiles`. En prod : un volume privé, sauvegardé |
 | `TLS_CA_FILE` | CA à approuver pour Beszel et les sondes HTTPS (CA mkcert), vide = CA du système |
@@ -1199,8 +1200,10 @@ température n'apparaît pas.
 ### `network`
 
 Onglet Réseau : débit Internet du moment (avec le maximum de la ligne et une
-courbe des dernières minutes), appareils vus par la Freebox, et ce qui est à
-vérifier (appareil sans nom, IP différente de son bail statique). Prévue pour
+courbe des dernières minutes), appareils vus par la Freebox avec leur
+position (zone, Wi-Fi ou câble), points d'accès avec les débits de leurs ports
+et radios, et ce qui est à vérifier (appareil sans nom, IP différente de son
+bail statique). Prévue pour
 être **seule dans sa section** : elle prend la hauteur de son contenu, `rows`
 est ignoré, et la section devient une pile pleine largeur. Réservé à ce type.
 
@@ -1214,6 +1217,9 @@ rechargement de la page.
 | `devices` | `{}` | par adresse MAC : `type` et/ou `name` pour corriger ce qui est deviné. Le type vient de la Freebox quand elle le connaît, sinon du fabricant de la carte réseau (Espressif → `iot`, TP-Link → `network`…), sinon `other`. Types : `box`, `network`, `server`, `computer`, `laptop`, `phone`, `tablet`, `tv`, `printer`, `speaker`, `camera`, `iot`, `console`, `other` |
 | `rates_refresh` | `5` | secondes entre deux lectures des débits (2 au moins) |
 | `keep_days` | `7` | jours pendant lesquels un appareil déconnecté reste dans la liste |
+| `access_points` | `[]` | points d'accès OpenWrt lus par SSH : `id` (lettres, chiffres, `-`), `address`, `zone` affichée, `uplink` (port relié au switch, `eth1` par défaut) |
+| `wired_zone` | `Baie` | zone des appareils câblés sur le switch |
+| `memory` | `300` | secondes pendant lesquelles un appareil garde son point d'accès après l'avoir quitté (« vu il y a… ») |
 
 ```yaml
 - title: Réseau
@@ -1221,9 +1227,44 @@ rechargement de la page.
   cards:
     - type: network
       span: 4
+      access_points:
+        - { id: borne, address: 192.168.1.20, zone: Bureau }
       devices:
         "00:16:3E:00:00:01": { type: server, name: alpha }
 ```
+
+**Position des appareils**, déduite à chaque relevé de la liste (`refresh`) :
+
+1. associé en Wi-Fi à un point d'accès, ou vu sur l'un de ses ports `lanX` :
+   il y est (zone, bande Wi-Fi et signal, ou port) ;
+2. vu ainsi il y a moins de `memory` secondes : il garde cette place, avec
+   « vu il y a… », pour qu'une connexion faible ne saute pas d'une place à
+   l'autre ;
+3. jamais vu sur un point d'accès depuis `keep_days` jours, mais présent en
+   amont (port `uplink`), ou point d'accès lui-même (son IP est une `address`) :
+   câblé sur le switch, dans `wired_zone` ;
+4. sinon : « Position incertaine ». C'est le cas d'un appareil passé sur un
+   point d'accès que le dashboard ne lit pas.
+
+La dernière place de chaque appareil est gardée dans `HISTORY_DATA_DIR`
+(`network-positions.json`). Un point d'accès injoignable ne fait pas tomber la
+carte : il est signalé, et ses appareils gardent leur dernière place le temps
+de `memory`.
+
+**Point d'accès OpenWrt** : le dashboard s'y connecte en SSH avec sa propre
+clé, limitée dans `authorized_keys` au seul script `dashboard-probe`. Ce
+script renvoie en JSON les compteurs d'octets des ports du bridge, les MAC
+apprises (`brctl showmacs`) et les appareils associés (`iwinfo assoclist`).
+Le rôle Ansible `openwrt-dashboard-probe` du dépôt homelab-ansible dépose le
+script et la clé, et les inscrit dans `/etc/sysupgrade.conf` pour qu'ils
+survivent aux mises à jour. Côté dashboard, `NETWORK_SSH_DIR` contient :
+
+- `id_ed25519` : la clé privée, lisible par PHP-FPM seulement ;
+- `known_hosts` : la clé d'hôte de chaque point d'accès, épinglée
+  (`StrictHostKeyChecking=yes`).
+
+Les débits des ports viennent de la différence entre deux relevés : ils
+apparaissent au deuxième passage du flux `rates`.
 
 **Jeton Freebox** (une seule fois, depuis le réseau de la maison) :
 

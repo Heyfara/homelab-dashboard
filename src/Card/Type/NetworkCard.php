@@ -7,19 +7,33 @@ use App\Card\CardFeedsInterface;
 use App\Card\CardTypeInterface;
 use App\Dashboard\Model\CardInstance;
 use App\Dashboard\Model\Dashboard;
+use App\Network\AccessPoint;
+use App\Network\Placement;
 use App\Source\Freebox\FreeboxClient;
 use App\Source\Freebox\FreeboxHost;
+use App\Source\OpenWrt\OpenWrtProbe;
+use App\Source\OpenWrt\OpenWrtSnapshot;
+use App\Source\SourceUnavailableException;
+use App\Storage\JsonFiles;
+use Psr\Cache\CacheItemPoolInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\OptionsResolver\Options;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * Onglet Réseau : appareils vus par la Freebox (récemment ou en ce moment) et
- * débit Internet (flux `rates`, toutes les 5 s). Prévue pour occuper seule son
- * onglet : sa hauteur suit son contenu.
+ * Onglet Réseau : appareils vus par la Freebox (récemment ou en ce moment),
+ * placés d'après ce que voient les points d'accès OpenWrt (voir Placement), et
+ * débits (flux `rates`, toutes les 5 s) : Internet, ports et radios des points
+ * d'accès. Prévue pour occuper seule son onglet : sa hauteur suit son contenu.
  *
  *     - type: network
+ *       access_points:                 # facultatif : points d'accès OpenWrt lus par SSH
+ *         - { id: flint, address: 192.168.1.175, zone: Bureau }
  *       devices:                       # facultatif : type ou nom par adresse MAC
  *         "AA:BB:CC:DD:EE:FF": { type: server, name: alpha }
+ *
+ * La dernière position de chaque appareil est gardée dans HISTORY_DATA_DIR
+ * (network-positions.json).
  */
 #[AsCard('network')]
 final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterface
@@ -74,11 +88,22 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
         'Sonos' => 'speaker',
     ];
 
+    private JsonFiles $files;
+    private \Closure $clock;
+
+    /**
+     * @param ?\Closure(): float $clock instant présent (s), pour les tests
+     */
     public function __construct(
         private FreeboxClient $freebox,
-        /** Instant présent, pour les tests ; sinon maintenant */
-        private ?string $now = null,
+        private OpenWrtProbe $probe,
+        private CacheItemPoolInterface $cache,
+        #[Autowire('%env(default:history_data_default_dir:HISTORY_DATA_DIR)%')]
+        string $dataDir,
+        ?\Closure $clock = null,
     ) {
+        $this->files = new JsonFiles($dataDir);
+        $this->clock = $clock ?? static fn (): float => microtime(true);
     }
 
     public function configureOptions(OptionsResolver $resolver, Dashboard $dashboard): void
@@ -110,7 +135,27 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
             ->setDefault('keep_days', 7)
             ->setAllowedTypes('keep_days', 'int')
             ->setAllowedValues('keep_days', static fn (int $d): bool => $d >= 1)
-            ->setInfo('keep_days', 'jours pendant lesquels un appareil déconnecté reste dans la liste');
+            ->setInfo('keep_days', 'jours pendant lesquels un appareil déconnecté reste dans la liste')
+            ->setOptions('access_points', static function (OptionsResolver $ap): void {
+                $ap->setPrototype(true)
+                    ->setRequired(['id', 'address', 'zone'])
+                    ->setAllowedTypes('id', 'string')
+                    ->setAllowedValues('id', static fn (string $id): bool => 1 === preg_match('/^[a-z0-9_-]+$/', $id))
+                    ->setAllowedTypes('address', 'string')
+                    ->setAllowedTypes('zone', 'string')
+                    ->setDefault('uplink', 'eth1')
+                    ->setAllowedTypes('uplink', 'string')
+                    ->setInfo('uplink', 'port du bridge relié au switch');
+            })
+            ->setAllowedValues('access_points', static fn (array $aps): bool => \count($aps) === \count(array_unique(array_column($aps, 'id'))))
+            ->setInfo('access_points', 'points d’accès OpenWrt lus par SSH : { id, address, zone, uplink: eth1 }')
+            ->setDefault('wired_zone', 'Baie')
+            ->setAllowedTypes('wired_zone', 'string')
+            ->setInfo('wired_zone', 'zone des appareils câblés sur le switch')
+            ->setDefault('memory', 300)
+            ->setAllowedTypes('memory', 'int')
+            ->setAllowedValues('memory', static fn (int $s): bool => $s >= 0)
+            ->setInfo('memory', 'secondes pendant lesquelles un appareil garde son point d’accès après l’avoir quitté');
     }
 
     public function describe(CardInstance $card, Dashboard $dashboard): array
@@ -120,11 +165,24 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
 
     public function fetch(CardInstance $card, Dashboard $dashboard): array
     {
+        $now = (int) ($this->clock)();
         $leases = $this->freebox->staticLeases();
-        $since = (new \DateTimeImmutable($this->now ?? 'now'))->modify(\sprintf('-%d days', $card->options['keep_days']));
-        $hosts = array_filter($this->freebox->hosts(), static fn (FreeboxHost $h): bool => $h->active || ($h->lastActivity ?? $since) > $since);
+        $since = (new \DateTimeImmutable('@'.$now))->modify(\sprintf('-%d days', $card->options['keep_days']));
+        $hosts = array_values(array_filter($this->freebox->hosts(), static fn (FreeboxHost $h): bool => $h->active || ($h->lastActivity ?? $since) > $since));
 
-        $devices = array_map(function (FreeboxHost $h) use ($card, $leases): array {
+        $aps = self::accessPoints($card);
+        [$snapshots, $errors] = $this->snapshots($aps);
+        $addresses = array_map(static fn (AccessPoint $ap): string => $ap->address, $aps);
+        $infrastructure = array_values(array_map(static fn (FreeboxHost $h): string => $h->mac, array_filter($hosts, static fn (FreeboxHost $h): bool => \in_array($h->ipv4, $addresses, true))));
+        $placement = new Placement($card->options['wired_zone'], $card->options['memory'], $card->options['keep_days'] * 86400);
+        $places = [];
+        $this->files->update('network-positions', static function (array $memory) use ($placement, $hosts, $aps, $snapshots, $infrastructure, $now, &$places): array {
+            [$places, $memory] = $placement->place(array_map(static fn (FreeboxHost $h): string => $h->mac, $hosts), $aps, $snapshots, $infrastructure, $memory, $now);
+
+            return $memory;
+        });
+
+        $devices = array_map(function (FreeboxHost $h) use ($card, $leases, $places): array {
             $config = $card->options['devices'][$h->mac] ?? [];
 
             return [
@@ -138,13 +196,60 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
                 'lastSeen' => $h->lastActivity?->format(\DATE_ATOM),
                 // Bit « administrée localement » : adresse privée (aléatoire) d'un téléphone ou d'un ordinateur.
                 'randomMac' => (bool) (hexdec(substr($h->mac, 0, 2)) & 0x02),
+                'place' => null === ($p = $places[$h->mac] ?? null) ? null
+                    : array_replace($p, ['seenAt' => null === $p['seenAt'] ? null : (new \DateTimeImmutable('@'.$p['seenAt']))->format(\DATE_ATOM)]),
             ];
-        }, array_values($hosts));
+        }, $hosts);
 
         usort($devices, static fn (array $a, array $b): int => [!$a['online'], strtolower($a['name'] ?? $a['vendor'] ?? $a['mac'])]
             <=> [!$b['online'], strtolower($b['name'] ?? $b['vendor'] ?? $b['mac'])]);
 
-        return ['devices' => $devices];
+        return [
+            'devices' => $devices,
+            'accessPoints' => array_values(array_map(static fn (AccessPoint $ap): array => [
+                'id' => $ap->id,
+                'zone' => $ap->zone,
+                'error' => $errors[$ap->id] ?? null,
+                'uplink' => $ap->uplink,
+                'radios' => array_map(Placement::band(...), $snapshots[$ap->id]?->radios ?? []),
+            ], $aps)),
+            'wiredZone' => $card->options['wired_zone'],
+        ];
+    }
+
+    /**
+     * @return array<string, AccessPoint>
+     */
+    private static function accessPoints(CardInstance $card): array
+    {
+        $aps = [];
+        foreach ($card->options['access_points'] as $ap) {
+            $aps[$ap['id']] = new AccessPoint($ap['id'], $ap['address'], $ap['zone'], $ap['uplink']);
+        }
+
+        return $aps;
+    }
+
+    /**
+     * Un point d'accès injoignable ne fait pas tomber la carte : il est signalé.
+     *
+     * @param array<string, AccessPoint> $aps
+     *
+     * @return array{array<string, ?OpenWrtSnapshot>, array<string, string>}
+     */
+    private function snapshots(array $aps): array
+    {
+        $snapshots = $errors = [];
+        foreach ($aps as $id => $ap) {
+            try {
+                $snapshots[$id] = $this->probe->snapshot($ap->address);
+            } catch (SourceUnavailableException $e) {
+                $snapshots[$id] = null;
+                $errors[$id] = $e->getMessage();
+            }
+        }
+
+        return [$snapshots, $errors];
     }
 
     private static function vendorType(?string $vendor): string
@@ -166,8 +271,14 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
     public function fetchFeed(string $feed, CardInstance $card, Dashboard $dashboard): array
     {
         $c = $this->freebox->connection();
+        $aps = self::accessPoints($card);
+        [$snapshots, $errors] = $this->snapshots($aps);
+        $rates = [];
+        foreach ($aps as $id => $ap) {
+            $rates[$id] = ['error' => $errors[$id] ?? null, 'ports' => null === $snapshots[$id] ? [] : $this->portRates($ap, $snapshots[$id])];
+        }
 
-        return ['wan' => [
+        return ['accessPoints' => $rates, 'wan' => [
             'state' => $c->state,
             'media' => $c->media,
             'down' => $c->rateDown,
@@ -175,5 +286,35 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
             'maxDown' => $c->bandwidthDown,
             'maxUp' => $c->bandwidthUp,
         ]];
+    }
+
+    /**
+     * Débit de chaque port depuis le relevé précédent, vu de l'appareil branché :
+     * `down` = vers lui. Pour le port amont, `down` = ce qui arrive du switch.
+     *
+     * @return array<string, array{down: int, up: int}>
+     */
+    private function portRates(AccessPoint $ap, OpenWrtSnapshot $s): array
+    {
+        $item = $this->cache->getItem('network.counters.'.hash('xxh128', $ap->id.'|'.$ap->address));
+        $previous = $item->isHit() ? $item->get() : null;
+        $item->set(['at' => $s->readAt, 'ports' => $s->ports])->expiresAfter(300);
+        $this->cache->save($item);
+
+        $dt = \is_array($previous) ? $s->readAt - $previous['at'] : 0.0;
+        if ($dt <= 0) {
+            return [];
+        }
+        $rates = [];
+        foreach ($s->ports as $port => [$rx, $tx]) {
+            [$prx, $ptx] = $previous['ports'][$port] ?? [null, null];
+            if (null === $prx || $rx < $prx || $tx < $ptx) {
+                continue;
+            }
+            [$in, $out] = [(int) round(($rx - $prx) / $dt), (int) round(($tx - $ptx) / $dt)];
+            $rates[$port] = $port === $ap->uplink ? ['down' => $in, 'up' => $out] : ['down' => $out, 'up' => $in];
+        }
+
+        return $rates;
     }
 }

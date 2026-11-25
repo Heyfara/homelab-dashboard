@@ -23,9 +23,10 @@ navigateur ─▶ Caddy (TLS, dashboard.example) ─▶ nginx partagé ─┬─
 | `Dashboard/Model/` | objets immuables : `Dashboard`, `Profile`, `Section`, `CardInstance`, `ServiceDefinition`, `Host`, `Settings` |
 | `Card/` | contrat d'un type de carte (`CardTypeInterface`, `#[AsCard]`), registre, `CardDataFetcher` (cache + capture d'erreurs), `CardResult` |
 | `Card/Type/` | un fichier par type de carte |
-| `Source/` | clients des sources : `Beszel/` (API du hub), `Container/` (état des containers), `Http/` (sonde), `WebSocket/` (client WebSocket minimal, RFC 6455), `HomeAssistant/` (API WebSocket de HA en question-réponse, partagée par les cartes HA), `Ntfy/` (messages gardés par ntfy, cloche), `Freebox/` (API Freebox OS, session signée par le jeton d'application), API des services ; `Credentials` (clés par variable d'environnement) |
+| `Source/` | clients des sources : `Beszel/` (API du hub), `Container/` (état des containers), `Http/` (sonde), `WebSocket/` (client WebSocket minimal, RFC 6455), `HomeAssistant/` (API WebSocket de HA en question-réponse, partagée par les cartes HA), `Ntfy/` (messages gardés par ntfy, cloche), `Freebox/` (API Freebox OS, session signée par le jeton d'application), `OpenWrt/` (relevé d'un point d'accès par SSH, script `dashboard-probe`), API des services ; `Credentials` (clés par variable d'environnement) |
 | `Profile/` | « Ma config » : coffre chiffré par profil (`ProfileCredentials`), réglages non secrets (`ProfileSettings`, dont le lieu de la météo `WeatherLocation`), ordre des cartes (`ProfileLayout`), fichiers privés par profil (`ProfileFiles`), services dont on peut saisir sa clé (`CredentialKindInterface`), choix de la clé d'une carte (`CardCredentials`) |
 | `Notifications/` | cloche : messages ntfy des sujets suivis par un profil, et ce qu'il a lu (`ProfileNotifications`) |
+| `Network/` | position des appareils du réseau, déduite de ce que voient les points d'accès (`Placement`), carte `network` |
 | `History/` | relevés quotidiens que les sources ne gardent pas (`DailyHistory` : taille des buckets B2) |
 | `Storage/` | fichiers JSON privés écrits sous verrou (`JsonFiles`), base de `ProfileFiles` et `DailyHistory` |
 | `Controller/` | routes de lecture, « Ma config » et ordre des cartes (seules écritures), sans logique |
@@ -229,6 +230,7 @@ quelques dizaines de lignes, et jamais de bundle tiers.
 | FrankenPHP | PHP-FPM derrière le nginx partagé |
 | Prometheus, cAdvisor | Beszel (déjà en place) |
 | docker-socket-proxy | Beszel : voir « État des containers » |
+| ext-ssh2, phpseclib | `openssh-client` dans l'image, lancé par `proc_open` (`OpenWrtProbe`) : seul paquet système ajouté, pour lire les points d'accès OpenWrt. Écarté aussi : une page web sur le routeur, perdue à chaque mise à jour du firmware |
 
 Dépendances de test seulement : phpunit et le pack de test Symfony ; vitest,
 jsdom et Testing Library.
