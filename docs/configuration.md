@@ -1203,7 +1203,12 @@ Onglet Réseau : débit Internet du moment (avec le maximum de la ligne et une
 courbe des dernières minutes), appareils vus par la Freebox avec leur
 position (zone, Wi-Fi ou câble), points d'accès avec les débits de leurs ports
 et radios, et ce qui est à vérifier (appareil sans nom, IP différente de son
-bail statique). Prévue pour
+bail statique). Un schéma montre Internet, la box, le switch puis une zone
+par endroit (`wired_zone`, chaque point d'accès, position incertaine), en
+colonnes ou empilées selon la largeur. Les liens mesurés (Internet, ports des
+points d'accès) s'animent selon leur débit. Le survol éclaire le chemin d'un
+appareil, et le clic, sur le schéma ou dans la liste, ouvre son détail. Les
+animations s'arrêtent si le système demande moins de mouvement. Prévue pour
 être **seule dans sa section** : elle prend la hauteur de son contenu, `rows`
 est ignoré, et la section devient une pile pleine largeur. Réservé à ce type.
 

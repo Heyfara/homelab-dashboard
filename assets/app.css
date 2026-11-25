@@ -12,11 +12,76 @@
   --color-voie-upload: #c026d3;
   --color-voie-specialization: #ea580c;
   --color-voie-competitivity: #4f46e5;
+
+  /* Zones du schéma réseau, dans cet ordre fixe : cœur (Internet, box, switch,
+     le bleu du sens descendant), baie, puis les points d'accès dans l'ordre de
+     la configuration. Même validation, clair et sombre : OK (pire paire
+     daltonienne ΔE 13). L'orange vient en dernier, loin de l'ambre « à
+     vérifier ». Position incertaine : gris neutre, hors palette. */
+  --color-zone-core: #0284c7;
+  --color-zone-wired: #059669;
+  --color-zone-ap1: #7c3aed;
+  --color-zone-ap2: #db2777;
+  --color-zone-ap3: #ea580c;
+  --color-zone-other: #64748b;
+  --color-zone-uncertain: #64748b;
 }
 @media (prefers-color-scheme: dark) {
   :root {
     --color-up: #8b5cf6;
     --color-voie-competitivity: #6366f1;
+    --color-zone-ap1: #8b5cf6;
+    --color-zone-ap2: #ec4899;
+  }
+}
+
+/* Schéma réseau : points qui défilent sur les liens mesurés, dans le sens du
+   trafic (descendant vers l'appareil, montant en sens inverse), d'autant plus
+   vite que le débit est fort. */
+@keyframes net-dash {
+  to {
+    stroke-dashoffset: -16.1;
+  }
+}
+@keyframes net-pulse {
+  from {
+    box-shadow: 0 0 0 0 rgb(245 158 11 / 0.6);
+  }
+  to {
+    box-shadow: 0 0 0 12px rgb(245 158 11 / 0);
+  }
+}
+@layer components {
+  .net-flow {
+    fill: none;
+    stroke-linecap: round;
+    stroke-width: 4;
+    stroke-dasharray: 0.1 16;
+    animation: net-dash linear infinite;
+  }
+  .net-flow-up {
+    stroke-width: 2.5;
+    animation-direction: reverse;
+  }
+  .net-flow-slow {
+    animation-duration: 2.8s;
+  }
+  .net-flow-mid {
+    animation-duration: 1.4s;
+  }
+  .net-flow-fast {
+    animation-duration: 0.6s;
+  }
+  .net-pulse {
+    animation: net-pulse 1.8s ease-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .net-flow {
+      display: none;
+    }
+    .net-pulse {
+      animation: none;
+    }
   }
 }
 

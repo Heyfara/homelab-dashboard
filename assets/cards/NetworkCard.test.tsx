@@ -29,7 +29,7 @@ const data: NetworkData = {
     device({ mac: '00:16:3E:00:00:06', name: 'pc-bureau', type: 'computer', ip: '192.168.1.70', expectedIp: null, place: { zone: 'Bureau', ap: 'flint', link: 'cable', port: 'lan2', band: null, signal: null, seenAt: null } }),
     device({ mac: '00:16:3E:00:00:07', name: 'tablette', type: 'tablet', ip: '192.168.1.71', expectedIp: null, place: { zone: 'Bureau', ap: 'flint', link: 'wifi', port: 'rax0', band: '5', signal: -80, seenAt: new Date(Date.now() - 120_000).toISOString() } }),
   ],
-  accessPoints: [{ id: 'flint', zone: 'Bureau', error: null, uplink: 'eth1', radios: { ra0: '2.4', rax0: '5' } }],
+  accessPoints: [{ id: 'flint', zone: 'Bureau', error: null, uplink: 'eth1', radios: { ra0: '2.4', rax0: '5' }, device: null }],
   wiredZone: 'Baie',
 }
 const rates: NetworkRates = {
@@ -134,6 +134,60 @@ describe('NetworkCard', () => {
     render(<NetworkCard card={card} result={ok({ ...data, accessPoints: [{ ...data.accessPoints[0]!, error: '192.168.1.175 injoignable en SSH : délai dépassé' }] })} feeds={{ rates: ok(rates) }} />)
 
     expect(text(screen.getByRole('region', { name: 'Points d’accès' }))).toContain('injoignable en SSH')
+  })
+
+  it('schéma : le cœur et chaque appareil en ligne', () => {
+    renderCard()
+
+    const diagram = within(screen.getByRole('region', { name: 'Schéma du réseau' }))
+    expect(diagram.getByRole('button', { name: 'Internet' })).toBeTruthy()
+    expect(diagram.getByRole('button', { name: 'pc-bureau, 192.168.1.70' })).toBeTruthy()
+    expect(diagram.getByRole('button', { name: 'flint' })).toBeTruthy()
+    expect(diagram.queryByRole('button', { name: /ancien-portable/ })).toBeNull()
+  })
+
+  it('clic sur un nœud : son détail, avec son chemin', () => {
+    renderCard()
+
+    fireEvent.click(within(screen.getByRole('region', { name: 'Schéma du réseau' })).getByRole('button', { name: /^tablette/ }))
+    const detail = text(screen.getByRole('complementary', { name: 'Détail' }))
+    expect(detail).toContain('Tablette')
+    expect(detail).toContain('192.168.1.71')
+    expect(detail).toContain('Bureau · Wi-Fi 5 GHz')
+    expect(detail).toContain('Internet›Freebox›Switch›flint›tablette')
+  })
+
+  it('clic dans la liste : même détail', () => {
+    renderCard()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Détail de imprimante' }))
+    const detail = text(screen.getByRole('complementary', { name: 'Détail' }))
+    expect(detail).toContain('192.168.1.31')
+    expect(detail).toContain('00:16:3E:00:00:02')
+  })
+
+  it('détail d’Internet : état et débits', () => {
+    renderCard()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Internet' }))
+    expect(text(screen.getByRole('complementary', { name: 'Détail' }))).toContain('2,5 Mo/s')
+  })
+
+  it('survol : ce qui n’est pas sur le chemin s’estompe', () => {
+    renderCard()
+
+    const diagram = within(screen.getByRole('region', { name: 'Schéma du réseau' }))
+    fireEvent.mouseEnter(diagram.getByRole('button', { name: /^pc-bureau/ }))
+    expect(diagram.getByRole('button', { name: /^alpha/ }).dataset.dim).toBe('true')
+    expect(diagram.getByRole('button', { name: 'Internet' }).dataset.dim).toBe('false')
+  })
+
+  it('points animés sur les liens mesurés seulement', () => {
+    const { container } = renderCard()
+
+    expect(container.querySelector('[data-link="internet>box"] .net-flow')).not.toBeNull()
+    expect(container.querySelector('[data-link="ap:flint>00:16:3E:00:00:06"] .net-flow')).not.toBeNull()
+    expect(container.querySelector('[data-link="ap:flint>00:16:3E:00:00:07"] .net-flow')).toBeNull()
   })
 
   it('chargement : squelette', () => {

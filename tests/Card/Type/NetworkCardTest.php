@@ -274,7 +274,7 @@ final class NetworkCardTest extends TestCase
         self::assertSame(['Bureau', 'wifi', '5', -41], [$devices['DA:A1:19:00:00:05']['zone'], $devices['DA:A1:19:00:00:05']['link'], $devices['DA:A1:19:00:00:05']['band'], $devices['DA:A1:19:00:00:05']['signal']]);
         self::assertSame('Baie', $devices['00:16:3E:00:00:02']['zone']);
         self::assertNull($devices['00:16:3E:00:00:03']);
-        self::assertSame([['id' => 'flint', 'zone' => 'Bureau', 'error' => null, 'uplink' => 'eth1', 'radios' => ['rax0' => '5']]], $data['accessPoints']);
+        self::assertSame([['id' => 'flint', 'zone' => 'Bureau', 'error' => null, 'uplink' => 'eth1', 'radios' => ['rax0' => '5'], 'device' => null]], $data['accessPoints']);
         self::assertSame('Baie', $data['wiredZone']);
     }
 
@@ -287,6 +287,7 @@ final class NetworkCardTest extends TestCase
         $devices = array_column($card->fetch($instance, $this->dashboard)['devices'], 'place', 'mac');
 
         self::assertSame('Placard', $devices['00:16:3E:00:00:02']['zone']);
+        self::assertSame('00:16:3E:00:00:02', $card->fetch($instance, $this->dashboard)['accessPoints'][0]['device']);
     }
 
     public function testRememberedPositionSurvivesAnUnreachableAccessPoint(): void
