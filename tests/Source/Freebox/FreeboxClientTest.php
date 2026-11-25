@@ -90,6 +90,7 @@ final class FreeboxClientTest extends TestCase
             ipv4: '192.168.1.41',
             active: true,
             lastActivity: new \DateTimeImmutable('@1795000000'),
+            firstActivity: new \DateTimeImmutable('@1790000000'),
         )], $hosts);
 
         [$method, , $options] = $this->requests[1];

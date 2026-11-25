@@ -25,7 +25,7 @@ export type Zone = {
 }
 
 /** Débit d'un lien : celui d'Internet, ou d'un port d'un point d'accès. */
-export type RateRef = { kind: 'wan' } | { kind: 'port'; ap: string; port: string }
+export type RateRef = { kind: 'wan' } | { kind: 'port'; ap: string; port: string } | { kind: 'host'; ip: string }
 
 export type CoreKey = 'internet' | 'box' | 'switch'
 
@@ -153,7 +153,8 @@ export function layout(zones: Zone[], width: number): Diagram {
       z.devices.forEach((d, n) => {
         const node = item(d.mac, d, n, 1, z.tone === 'uncertain' ? null : 'switch')
         nodes.push(node)
-        if (z.tone !== 'uncertain') links.push({ from: 'switch', to: d.mac, d: `${bus(trunk)} V${node.y} H${node.left}`, kind: 'cable', tone: z.tone, rate: null })
+        // Débit connu seulement pour les machines suivies par Beszel, retrouvées par leur IP.
+        if (z.tone !== 'uncertain') links.push({ from: 'switch', to: d.mac, d: `${bus(trunk)} V${node.y} H${node.left}`, kind: 'cable', tone: z.tone, rate: d.ip !== null ? { kind: 'host', ip: d.ip } : null })
       })
     }
   })

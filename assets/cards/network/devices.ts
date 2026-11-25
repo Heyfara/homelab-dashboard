@@ -32,6 +32,10 @@ export type Device = {
   randomMac: boolean
   /** null : position incertaine, ou appareil hors ligne jamais placé */
   place: Place | null
+  /** Première apparition sur le réseau (Freebox) */
+  firstSeen: string | null
+  /** Changements de point d'accès et retours après coupure, sur la dernière heure */
+  changes: number
 }
 
 export type DeviceFilter = 'all' | 'online' | 'unknown'
@@ -74,6 +78,14 @@ export function placeLabel(p: Place): string {
   if (p.link === 'wifi') return `${p.zone} · Wi-Fi${p.band !== null ? ` ${bandLabel(p.band)}` : ''}`
   return `${p.zone} · câble${p.ap !== null && p.port !== null ? ` ${p.port}` : ''}`
 }
+
+/** Apparu depuis moins de 24 h : à reconnaître. */
+export const isNew = (d: Device, now: Date = new Date()) => d.firstSeen !== null && now.getTime() - new Date(d.firstSeen).getTime() < 24 * 3600_000
+
+/** Seuil de changements de point d'accès ou de coupures en une heure. */
+export const UNSTABLE_CHANGES = 4
+
+export const isUnstable = (d: Device) => d.changes >= UNSTABLE_CHANGES
 
 /** Au-dessous, la connexion devient instable. */
 export const weakSignal = (p: Place) => p.signal !== null && p.signal < -75

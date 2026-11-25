@@ -17,6 +17,8 @@ const device = (d: Partial<Device>): Device => ({
   lastSeen: new Date().toISOString(),
   randomMac: false,
   place: { zone: 'Baie', ap: null, link: 'cable', port: null, band: null, signal: null, seenAt: null },
+  firstSeen: '2026-10-01T08:00:00+00:00',
+  changes: 0,
   ...d,
 })
 
@@ -24,10 +26,10 @@ const data: NetworkData = {
   devices: [
     device({}),
     device({ mac: '00:16:3E:00:00:02', name: 'imprimante', type: 'printer', ip: '192.168.1.30', expectedIp: '192.168.1.31' }),
-    device({ mac: 'DA:A1:19:00:00:05', name: null, vendor: null, type: 'other', ip: '192.168.1.60', expectedIp: null, randomMac: true, place: null }),
+    device({ mac: 'DA:A1:19:00:00:05', name: null, vendor: null, type: 'other', ip: '192.168.1.60', expectedIp: null, randomMac: true, place: null, firstSeen: new Date(Date.now() - 2 * 3600_000).toISOString() }),
     device({ mac: '00:16:3E:00:00:03', name: 'ancien-portable', type: 'laptop', online: false, lastSeen: new Date(Date.now() - 3 * 3600_000).toISOString(), expectedIp: null, place: null }),
     device({ mac: '00:16:3E:00:00:06', name: 'pc-bureau', type: 'computer', ip: '192.168.1.70', expectedIp: null, place: { zone: 'Bureau', ap: 'flint', link: 'cable', port: 'lan2', band: null, signal: null, seenAt: null } }),
-    device({ mac: '00:16:3E:00:00:07', name: 'tablette', type: 'tablet', ip: '192.168.1.71', expectedIp: null, place: { zone: 'Bureau', ap: 'flint', link: 'wifi', port: 'rax0', band: '5', signal: -80, seenAt: new Date(Date.now() - 120_000).toISOString() } }),
+    device({ mac: '00:16:3E:00:00:07', name: 'tablette', type: 'tablet', ip: '192.168.1.71', expectedIp: null, changes: 5, place: { zone: 'Bureau', ap: 'flint', link: 'wifi', port: 'rax0', band: '5', signal: -80, seenAt: new Date(Date.now() - 120_000).toISOString() } }),
   ],
   accessPoints: [{ id: 'flint', zone: 'Bureau', error: null, uplink: 'eth1', radios: { ra0: '2.4', rax0: '5' }, device: null, kind: 'openwrt' }],
   wiredZone: 'Baie',
@@ -35,6 +37,7 @@ const data: NetworkData = {
 const rates: NetworkRates = {
   wan: { state: 'up', media: 'ftth', down: 2_500_000, up: 40_000, maxDown: 125_000_000, maxUp: 87_500_000 },
   accessPoints: { flint: { error: null, ports: { eth1: { down: 3_000_000, up: 100_000 }, lan2: { down: 1_500_000, up: 20_000 }, ra0: { down: 0, up: 0 }, rax0: { down: 4_000, up: 1_000 }, lan4: { down: 0, up: 0 } } } },
+  hosts: { '192.168.1.2': { down: 7_000_000, up: 300_000 } },
 }
 
 const ok = <T,>(d: T): CardResult<T> => ({ status: 'ok', data: d, error: null, fetchedAt: '2026-11-24T12:00:00+00:00' })
@@ -66,6 +69,16 @@ describe('NetworkCard', () => {
     const alerts = text(screen.getByRole('region', { name: 'À vérifier' }))
     expect(alerts).toContain('imprimante a l’adresse 192.168.1.30 au lieu de 192.168.1.31 (bail statique)')
     expect(alerts).toContain('1 appareil sans nom')
+    expect(alerts).toContain('Nouvel appareil : Adresse privée, apparu il y a 2 heures')
+    expect(alerts).toContain('tablette : connexion instable (5 changements de point d’accès ou coupures en 1 h)')
+  })
+
+  it('serveur suivi par Beszel : lien animé et débit dans le détail', () => {
+    const { container } = renderCard()
+
+    expect(container.querySelector('[data-link="switch>00:16:3E:00:00:01"] .net-flow')).not.toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Détail de alpha' }))
+    expect(text(screen.getByRole('complementary', { name: 'Détail' }))).toContain('7 Mo/s')
   })
 
   it('liste : nom, type, IP, MAC et état', () => {

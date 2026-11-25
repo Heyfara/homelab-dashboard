@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { countDevices, countZones, deviceLabel, filterDevices, ipMismatch, isUnknown, placeLabel, UNCERTAIN, weakSignal, zoneOf, type Device, type Place } from './devices'
+import { countDevices, countZones, deviceLabel, filterDevices, ipMismatch, isNew, isUnknown, isUnstable, placeLabel, UNCERTAIN, weakSignal, zoneOf, type Device, type Place } from './devices'
 
 const device = (d: Partial<Device>): Device => ({
   mac: '00:16:3E:00:00:01',
@@ -12,6 +12,8 @@ const device = (d: Partial<Device>): Device => ({
   lastSeen: '2026-11-24T11:59:00+00:00',
   randomMac: false,
   place: null,
+  firstSeen: '2026-10-01T08:00:00+00:00',
+  changes: 0,
   ...d,
 })
 
@@ -51,6 +53,18 @@ describe('appareils du réseau', () => {
     expect(placeLabel(place({ band: '2.4' }))).toBe('Bureau · Wi-Fi 2,4 GHz')
     expect(placeLabel(place({ link: 'cable', port: 'lan2', band: null, signal: null }))).toBe('Bureau · câble lan2')
     expect(placeLabel(place({ zone: 'Baie', ap: null, link: 'cable', port: null, band: null, signal: null }))).toBe('Baie · câble')
+  })
+
+  it('nouvel appareil : apparu depuis moins de 24 h', () => {
+    const now = new Date('2026-11-24T12:00:00Z')
+    expect(isNew(device({ firstSeen: '2026-11-24T02:00:00+00:00' }), now)).toBe(true)
+    expect(isNew(device({ firstSeen: '2026-11-23T11:00:00+00:00' }), now)).toBe(false)
+    expect(isNew(device({ firstSeen: null }), now)).toBe(false)
+  })
+
+  it('connexion instable : au moins 4 changements ou coupures en une heure', () => {
+    expect(isUnstable(device({ changes: 4 }))).toBe(true)
+    expect(isUnstable(device({ changes: 3 }))).toBe(false)
   })
 
   it('signal faible sous -75 dBm', () => {

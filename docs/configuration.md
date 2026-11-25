@@ -1203,8 +1203,10 @@ température n'apparaît pas.
 Onglet Réseau : débit Internet du moment (avec le maximum de la ligne et une
 courbe des dernières minutes), appareils vus par la Freebox avec leur
 position (zone, Wi-Fi ou câble), points d'accès avec les débits de leurs ports
-et radios, et ce qui est à vérifier (appareil sans nom, IP différente de son
-bail statique). Un schéma montre Internet, la box, le switch puis une zone
+et radios, et ce qui est à vérifier : appareil sans nom, IP différente de son
+bail statique, nouvel appareil (apparu depuis moins de 24 h), connexion
+instable (au moins 4 changements de point d'accès ou coupures en une heure).
+Un schéma montre Internet, la box, le switch puis une zone
 par endroit (`wired_zone`, chaque point d'accès, position incertaine), en
 colonnes ou empilées selon la largeur. Les liens mesurés (Internet, ports des
 points d'accès) s'animent selon leur débit. Le survol éclaire le chemin d'un
@@ -1254,7 +1256,14 @@ rechargement de la page.
    point d'accès que le dashboard ne lit pas.
 
 La dernière place de chaque appareil est gardée dans `HISTORY_DATA_DIR`
-(`network-positions.json`). Un point d'accès injoignable ne fait pas tomber la
+(`network-positions.json`), avec ses changements de point d'accès et ses
+retours après coupure de la dernière heure. Ceux-ci ne sont comptés que si le
+relevé précédent date de moins de `memory` secondes : sans personne devant
+l'onglet, rien n'est relu, et ce silence n'est pas une coupure.
+
+**Débit des serveurs** : celui des machines suivies par Beszel (moyenne de la
+dernière minute), rattachées à leur appareil par l'IP de leur agent. Rien à
+configurer ; si Beszel ne répond pas, ces débits manquent simplement. Un point d'accès injoignable ne fait pas tomber la
 carte : il est signalé, et ses appareils gardent leur dernière place le temps
 de `memory`.
 

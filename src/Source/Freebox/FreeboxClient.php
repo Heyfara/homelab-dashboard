@@ -44,6 +44,7 @@ final readonly class FreeboxClient
             $ipv4 = array_values(array_filter($h['l3connectivities'] ?? [], static fn (array $c): bool => 'ipv4' === ($c['af'] ?? null)));
             usort($ipv4, static fn (array $a, array $b): int => [$b['active'] ?? false, $b['last_activity'] ?? 0] <=> [$a['active'] ?? false, $a['last_activity'] ?? 0]);
             $last = (int) ($h['last_activity'] ?? 0);
+            $first = (int) ($h['first_activity'] ?? 0);
 
             return new FreeboxHost(
                 mac: strtoupper((string) ($h['l2ident']['id'] ?? '')),
@@ -53,6 +54,7 @@ final readonly class FreeboxClient
                 ipv4: $ipv4[0]['addr'] ?? null,
                 active: (bool) ($h['active'] ?? false),
                 lastActivity: $last > 0 ? new \DateTimeImmutable('@'.$last) : null,
+                firstActivity: $first > 0 ? new \DateTimeImmutable('@'.$first) : null,
             );
         }, $this->get('/lan/browser/pub/') ?? []);
     }
