@@ -2,7 +2,7 @@ import { Fragment, type ReactNode } from 'react'
 import { formatRelative, formatSpeed } from '../../ui/format'
 import type { LinkRate, NetworkData, NetworkRates } from '../NetworkCard'
 import { DeviceIcon, type IconKind } from './DeviceIcon'
-import { deviceLabel, ipMismatch, placeLabel, TYPE_LABELS, UNCERTAIN, weakSignal } from './devices'
+import { deviceLabel, ipMismatch, isUnstable, placeLabel, TYPE_LABELS, UNCERTAIN, weakSignal } from './devices'
 import { pathOf, type RateRef } from './layout'
 import { rateOf } from './TopologyDiagram'
 
@@ -42,7 +42,16 @@ function Content({ selected, data, rates }: { selected: string; data: NetworkDat
   if (d === undefined) return <Head title={ap?.id ?? '?'} kind="Point d’accès" icon="network" />
 
   const p = d.place
-  const ref: RateRef | null = ap !== undefined ? { kind: 'port', ap: ap.id, port: ap.uplink } : p?.ap && p.link === 'cable' && p.port ? { kind: 'port', ap: p.ap, port: p.port } : null
+  const ref: RateRef | null =
+    ap !== undefined
+      ? ap.kind === 'openwrt'
+        ? { kind: 'port', ap: ap.id, port: ap.uplink }
+        : null
+      : p?.ap && p.link === 'cable' && p.port
+        ? { kind: 'port', ap: p.ap, port: p.port }
+        : d.ip !== null && rateOf(rates, { kind: 'host', ip: d.ip }) !== undefined
+          ? { kind: 'host', ip: d.ip }
+          : null
   const status = !d.online ? 'Hors ligne' : p?.seenAt ? `Vu ${formatRelative(p.seenAt)}` : 'En ligne'
 
   return (
@@ -65,6 +74,12 @@ function Content({ selected, data, rates }: { selected: string; data: NetworkDat
           {p?.signal != null && <span className={weakSignal(p) ? 'text-amber-700 dark:text-amber-300' : ''}> · {p.signal} dBm</span>}
         </Fact>
         <Fact label="Vu">{d.online ? 'maintenant' : d.lastSeen !== null ? formatRelative(d.lastSeen) : '—'}</Fact>
+        {d.firstSeen !== null && <Fact label="Apparu">{formatRelative(d.firstSeen)}</Fact>}
+        <Fact label="Stabilité">
+          <span className={isUnstable(d) ? 'text-amber-700 dark:text-amber-300' : ''}>
+            {d.changes === 0 ? 'aucun changement ni coupure en 1 h' : `${d.changes} changement${d.changes > 1 ? 's' : ''} de point d’accès ou coupure${d.changes > 1 ? 's' : ''} en 1 h`}
+          </span>
+        </Fact>
         <Fact label="IP attendue">
           {d.expectedIp === null ? 'aucun bail statique' : <span className={ipMismatch(d) ? 'font-mono text-amber-700 dark:text-amber-300' : 'font-mono'}>{d.expectedIp}</span>}
         </Fact>

@@ -14,12 +14,19 @@ namespace App\Network;
  *  4. sinon : position incertaine (null).
  *
  * La mémoire (dernier point d'accès de chaque MAC) est un tableau simple, gardé
- * par l'appelant entre deux relevés.
+ * par l'appelant entre deux relevés. Elle note aussi, sur la dernière heure,
+ * chaque changement de point d'accès et chaque retour après une coupure plus
+ * longue que `memory` (`events`) : une connexion instable en accumule. Seulement
+ * si l'on observait sans interruption (relevé précédent, `@run`, il y a moins
+ * de `memory` secondes) : le dashboard ne lit le réseau que lorsqu'on regarde
+ * l'onglet, et notre propre absence n'est pas une coupure de l'appareil.
  */
 final readonly class Placement
 {
     /** Au-delà, une entrée du bridge n'est plus une présence : le bridge garde les MAC 5 min. */
     private const FDB_FRESH = 60.0;
+    /** Fenêtre des changements et coupures comptés (s) */
+    public const EVENTS_WINDOW = 3600;
 
     public function __construct(
         private string $wiredZone,
@@ -71,11 +78,18 @@ final readonly class Placement
             }
         }
 
+        $watching = \is_int($memory['@run'] ?? null) && $memory['@run'] >= $now - $this->memory;
+        unset($memory['@run']);
         $memory = array_filter($memory, fn ($m): bool => \is_array($m) && ($m['at'] ?? 0) >= $now - $this->keep && isset($aps[$m['ap'] ?? '']));
         $places = [];
         foreach ($macs as $mac) {
             if (isset($seen[$mac])) {
-                $memory[$mac] = $seen[$mac];
+                $before = $memory[$mac] ?? null;
+                $events = array_values(array_filter($before['events'] ?? [], static fn (int $t): bool => $t > $now - self::EVENTS_WINDOW));
+                if ($watching && null !== $before && ($before['ap'] !== $seen[$mac]['ap'] || $before['at'] < $now - $this->memory)) {
+                    $events[] = $now;
+                }
+                $memory[$mac] = $seen[$mac] + ['events' => $events];
                 $places[$mac] = $this->toPlace($aps, $seen[$mac], null);
             } elseif (isset($memory[$mac]) && $memory[$mac]['at'] >= $now - $this->memory) {
                 $places[$mac] = $this->toPlace($aps, $memory[$mac], $memory[$mac]['at']);
@@ -85,6 +99,8 @@ final readonly class Placement
                 $places[$mac] = null;
             }
         }
+
+        $memory['@run'] = $now;
 
         return [$places, $memory];
     }

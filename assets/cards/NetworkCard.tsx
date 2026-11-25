@@ -6,7 +6,7 @@ import { AlertIcon, ArrowDownIcon, ArrowUpIcon, NetworkIcon, ServerIcon } from '
 import { Sparkline } from '../ui/Sparkline'
 import { DeviceDetail } from './network/DeviceDetail'
 import { TopologyDiagram } from './network/TopologyDiagram'
-import { bandLabel, countDevices, countZones, deviceLabel, filterDevices, ipMismatch, isUnknown, placeLabel, TYPE_LABELS, UNCERTAIN, weakSignal, type Device, type DeviceFilter } from './network/devices'
+import { bandLabel, countDevices, countZones, deviceLabel, filterDevices, ipMismatch, isNew, isUnknown, isUnstable, placeLabel, TYPE_LABELS, UNCERTAIN, weakSignal, type Device, type DeviceFilter } from './network/devices'
 
 /** Props de NetworkCard::describe() côté PHP. */
 export type NetworkProps = { title: string }
@@ -26,6 +26,8 @@ export type NetworkRates = {
   wan: { state: string; media: string; down: number; up: number; maxDown: number; maxUp: number }
   /** Par point d'accès ; `ports` vide au premier relevé (il en faut deux) */
   accessPoints: Record<string, { error: string | null; ports: Record<string, LinkRate> }>
+  /** Machines suivies par Beszel, par IP (vide si Beszel ne répond pas) */
+  hosts: Record<string, LinkRate>
 }
 
 /** Mesures gardées pour les courbes : 5 min au rythme de 5 s. */
@@ -74,6 +76,8 @@ export const NetworkCard: CardComponent<NetworkProps, NetworkData> = ({ card, re
 
   const counts = countDevices(data.devices)
   const mismatches = data.devices.filter(ipMismatch)
+  const fresh = data.devices.filter((d) => isNew(d))
+  const unstable = data.devices.filter(isUnstable)
   const shown = filterDevices(data.devices, filter, zone)
   const zones = countZones(data.devices, [...data.accessPoints.map((ap) => ap.zone), data.wiredZone])
 
@@ -102,12 +106,24 @@ export const NetworkCard: CardComponent<NetworkProps, NetworkData> = ({ card, re
         </Tile>
       </div>
 
-      {(mismatches.length > 0 || counts.unknown > 0) && (
+      {(mismatches.length > 0 || counts.unknown > 0 || fresh.length > 0 || unstable.length > 0) && (
         <section aria-label="À vérifier" className="flex flex-col gap-1 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
           {mismatches.map((d) => (
             <p key={d.mac} className="flex items-start gap-2">
               <AlertIcon className="mt-0.5 size-4 shrink-0" />
               {deviceLabel(d)} a l’adresse {d.ip} au lieu de {d.expectedIp} (bail statique)
+            </p>
+          ))}
+          {fresh.map((d) => (
+            <p key={`new-${d.mac}`} className="flex items-start gap-2">
+              <AlertIcon className="mt-0.5 size-4 shrink-0" />
+              Nouvel appareil : {deviceLabel(d)}, apparu {formatRelative(d.firstSeen!)}
+            </p>
+          ))}
+          {unstable.map((d) => (
+            <p key={`unstable-${d.mac}`} className="flex items-start gap-2">
+              <AlertIcon className="mt-0.5 size-4 shrink-0" />
+              {deviceLabel(d)} : connexion instable ({d.changes} changements de point d’accès ou coupures en 1 h)
             </p>
           ))}
           {counts.unknown > 0 && (

@@ -29,7 +29,7 @@ final class PlacementTest extends TestCase
      * @param list<array{string, string, float}>   $fdb
      * @param list<array{string, string, int, int}> $stations
      */
-    private static function snapshot(array $fdb = [], array $stations = []): ApSnapshot
+    private static function snapshot(array $fdb = [], array $stations = [], int $at = self::NOW): ApSnapshot
     {
         return ApSnapshot::fromArray([
             'time' => self::NOW,
@@ -37,7 +37,7 @@ final class PlacementTest extends TestCase
             'radios' => ['ra0' => 2.467, 'rax0' => 5.62],
             'fdb' => $fdb,
             'stations' => $stations,
-        ], self::NOW);
+        ], $at);
     }
 
     /**
@@ -156,6 +156,38 @@ final class PlacementTest extends TestCase
         ]);
 
         self::assertSame(['Bureau', -50], [$places[self::TABLET]['zone'], $places[self::TABLET]['signal']]);
+    }
+
+    public function testMovesAndReconnectionsOfTheLastHourAreCounted(): void
+    {
+        $this->aps['flint2'] = new AccessPoint('flint2', '192.168.1.176', 'Salon', 'eth1');
+        $on = fn (string $ap, int $t): array => [$ap => self::snapshot(stations: [[self::PHONE, 'rax0', -50, 0]], at: $t)];
+
+        [, $memory] = $this->place($on('flint', self::NOW));
+        [, $memory] = $this->place($on('flint2', self::NOW + 60), $memory, now: self::NOW + 60);
+        [, $memory] = $this->place($on('flint', self::NOW + 120), $memory, now: self::NOW + 120);
+        // Absent plus longtemps que `memory` pendant qu'on regarde, puis de retour : une coupure.
+        foreach ([300, 500, 700] as $t) {
+            [, $memory] = $this->place(['flint' => self::snapshot()], $memory, now: self::NOW + $t);
+        }
+        [, $memory] = $this->place($on('flint', self::NOW + 900), $memory, now: self::NOW + 900);
+        self::assertSame([self::NOW + 60, self::NOW + 120, self::NOW + 900], $memory[self::PHONE]['events']);
+
+        // Les événements de plus d'une heure sont oubliés.
+        foreach ([1200, 2400, 4000] as $t) {
+            [, $memory] = $this->place($on('flint', self::NOW + $t), $memory, now: self::NOW + $t);
+        }
+        self::assertSame([self::NOW + 900], $memory[self::PHONE]['events']);
+    }
+
+    public function testNobodyWatchingIsNotACut(): void
+    {
+        // Personne ne regarde l'onglet pendant des heures : aucun relevé, donc aucune coupure à compter.
+        [, $memory] = $this->place(['flint' => self::snapshot(stations: [[self::PHONE, 'rax0', -50, 0]])]);
+        $this->aps['flint2'] = new AccessPoint('flint2', '192.168.1.176', 'Salon', 'eth1');
+        [, $memory] = $this->place(['flint2' => self::snapshot(stations: [[self::PHONE, 'rax0', -50, 0]], at: self::NOW + 7200)], $memory, now: self::NOW + 7200);
+
+        self::assertSame([], $memory[self::PHONE]['events']);
     }
 
     public function testFreshestAccessPointWinsWhenRoaming(): void

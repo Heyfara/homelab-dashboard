@@ -17,6 +17,8 @@ const device = (mac: string, name: string, d: Partial<Device> = {}): Device => (
   lastSeen: null,
   randomMac: false,
   place: baie,
+  firstSeen: null,
+  changes: 0,
   ...d,
 })
 
@@ -79,7 +81,7 @@ describe('placement du schéma', () => {
     expect(link('00:00:00:00:00:02')).toMatchObject({ from: 'switch', rate: { kind: 'port', ap: 'flint', port: 'eth1' } })
     expect(link('00:00:00:00:00:03')).toMatchObject({ from: '00:00:00:00:00:02', kind: 'cable', rate: { kind: 'port', ap: 'flint', port: 'lan2' } })
     expect(link('00:00:00:00:00:04')).toMatchObject({ from: '00:00:00:00:00:02', kind: 'wifi', rate: null })
-    expect(link('00:00:00:00:00:01')).toMatchObject({ from: 'switch', kind: 'cable', rate: null })
+    expect(link('00:00:00:00:00:01')).toMatchObject({ from: 'switch', kind: 'cable', rate: { kind: 'host', ip: '192.168.1.1' } })
     expect(d.links.find((l) => l.to === '00:00:00:00:00:06')).toBeUndefined()
   })
 

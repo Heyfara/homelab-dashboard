@@ -9,6 +9,7 @@ use App\Dashboard\Model\CardInstance;
 use App\Dashboard\Model\Dashboard;
 use App\Network\AccessPoint;
 use App\Network\Placement;
+use App\Source\Beszel\BeszelClient;
 use App\Source\Freebox\FreeboxClient;
 use App\Source\Freebox\FreeboxHost;
 use App\Source\OpenWrt\OpenWrtProbe;
@@ -100,6 +101,7 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
         private FreeboxClient $freebox,
         private OpenWrtProbe $probe,
         private TplinkClient $tplink,
+        private BeszelClient $beszel,
         private CacheItemPoolInterface $cache,
         #[Autowire('%env(default:history_data_default_dir:HISTORY_DATA_DIR)%')]
         string $dataDir,
@@ -182,13 +184,14 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
         $infrastructure = array_values(array_map(static fn (FreeboxHost $h): string => $h->mac, array_filter($hosts, static fn (FreeboxHost $h): bool => \in_array($h->ipv4, $addresses, true))));
         $placement = new Placement($card->options['wired_zone'], $card->options['memory'], $card->options['keep_days'] * 86400);
         $places = [];
-        $this->files->update('network-positions', static function (array $memory) use ($placement, $hosts, $aps, $snapshots, $infrastructure, $now, &$places): array {
-            [$places, $memory] = $placement->place(array_map(static fn (FreeboxHost $h): string => $h->mac, $hosts), $aps, $snapshots, $infrastructure, $memory, $now);
+        $memory = [];
+        $this->files->update('network-positions', static function (array $previous) use ($placement, $hosts, $aps, $snapshots, $infrastructure, $now, &$places, &$memory): array {
+            [$places, $memory] = $placement->place(array_map(static fn (FreeboxHost $h): string => $h->mac, $hosts), $aps, $snapshots, $infrastructure, $previous, $now);
 
             return $memory;
         });
 
-        $devices = array_map(function (FreeboxHost $h) use ($card, $leases, $places): array {
+        $devices = array_map(function (FreeboxHost $h) use ($card, $leases, $places, $memory, $now): array {
             $config = $card->options['devices'][$h->mac] ?? [];
 
             return [
@@ -204,6 +207,9 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
                 'randomMac' => (bool) (hexdec(substr($h->mac, 0, 2)) & 0x02),
                 'place' => null === ($p = $places[$h->mac] ?? null) ? null
                     : array_replace($p, ['seenAt' => null === $p['seenAt'] ? null : (new \DateTimeImmutable('@'.$p['seenAt']))->format(\DATE_ATOM)]),
+                'firstSeen' => $h->firstActivity?->format(\DATE_ATOM),
+                // Changements de point d'accès et retours après coupure, sur la dernière heure.
+                'changes' => \count(array_filter($memory[$h->mac]['events'] ?? [], static fn (int $t): bool => $t > $now - Placement::EVENTS_WINDOW)),
             ];
         }, $hosts);
 
@@ -288,7 +294,7 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
             $rates[$id] = ['error' => $errors[$id] ?? null, 'ports' => null === $snapshots[$id] ? [] : $this->portRates($ap, $snapshots[$id])];
         }
 
-        return ['accessPoints' => $rates, 'wan' => [
+        return ['accessPoints' => $rates, 'hosts' => $this->hostRates(), 'wan' => [
             'state' => $c->state,
             'media' => $c->media,
             'down' => $c->rateDown,
@@ -296,6 +302,34 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
             'maxDown' => $c->bandwidthDown,
             'maxUp' => $c->bandwidthUp,
         ]];
+    }
+
+    /**
+     * Débit réseau des machines suivies par Beszel (moyenne de la dernière
+     * minute), par IP de leur agent : vu de la machine, `down` = reçu. Beszel
+     * absent ou en panne : rien, sans faire tomber les autres débits.
+     *
+     * @return array<string, array{down: int, up: int}>
+     */
+    private function hostRates(): array
+    {
+        $rates = [];
+        try {
+            foreach ($this->beszel->systems() as $system) {
+                if ('up' !== $system->status || '' === $system->host) {
+                    continue;
+                }
+                $stats = $this->beszel->stats($system->name, '1m');
+                $b = [] !== $stats ? ($stats[\count($stats) - 1]->values['b'] ?? null) : null;
+                if (\is_array($b) && isset($b[0], $b[1])) {
+                    $rates[$system->host] = ['down' => (int) $b[1], 'up' => (int) $b[0]];
+                }
+            }
+        } catch (\Throwable) {
+            return [];
+        }
+
+        return $rates;
     }
 
     /**

@@ -6,6 +6,7 @@ use App\Card\Type\NetworkCard;
 use App\Dashboard\Model\CardInstance;
 use App\Dashboard\Model\Dashboard;
 use App\Dashboard\Model\Settings;
+use App\Source\Beszel\BeszelClient;
 use App\Source\Freebox\FreeboxClient;
 use App\Source\OpenWrt\OpenWrtProbe;
 use App\Source\Tplink\TplinkClient;
@@ -83,6 +84,7 @@ final class NetworkCardTest extends TestCase
             'host_type' => 'workstation',
             'active' => $active,
             'last_activity' => $last,
+            'first_activity' => $last,
             'l3connectivities' => [['addr' => $ip, 'af' => 'ipv4', 'active' => $active, 'last_activity' => $last]],
         ], $overrides);
     }
@@ -120,6 +122,7 @@ final class NetworkCardTest extends TestCase
 
     private ?ArrayAdapter $cache = null;
     private ?FakeArcher $archer = null;
+    private bool $beszelDown = false;
 
     private function network(FreeboxClient $freebox): NetworkCard
     {
@@ -128,7 +131,27 @@ final class NetworkCardTest extends TestCase
         $this->archer ??= new FakeArcher();
         $tplink = new TplinkClient(new MockHttpClient($this->archer->router()), $this->cache, 'motdepasse', fn (): float => $this->time);
 
-        return new NetworkCard($freebox, $probe, $tplink, $this->cache, $this->dir.'/data', fn (): float => $this->time);
+        $beszel = new BeszelClient(new MockHttpClient(function (string $method, string $url) {
+            if ($this->beszelDown) {
+                return new MockResponse('', ['error' => 'Connection refused']);
+            }
+            if (str_contains($url, 'auth-with-password')) {
+                return new JsonMockResponse(['token' => 't']);
+            }
+            if (str_contains($url, '/systems/')) {
+                return new JsonMockResponse(['items' => [
+                    ['id' => 'sys-a', 'name' => 'Alpha', 'status' => 'up', 'host' => '192.168.1.2', 'info' => []],
+                    ['id' => 'sys-b', 'name' => 'Beta', 'status' => 'down', 'host' => '192.168.1.9', 'info' => []],
+                ]]);
+            }
+
+            return new JsonMockResponse(['items' => str_contains($url, 'sys-a') ? [
+                ['created' => '2026-11-24 11:58:00.000Z', 'stats' => ['b' => [10, 20]]],
+                ['created' => '2026-11-24 11:59:00.000Z', 'stats' => ['b' => [1_000, 5_000]]],
+            ] : []]);
+        }), new ArrayAdapter(), 'http://beszel', 'u', 'p');
+
+        return new NetworkCard($freebox, $probe, $tplink, $beszel, $this->cache, $this->dir.'/data', fn (): float => $this->time);
     }
 
     /**
@@ -175,6 +198,8 @@ final class NetworkCardTest extends TestCase
             'lastSeen' => '2026-11-24T11:59:00+00:00',
             'randomMac' => false,
             'place' => null,
+            'firstSeen' => '2026-11-24T11:59:00+00:00',
+            'changes' => 0,
         ], $devices[2]);
     }
 
@@ -258,7 +283,7 @@ final class NetworkCardTest extends TestCase
     {
         $card = $this->card();
 
-        self::assertSame(['accessPoints' => [], 'wan' => [
+        self::assertSame(['accessPoints' => [], 'hosts' => ['192.168.1.2' => ['down' => 5_000, 'up' => 1_000]], 'wan' => [
             'state' => 'up',
             'media' => 'ftth',
             'down' => 2_500_000,
@@ -356,6 +381,17 @@ final class NetworkCardTest extends TestCase
 
         self::assertSame(['zone' => 'Étage', 'ap' => 'archer', 'link' => 'wifi', 'port' => 'wlan2g', 'band' => '2.4', 'signal' => null, 'seenAt' => null], $printer);
         self::assertSame(['id' => 'archer', 'zone' => 'Étage', 'error' => null, 'uplink' => 'eth1', 'radios' => ['wlan2g' => '2.4', 'wlan5g' => '5'], 'device' => null, 'kind' => 'tplink'], $data['accessPoints'][1]);
+    }
+
+    public function testBeszelUnavailableLeavesTheOtherRates(): void
+    {
+        $this->beszelDown = true;
+        $card = $this->card();
+
+        $rates = $card->fetchFeed('rates', $this->instance($card), $this->dashboard);
+
+        self::assertSame([], $rates['hosts']);
+        self::assertSame('up', $rates['wan']['state']);
     }
 
     public function testTplinkAccessPointHasNoPortRates(): void

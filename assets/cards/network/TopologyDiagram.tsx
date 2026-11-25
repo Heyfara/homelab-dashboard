@@ -1,7 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { formatRelative, formatSpeed } from '../../ui/format'
 import type { LinkRate, NetworkData, NetworkRates } from '../NetworkCard'
-import { deviceLabel, isUnknown, placeLabel, weakSignal } from './devices'
+import { deviceLabel, isUnknown, isUnstable, placeLabel, weakSignal } from './devices'
 import { DeviceIcon } from './DeviceIcon'
 import { buildZones, flowSpeed, layout, related, type DiagramLink, type DiagramNode, type RateRef, type ZoneTone } from './layout'
 
@@ -22,6 +22,7 @@ const CORE_LABELS = { internet: 'Internet', box: 'Freebox', switch: 'Switch' }
 export function rateOf(rates: NetworkRates | null, ref: RateRef | null): LinkRate | undefined {
   if (rates === null || ref === null) return undefined
   if (ref.kind === 'wan') return { down: rates.wan.down, up: rates.wan.up }
+  if (ref.kind === 'host') return Array.isArray(rates.hosts) ? undefined : rates.hosts?.[ref.ip]
   const ports = rates.accessPoints[ref.ap]?.ports
   return ports !== undefined && !Array.isArray(ports) ? ports[ref.port] : undefined
 }
@@ -123,7 +124,7 @@ function Node({ node: n, data, rate, selected, dim, onSelect, onHover }: NodePro
   const p = d?.place ?? null
   const stale = p?.seenAt != null
   const sub = n.ap !== null ? (n.ap.error !== null ? 'injoignable' : `point d’accès · ${n.ap.id}`) : p === null ? 'position incertaine' : p.link === 'wifi' ? placeLabel(p).split(' · ')[1] : p.ap !== null ? `câble ${p.port}` : 'câble'
-  const dot = n.ap?.error ? 'bg-amber-500' : stale ? 'bg-zinc-400 dark:bg-slate-500' : p !== null && weakSignal(p) ? 'bg-amber-500' : 'bg-emerald-500'
+  const dot = n.ap?.error || (d !== null && isUnstable(d)) ? 'bg-amber-500' : stale ? 'bg-zinc-400 dark:bg-slate-500' : p !== null && weakSignal(p) ? 'bg-amber-500' : 'bg-emerald-500'
 
   return (
     <button

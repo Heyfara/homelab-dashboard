@@ -19,6 +19,8 @@ final readonly class FreeboxHost
         public ?string $ipv4,
         public bool $active,
         public ?\DateTimeImmutable $lastActivity,
+        /** Première apparition sur le réseau */
+        public ?\DateTimeImmutable $firstActivity = null,
     ) {
     }
 }
