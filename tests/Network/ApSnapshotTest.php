@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Tests\Source\OpenWrt;
+namespace App\Tests\Network;
 
-use App\Source\OpenWrt\OpenWrtSnapshot;
+use App\Network\ApSnapshot;
 use App\Source\SourceUnavailableException;
 use PHPUnit\Framework\TestCase;
 
-final class OpenWrtSnapshotTest extends TestCase
+final class ApSnapshotTest extends TestCase
 {
     public function testFromProbeOutput(): void
     {
@@ -14,7 +14,7 @@ final class OpenWrtSnapshotTest extends TestCase
             .'"fdb":[["00:16:3E:00:00:01","lan2",0.00],["00:16:3E:00:00:02","eth1",6.53]],'
             .'"stations":[["00:16:3E:00:00:03","rax0",-27,0]]}';
 
-        $s = OpenWrtSnapshot::fromJson($json, 1000.5);
+        $s = ApSnapshot::fromJson($json, 1000.5);
 
         self::assertSame(1000.5, $s->readAt);
         self::assertSame(['eth1' => [10, 20], 'lan2' => [30, 40], 'rax0' => [50, 60]], $s->ports);
@@ -25,7 +25,7 @@ final class OpenWrtSnapshotTest extends TestCase
 
     public function testRadioWithoutClients(): void
     {
-        $s = OpenWrtSnapshot::fromJson('{"time":1,"ports":{},"radios":{},"fdb":[],"stations":[]}', 1.0);
+        $s = ApSnapshot::fromJson('{"time":1,"ports":{},"radios":{},"fdb":[],"stations":[]}', 1.0);
 
         self::assertSame([], $s->stations);
     }
@@ -35,6 +35,6 @@ final class OpenWrtSnapshotTest extends TestCase
         $this->expectException(SourceUnavailableException::class);
         $this->expectExceptionMessage('Relevé illisible');
 
-        OpenWrtSnapshot::fromJson('sh: dashboard-probe: not found', 1.0);
+        ApSnapshot::fromJson('sh: dashboard-probe: not found', 1.0);
     }
 }

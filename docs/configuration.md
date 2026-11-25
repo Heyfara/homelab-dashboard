@@ -27,6 +27,7 @@ Variables d'environnement liées :
 | `PAPERLESS_API_TOKEN` | jeton d'API Paperless-ngx d'un utilisateur en lecture seule (cartes `factures`) : droits « voir » sur les documents, types de document, correspondants et champs personnalisés, et accès aux factures elles-mêmes |
 | `GW2_API_KEY` | clé d'API Guild Wars 2 du compte (cartes `gw2` et `gw2-bosses`) : droits `account`, `wallet`, `progression`, `tradingpost` |
 | `FREEBOX_URL`, `FREEBOX_APP_TOKEN` | adresse de la Freebox sur le réseau local (`http://192.168.1.254`) et jeton d'application obtenu avec `bin/console dashboard:freebox-authorize` (carte `network`) |
+| `TPLINK_PASSWORD` | mot de passe d'administration du point d'accès TP-Link Archer C6 (carte `network`, `kind: tplink`) |
 | `NETWORK_SSH_DIR` | dossier avec la clé privée SSH du dashboard (`id_ed25519`) et les clés d'hôte des points d'accès (`known_hosts`), lisibles par PHP-FPM (carte `network`, option `access_points`) |
 | `NTFY_TOKEN` | jeton ntfy d'un compte qui ne peut que lire (cloche, section `notifications`) |
 | `PROFILE_DATA_DIR` | dossier des données saisies par chaque profil : clés et réglages de « Ma config » (clés chiffrées) et ordre des cartes ; vide = `var/profiles`. En prod : un volume privé, sauvegardé |
@@ -1222,7 +1223,7 @@ rechargement de la page.
 | `devices` | `{}` | par adresse MAC : `type` et/ou `name` pour corriger ce qui est deviné. Le type vient de la Freebox quand elle le connaît, sinon du fabricant de la carte réseau (Espressif → `iot`, TP-Link → `network`…), sinon `other`. Types : `box`, `network`, `server`, `computer`, `laptop`, `phone`, `tablet`, `tv`, `printer`, `speaker`, `camera`, `iot`, `console`, `other` |
 | `rates_refresh` | `5` | secondes entre deux lectures des débits (2 au moins) |
 | `keep_days` | `7` | jours pendant lesquels un appareil déconnecté reste dans la liste |
-| `access_points` | `[]` | points d'accès OpenWrt lus par SSH : `id` (lettres, chiffres, `-`), `address`, `zone` affichée, `uplink` (port relié au switch, `eth1` par défaut) |
+| `access_points` | `[]` | points d'accès : `id` (lettres, chiffres, `-`), `address`, `zone` affichée, `kind` (`openwrt` par défaut, ou `tplink`), `uplink` (port relié au switch, `eth1` par défaut, OpenWrt seulement) |
 | `wired_zone` | `Baie` | zone des appareils câblés sur le switch |
 | `memory` | `300` | secondes pendant lesquelles un appareil garde son point d'accès après l'avoir quitté (« vu il y a… ») |
 
@@ -1234,6 +1235,7 @@ rechargement de la page.
       span: 4
       access_points:
         - { id: borne, address: 192.168.1.20, zone: Bureau }
+        - { id: etage, kind: tplink, address: 192.168.1.21, zone: Étage }
       devices:
         "00:16:3E:00:00:01": { type: server, name: alpha }
 ```
@@ -1270,6 +1272,16 @@ survivent aux mises à jour. Côté dashboard, `NETWORK_SSH_DIR` contient :
 
 Les débits des ports viennent de la différence entre deux relevés : ils
 apparaissent au deuxième passage du flux `rates`.
+
+**Point d'accès TP-Link Archer C6** (`kind: tplink`, firmware d'origine) : lu
+comme le fait son interface web, avec `TPLINK_PASSWORD`. On en tire seulement
+les appareils associés et leur bande Wi-Fi : ni signal, ni débit, ni ports.
+- Relu au plus une fois par minute, échec compris.
+- Le dashboard se déconnecte après chaque relevé. L'Archer n'accepte qu'une
+  session d'administration à la fois : une personne connectée à son interface
+  peut être déconnectée au moment d'un relevé.
+- Prise en charge provisoire : elle sera retirée quand ce point d'accès sera
+  remplacé par un OpenWrt.
 
 **Jeton Freebox** (une seule fois, depuis le réseau de la maison) :
 

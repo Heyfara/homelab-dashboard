@@ -12,8 +12,9 @@ use App\Network\Placement;
 use App\Source\Freebox\FreeboxClient;
 use App\Source\Freebox\FreeboxHost;
 use App\Source\OpenWrt\OpenWrtProbe;
-use App\Source\OpenWrt\OpenWrtSnapshot;
+use App\Network\ApSnapshot;
 use App\Source\SourceUnavailableException;
+use App\Source\Tplink\TplinkClient;
 use App\Storage\JsonFiles;
 use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -27,8 +28,9 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  * d'accès. Prévue pour occuper seule son onglet : sa hauteur suit son contenu.
  *
  *     - type: network
- *       access_points:                 # facultatif : points d'accès OpenWrt lus par SSH
+ *       access_points:                 # facultatif : points d'accès lus par SSH (OpenWrt) ou HTTP (TP-Link)
  *         - { id: flint, address: 192.168.1.175, zone: Bureau }
+ *         - { id: archer, kind: tplink, address: 192.168.1.133, zone: Étage }
  *       devices:                       # facultatif : type ou nom par adresse MAC
  *         "AA:BB:CC:DD:EE:FF": { type: server, name: alpha }
  *
@@ -97,6 +99,7 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
     public function __construct(
         private FreeboxClient $freebox,
         private OpenWrtProbe $probe,
+        private TplinkClient $tplink,
         private CacheItemPoolInterface $cache,
         #[Autowire('%env(default:history_data_default_dir:HISTORY_DATA_DIR)%')]
         string $dataDir,
@@ -143,12 +146,15 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
                     ->setAllowedValues('id', static fn (string $id): bool => 1 === preg_match('/^[a-z0-9_-]+$/', $id))
                     ->setAllowedTypes('address', 'string')
                     ->setAllowedTypes('zone', 'string')
+                    ->setDefault('kind', 'openwrt')
+                    ->setAllowedValues('kind', ['openwrt', 'tplink'])
+                    ->setInfo('kind', 'openwrt : lu par SSH (script dashboard-probe) ; tplink : Archer C6 lu comme son interface web')
                     ->setDefault('uplink', 'eth1')
                     ->setAllowedTypes('uplink', 'string')
                     ->setInfo('uplink', 'port du bridge relié au switch');
             })
             ->setAllowedValues('access_points', static fn (array $aps): bool => \count($aps) === \count(array_unique(array_column($aps, 'id'))))
-            ->setInfo('access_points', 'points d’accès OpenWrt lus par SSH : { id, address, zone, uplink: eth1 }')
+            ->setInfo('access_points', 'points d’accès : { id, address, zone, kind: openwrt|tplink, uplink: eth1 }')
             ->setDefault('wired_zone', 'Baie')
             ->setAllowedTypes('wired_zone', 'string')
             ->setInfo('wired_zone', 'zone des appareils câblés sur le switch')
@@ -214,6 +220,7 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
                 'radios' => array_map(Placement::band(...), $snapshots[$ap->id]?->radios ?? []),
                 // L'appareil du point d'accès lui-même, retrouvé par son IP : il mène sa zone sur le schéma.
                 'device' => array_values(array_filter($hosts, static fn (FreeboxHost $h): bool => $h->ipv4 === $ap->address))[0]->mac ?? null,
+                'kind' => $ap->kind,
             ], $aps)),
             'wiredZone' => $card->options['wired_zone'],
         ];
@@ -226,7 +233,7 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
     {
         $aps = [];
         foreach ($card->options['access_points'] as $ap) {
-            $aps[$ap['id']] = new AccessPoint($ap['id'], $ap['address'], $ap['zone'], $ap['uplink']);
+            $aps[$ap['id']] = new AccessPoint($ap['id'], $ap['address'], $ap['zone'], $ap['uplink'], $ap['kind']);
         }
 
         return $aps;
@@ -237,14 +244,14 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
      *
      * @param array<string, AccessPoint> $aps
      *
-     * @return array{array<string, ?OpenWrtSnapshot>, array<string, string>}
+     * @return array{array<string, ?ApSnapshot>, array<string, string>}
      */
     private function snapshots(array $aps): array
     {
         $snapshots = $errors = [];
         foreach ($aps as $id => $ap) {
             try {
-                $snapshots[$id] = $this->probe->snapshot($ap->address);
+                $snapshots[$id] = 'tplink' === $ap->kind ? $this->tplink->snapshot($ap->address) : $this->probe->snapshot($ap->address);
             } catch (SourceUnavailableException $e) {
                 $snapshots[$id] = null;
                 $errors[$id] = $e->getMessage();
@@ -273,7 +280,8 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
     public function fetchFeed(string $feed, CardInstance $card, Dashboard $dashboard): array
     {
         $c = $this->freebox->connection();
-        $aps = self::accessPoints($card);
+        // Seuls les points d'accès OpenWrt donnent les compteurs de leurs ports.
+        $aps = array_filter(self::accessPoints($card), static fn (AccessPoint $ap): bool => 'openwrt' === $ap->kind);
         [$snapshots, $errors] = $this->snapshots($aps);
         $rates = [];
         foreach ($aps as $id => $ap) {
@@ -296,7 +304,7 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
      *
      * @return array<string, array{down: int, up: int}>
      */
-    private function portRates(AccessPoint $ap, OpenWrtSnapshot $s): array
+    private function portRates(AccessPoint $ap, ApSnapshot $s): array
     {
         $item = $this->cache->getItem('network.counters.'.hash('xxh128', $ap->id.'|'.$ap->address));
         $previous = $item->isHit() ? $item->get() : null;

@@ -8,6 +8,8 @@ use App\Dashboard\Model\Dashboard;
 use App\Dashboard\Model\Settings;
 use App\Source\Freebox\FreeboxClient;
 use App\Source\OpenWrt\OpenWrtProbe;
+use App\Source\Tplink\TplinkClient;
+use App\Tests\Source\Tplink\FakeArcher;
 use App\Source\SourceUnavailableException;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
@@ -22,6 +24,7 @@ final class NetworkCardTest extends TestCase
     private const NOW = '2026-11-24T12:00:00+00:00';
 
     private const FLINT = ['id' => 'flint', 'address' => '192.168.1.175', 'zone' => 'Bureau'];
+    private const ARCHER = ['id' => 'archer', 'kind' => 'tplink', 'address' => '192.168.1.133', 'zone' => 'Étage'];
 
     private Dashboard $dashboard;
     private string $dir;
@@ -116,13 +119,16 @@ final class NetworkCardTest extends TestCase
     }
 
     private ?ArrayAdapter $cache = null;
+    private ?FakeArcher $archer = null;
 
     private function network(FreeboxClient $freebox): NetworkCard
     {
         $probe = new OpenWrtProbe($this->dir.'/ssh', fn (): array => null === $this->probe ? [255, '', 'Connection timed out'] : [0, $this->probe, ''], fn (): float => $this->time);
         $this->cache ??= new ArrayAdapter();
+        $this->archer ??= new FakeArcher();
+        $tplink = new TplinkClient(new MockHttpClient($this->archer->router()), $this->cache, 'motdepasse', fn (): float => $this->time);
 
-        return new NetworkCard($freebox, $probe, $this->cache, $this->dir.'/data', fn (): float => $this->time);
+        return new NetworkCard($freebox, $probe, $tplink, $this->cache, $this->dir.'/data', fn (): float => $this->time);
     }
 
     /**
@@ -274,7 +280,7 @@ final class NetworkCardTest extends TestCase
         self::assertSame(['Bureau', 'wifi', '5', -41], [$devices['DA:A1:19:00:00:05']['zone'], $devices['DA:A1:19:00:00:05']['link'], $devices['DA:A1:19:00:00:05']['band'], $devices['DA:A1:19:00:00:05']['signal']]);
         self::assertSame('Baie', $devices['00:16:3E:00:00:02']['zone']);
         self::assertNull($devices['00:16:3E:00:00:03']);
-        self::assertSame([['id' => 'flint', 'zone' => 'Bureau', 'error' => null, 'uplink' => 'eth1', 'radios' => ['rax0' => '5'], 'device' => null]], $data['accessPoints']);
+        self::assertSame([['id' => 'flint', 'zone' => 'Bureau', 'error' => null, 'uplink' => 'eth1', 'radios' => ['rax0' => '5'], 'device' => null, 'kind' => 'openwrt']], $data['accessPoints']);
         self::assertSame('Baie', $data['wiredZone']);
     }
 
@@ -338,6 +344,28 @@ final class NetworkCardTest extends TestCase
         self::assertSame(['lan2', 'rax0'], array_keys($ports));
     }
 
+    public function testTplinkAccessPointPlacesItsWifiClients(): void
+    {
+        $this->archer = new FakeArcher();
+        $this->archer->devices = "name 1 imprimante\r\nmac 1 00-16-3E-00-00-02\r\nip 1 192.168.1.30\r\ntype 1 1\r\nonline 1 1";
+        $card = $this->card();
+        $instance = $this->instance($card, ['access_points' => [self::FLINT, self::ARCHER]]);
+
+        $data = $card->fetch($instance, $this->dashboard);
+        $printer = array_column($data['devices'], 'place', 'mac')['00:16:3E:00:00:02'];
+
+        self::assertSame(['zone' => 'Étage', 'ap' => 'archer', 'link' => 'wifi', 'port' => 'wlan2g', 'band' => '2.4', 'signal' => null, 'seenAt' => null], $printer);
+        self::assertSame(['id' => 'archer', 'zone' => 'Étage', 'error' => null, 'uplink' => 'eth1', 'radios' => ['wlan2g' => '2.4', 'wlan5g' => '5'], 'device' => null, 'kind' => 'tplink'], $data['accessPoints'][1]);
+    }
+
+    public function testTplinkAccessPointHasNoPortRates(): void
+    {
+        $card = $this->card();
+        $instance = $this->instance($card, ['access_points' => [self::FLINT, self::ARCHER]]);
+
+        self::assertSame(['flint'], array_keys($card->fetchFeed('rates', $instance, $this->dashboard)['accessPoints']));
+    }
+
     /**
      * @return iterable<string, array{array<string, mixed>}>
      */
@@ -351,6 +379,7 @@ final class NetworkCardTest extends TestCase
         yield 'point d’accès sans adresse' => [['access_points' => [['id' => 'flint', 'zone' => 'Bureau']]]];
         yield 'point d’accès en double' => [['access_points' => [self::FLINT, self::FLINT]]];
         yield 'mémoire négative' => [['memory' => -1]];
+        yield 'point d’accès d’un type inconnu' => [['access_points' => [['kind' => 'cisco'] + self::FLINT]]];
     }
 
     /**

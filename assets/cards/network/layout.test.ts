@@ -29,7 +29,7 @@ const data: NetworkData = {
     device('00:00:00:00:00:05', 'éteint', { online: false, place: place({}) }),
     device('00:00:00:00:00:06', 'perdu', { place: null }),
   ],
-  accessPoints: [{ id: 'flint', zone: 'Bureau', error: null, uplink: 'eth1', radios: { ra0: '2.4', rax0: '5' }, device: '00:00:00:00:00:02' }],
+  accessPoints: [{ id: 'flint', zone: 'Bureau', error: null, uplink: 'eth1', radios: { ra0: '2.4', rax0: '5' }, device: '00:00:00:00:00:02', kind: 'openwrt' }],
   wiredZone: 'Baie',
 }
 

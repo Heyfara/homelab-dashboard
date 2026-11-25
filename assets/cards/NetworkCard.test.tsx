@@ -29,7 +29,7 @@ const data: NetworkData = {
     device({ mac: '00:16:3E:00:00:06', name: 'pc-bureau', type: 'computer', ip: '192.168.1.70', expectedIp: null, place: { zone: 'Bureau', ap: 'flint', link: 'cable', port: 'lan2', band: null, signal: null, seenAt: null } }),
     device({ mac: '00:16:3E:00:00:07', name: 'tablette', type: 'tablet', ip: '192.168.1.71', expectedIp: null, place: { zone: 'Bureau', ap: 'flint', link: 'wifi', port: 'rax0', band: '5', signal: -80, seenAt: new Date(Date.now() - 120_000).toISOString() } }),
   ],
-  accessPoints: [{ id: 'flint', zone: 'Bureau', error: null, uplink: 'eth1', radios: { ra0: '2.4', rax0: '5' }, device: null }],
+  accessPoints: [{ id: 'flint', zone: 'Bureau', error: null, uplink: 'eth1', radios: { ra0: '2.4', rax0: '5' }, device: null, kind: 'openwrt' }],
   wiredZone: 'Baie',
 }
 const rates: NetworkRates = {
@@ -128,6 +128,16 @@ describe('NetworkCard', () => {
     expect(line(/Câble lan2/)).toContain('pc-bureau')
     expect(line(/Câble lan2/)).toContain('1,5 Mo/s')
     expect(ap.queryByRole('group', { name: /lan4/ })).toBeNull()
+  })
+
+  it('point d’accès TP-Link : ses radios, sans lien mesuré vers le switch', () => {
+    const archer = { id: 'archer', zone: 'Étage', error: null, uplink: 'eth1', radios: { wlan2g: '2.4', wlan5g: '5' }, device: null, kind: 'tplink' as const }
+    const devices = [...data.devices, device({ mac: '00:16:3E:00:00:08', name: 'enceinte', place: { zone: 'Étage', ap: 'archer', link: 'wifi', port: 'wlan2g', band: '2.4', signal: null, seenAt: null } })]
+    render(<NetworkCard card={card} result={ok({ ...data, devices, accessPoints: [...data.accessPoints, archer] })} feeds={{ rates: ok(rates) }} />)
+
+    const panels = within(screen.getByRole('region', { name: 'Points d’accès' }))
+    expect(panels.getAllByRole('group', { name: /Vers le switch/ })).toHaveLength(1)
+    expect(panels.getAllByRole('group', { name: 'Wi-Fi 2,4 GHz' }).map(text).some((t) => t.includes('1 appareil'))).toBe(true)
   })
 
   it('point d’accès injoignable : signalé', () => {

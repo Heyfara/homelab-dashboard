@@ -14,6 +14,8 @@ final readonly class AccessPoint
         public string $zone,
         /** Port du bridge relié au switch de la baie */
         public string $uplink,
+        /** openwrt : lu par SSH ; tplink : Archer C6 lu comme son interface web */
+        public string $kind = 'openwrt',
     ) {
     }
 }
