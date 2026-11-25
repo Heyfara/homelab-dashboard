@@ -6,6 +6,8 @@ services:
     build:
       context: .
       target: dev
+      args:
+        UID: ${UID:-1000}
     user: "${UID:-1000}:${GID:-1000}"
     environment:
       COMPOSER_HOME: /tmp/composer

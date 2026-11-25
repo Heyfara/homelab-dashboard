@@ -21,6 +21,10 @@ WORKDIR /app
 # --- Dev : le code est monté depuis l'hôte (compose.yaml) --------------------
 FROM php-base AS dev
 RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
+# Le container tourne avec l'UID du poste (compose.yaml) : ssh exige qu'il
+# existe dans /etc/passwd.
+ARG UID=1000
+RUN getent passwd "$UID" >/dev/null || adduser -D -H -u "$UID" dev
 
 # --- Front : compilé par Vite dans public/build -------------------------------
 FROM node:24.16.0-alpine AS front
