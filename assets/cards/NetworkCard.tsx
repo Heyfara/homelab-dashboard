@@ -4,13 +4,16 @@ import { useSampleHistory } from '../hooks/useSampleHistory'
 import { formatRelative, formatSpeed } from '../ui/format'
 import { AlertIcon, ArrowDownIcon, ArrowUpIcon, NetworkIcon, ServerIcon } from '../ui/icons'
 import { Sparkline } from '../ui/Sparkline'
+import { DeviceDetail } from './network/DeviceDetail'
+import { TopologyDiagram } from './network/TopologyDiagram'
 import { bandLabel, countDevices, countZones, deviceLabel, filterDevices, ipMismatch, isUnknown, placeLabel, TYPE_LABELS, UNCERTAIN, weakSignal, type Device, type DeviceFilter } from './network/devices'
 
 /** Props de NetworkCard::describe() côté PHP. */
 export type NetworkProps = { title: string }
 
 /** Point d'accès lu par SSH ; `error` s'il n'a pas répondu. */
-export type AccessPointInfo = { id: string; zone: string; error: string | null; uplink: string; radios: Record<string, string> }
+/** `device` : MAC de l'appareil du point d'accès lui-même, s'il est dans la liste. */
+export type AccessPointInfo = { id: string; zone: string; error: string | null; uplink: string; radios: Record<string, string>; device: string | null }
 
 /** Données de NetworkCard::fetch() côté PHP. */
 export type NetworkData = { devices: Device[]; accessPoints: AccessPointInfo[]; wiredZone: string }
@@ -51,6 +54,9 @@ export const NetworkCard: CardComponent<NetworkProps, NetworkData> = ({ card, re
   const history = useSampleHistory(wan ? ratesResult!.fetchedAt : null, wan ? { down: wan.down, up: wan.up } : null, HISTORY)
   const [filter, setFilter] = useState<DeviceFilter>('all')
   const [zone, setZone] = useState<string | null>(null)
+  /** Nœud choisi sur le schéma ou dans la liste : MAC, ou internet / box / switch */
+  const [selected, setSelected] = useState<string | null>(null)
+  const rates = ratesResult?.status === 'ok' ? (ratesResult.data as NetworkRates) : null
   const portRates = ratesResult?.status === 'ok' ? (ratesResult.data as NetworkRates).accessPoints : {}
 
   if (data === null) {
@@ -121,7 +127,13 @@ export const NetworkCard: CardComponent<NetworkProps, NetworkData> = ({ card, re
         </section>
       )}
 
-      <section aria-label="Appareils" className="flex flex-col gap-2">
+      <section aria-label="Schéma du réseau" className="flex flex-col gap-2">
+        <Legend />
+        <TopologyDiagram data={data} rates={rates} selected={selected} onSelect={setSelected} />
+      </section>
+
+      <div className="flex flex-col-reverse gap-4 lg:flex-row lg:items-start">
+      <section aria-label="Appareils" className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex flex-wrap gap-x-4 gap-y-2">
           <div role="group" aria-label="Filtrer les appareils" className="flex flex-wrap gap-1.5">
             {FILTERS.map((f) => (
@@ -139,10 +151,40 @@ export const NetworkCard: CardComponent<NetworkProps, NetworkData> = ({ card, re
         </div>
         <ul className="divide-y divide-zinc-100 dark:divide-slate-800">
           {shown.map((d) => (
-            <DeviceRow key={d.mac} device={d} />
+            <DeviceRow key={d.mac} device={d} selected={selected === d.mac} onSelect={() => setSelected(d.mac)} />
           ))}
         </ul>
       </section>
+      <div className="lg:sticky lg:top-4 lg:w-80 lg:shrink-0">
+        <DeviceDetail selected={selected} data={data} rates={rates} />
+      </div>
+      </div>
+    </div>
+  )
+}
+
+function Legend() {
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-500 dark:text-slate-400">
+      <span className="flex items-center gap-1.5">
+        <svg width="24" height="6" aria-hidden="true">
+          <path d="M1 3h22" className="stroke-zinc-400" strokeWidth="2" />
+        </svg>
+        câble
+      </span>
+      <span className="flex items-center gap-1.5">
+        <svg width="24" height="6" aria-hidden="true">
+          <path d="M1 3h22" className="stroke-zinc-400" strokeWidth="2" strokeDasharray="4 5" />
+        </svg>
+        Wi-Fi
+      </span>
+      <span className="flex items-center gap-1.5">
+        <span className="size-2 rounded-full bg-down" /> descendant
+      </span>
+      <span className="flex items-center gap-1.5">
+        <span className="size-1.5 rounded-full bg-zinc-700 dark:bg-slate-100" /> montant
+      </span>
+      <span>points animés : débit mesuré</span>
     </div>
   )
 }
@@ -247,17 +289,23 @@ function RateTile({ label, rate, max, history, tone }: { label: string; rate: nu
   )
 }
 
-function DeviceRow({ device: d }: { device: Device }) {
+function DeviceRow({ device: d, selected, onSelect }: { device: Device; selected: boolean; onSelect: () => void }) {
   const unknown = isUnknown(d)
 
   return (
-    <li className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-0.5 py-2 text-sm md:grid-cols-[minmax(0,2fr)_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_8rem]">
+    <li className={`${selected ? 'bg-zinc-100 dark:bg-slate-800' : ''} grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-0.5 py-2 text-sm md:grid-cols-[minmax(0,2fr)_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_8rem]`}>
       <div className="flex min-w-0 items-center gap-2">
         <span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${d.online ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-slate-600'}`} />
         <div className="min-w-0">
-          <p className={`truncate ${unknown ? 'text-amber-700 italic dark:text-amber-300' : 'text-zinc-900 dark:text-slate-100'}`} title={deviceLabel(d)}>
+          <button
+            type="button"
+            onClick={onSelect}
+            aria-label={`Détail de ${deviceLabel(d)}`}
+            className={`block max-w-full truncate text-left hover:underline focus-visible:outline-2 focus-visible:outline-indigo-500 ${unknown ? 'text-amber-700 italic dark:text-amber-300' : 'text-zinc-900 dark:text-slate-100'}`}
+            title={deviceLabel(d)}
+          >
             {deviceLabel(d)}
-          </p>
+          </button>
           <p className="truncate text-xs text-zinc-500 dark:text-slate-400">
             {TYPE_LABELS[d.type]}
             {d.vendor !== null && d.name !== null && ` · ${d.vendor}`}

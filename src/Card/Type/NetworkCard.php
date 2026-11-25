@@ -212,6 +212,8 @@ final readonly class NetworkCard implements CardTypeInterface, CardFeedsInterfac
                 'error' => $errors[$ap->id] ?? null,
                 'uplink' => $ap->uplink,
                 'radios' => array_map(Placement::band(...), $snapshots[$ap->id]?->radios ?? []),
+                // L'appareil du point d'accès lui-même, retrouvé par son IP : il mène sa zone sur le schéma.
+                'device' => array_values(array_filter($hosts, static fn (FreeboxHost $h): bool => $h->ipv4 === $ap->address))[0]->mac ?? null,
             ], $aps)),
             'wiredZone' => $card->options['wired_zone'],
         ];
